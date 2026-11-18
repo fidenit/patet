@@ -76,9 +76,9 @@ The element does not care how lines travel. Three shapes that work:
 
 ## What it draws, and what it does not
 
-All 16 core card types, extension kinds as records, named values, the "my turn" slot for cards that wait for the user, groups, light and dark. Charts, routes and drawings are SVG.
+All 16 core card types, extension kinds as records, named values, the "my turn" slot for cards that wait for the user, groups, the shelf (a press brings a topic back), light and dark. Charts, routes and drawings are SVG. A table too wide for its card scrolls sideways inside it.
 
-Not yet: dragging and resizing cards (so it never sends `move`, `size`, `pin`), the shelf as a list, folding a crowded topic, reading `tell` aloud, road-following routes. A route is drawn as straight legs between the stops, without a map underneath.
+Not yet: dragging and resizing cards (so it never sends `move`, `size`, `pin`), folding a crowded topic, reading `tell` aloud, road-following routes. A route is drawn as straight legs between the stops, without a map underneath.
 
 Every text a writer sends is placed as text, never as HTML.
 

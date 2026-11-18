@@ -39,7 +39,7 @@ const STYLE = `
 :host([theme="light"]) { --bg:#f3f3f1; --panel:#fafaf8; --card:#ffffff; --raised:#f0f0ee; --line:#e2e2df; --edge:#b9b9b4; --text:#1b1c1e; --soft:#3a3b3f; --dim:#74767c; --faint:#a0a2a8; --on:#1b1c1e; --on-text:#ffffff; }
 @media (prefers-color-scheme: light) { :host(:not([theme="dark"])) { --bg:#f3f3f1; --panel:#fafaf8; --card:#ffffff; --raised:#f0f0ee; --line:#e2e2df; --edge:#b9b9b4; --text:#1b1c1e; --soft:#3a3b3f; --dim:#74767c; --faint:#a0a2a8; --on:#1b1c1e; --on-text:#ffffff; } }
 * { box-sizing:border-box; }
-.wrap { display:grid; grid-template-columns:minmax(260px,340px) 1fr; gap:18px; padding:18px; align-items:start; }
+.wrap { display:grid; grid-template-columns:minmax(260px,320px) 1fr; gap:18px; padding:18px; align-items:start; }
 .wrap.solo { grid-template-columns:1fr; }
 @media (max-width:760px) { .wrap { grid-template-columns:1fr; } }
 aside { background:var(--panel); border:1px solid var(--line); border-radius:22px; padding:16px; position:sticky; top:12px; }
@@ -67,8 +67,8 @@ p { margin:0 0 8px; color:var(--soft); white-space:pre-wrap; overflow-wrap:anywh
 .dot.wait { border-color:var(--amber); } .dot.fail { background:var(--red); border-color:var(--red); }
 .big { font-size:40px; font-weight:800; line-height:1.1; overflow-wrap:anywhere; } .big.long { font-size:26px; } .unit { color:var(--dim); margin-left:6px; font-weight:600; }
 .delta.up { color:var(--green); } .delta.down { color:var(--red); }
-table { width:100%; border-collapse:collapse; } th { text-align:left; color:var(--faint); font-size:11px; font-weight:400; padding:0 12px 6px 0; }
-td { padding:6px 12px 6px 0; color:var(--dim); overflow-wrap:break-word; vertical-align:top; } td:first-child { color:var(--text); font-weight:700; }
+.rows { overflow-x:auto; } table { width:100%; border-collapse:collapse; } th { text-align:left; color:var(--faint); font-size:11px; font-weight:400; padding:0 12px 6px 0; }
+td { padding:6px 14px 6px 0; color:var(--dim); vertical-align:top; min-width:5.5em; } td:first-child, th { white-space:nowrap; } td:first-child { color:var(--text); font-weight:700; }
 .kv { display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin-bottom:8px; } .kv span:nth-child(odd) { color:var(--faint); font-size:12px; align-self:center; } .kv span:nth-child(even) { font-weight:700; overflow-wrap:anywhere; }
 .bar { height:6px; border-radius:3px; background:var(--raised); overflow:hidden; flex:1; } .bar > i { display:block; height:100%; background:var(--soft); border-radius:3px; }
 .check { flex:none; width:20px; height:20px; border-radius:6px; border:1.5px solid var(--faint); background:none; cursor:pointer; padding:0; }
@@ -89,6 +89,7 @@ svg { display:block; width:100%; } svg text { fill:var(--soft); font:10px system
 img { max-width:100%; border-radius:10px; display:block; } iframe { width:100%; height:320px; border:0; border-radius:10px; background:#fff; }
 a { color:var(--accent); }
 .empty { color:var(--faint); padding:40px; text-align:center; }
+.shelf { margin:4px 4px 0; color:var(--faint); font-size:12px; } .shelf button { margin-left:6px; }
 `;
 
 const COLORS = { accent: "var(--accent)", orange: "var(--accent)", green: "var(--green)", red: "var(--red)", amber: "var(--amber)", yellow: "var(--amber)", dim: "var(--dim)", gray: "var(--dim)", faint: "var(--faint)", white: "var(--text)" };
@@ -200,12 +201,19 @@ export class KiteBoard extends HTMLElement {
   #fit() {
     const width = this.clientWidth;
     if (!width) return;
-    const beside = this.shadowRoot.querySelector("aside") && width > 760 ? 358 : 0;
-    const cols = Math.min(12, Math.max(2, Math.floor((width - beside - 60) / 92)));
+    const beside = this.shadowRoot.querySelector("aside") && width > 760 ? 338 : 0;
+    const cols = Math.min(12, Math.max(2, Math.floor((width - beside - 60) / 104)));
     if (cols !== this.cols) {
       this.cols = cols;
       this.#schedule();
     }
+  }
+
+  // Card widths are written for a board 9 to 12 cells wide. On a narrower one they keep their share of the row,
+  // and no card is narrower than two columns.
+  #span(w) {
+    const cols = this.cols;
+    return Math.min(cols, Math.max(cols >= 4 ? 2 : 1, Math.ceil((w * cols) / (cols >= 10 ? 12 : 9))));
   }
 
   #pending = false;
@@ -245,7 +253,11 @@ export class KiteBoard extends HTMLElement {
       }
       main.append(h("section", {}, h("h2", { text: t.name }, h("small", { text: String(cards.length) })), h("div", { class: "grid" }, cards.map((c) => this.#card(c)))));
     }
-    if (b.topics.length === 0) main.append(h("div", { class: "empty", text: "Nothing on the board yet." }));
+    if (b.topics.length === 0 && b.shelf.length === 0) main.append(h("div", { class: "empty", text: "Nothing on the board yet." }));
+    if (b.shelf.length) {
+      main.append(h("div", { class: "shelf" }, h("span", { text: "On the shelf:" }),
+        b.shelf.map((s) => h("button", { class: "pill", title: "Bring it back", text: `${s.topic.name} (${s.cards.length})`, onclick: () => this.#user(`restore ${s.topic.id}`) }))));
+    }
     kids.push(main);
     wrap.className = turn || b.say ? "wrap" : "wrap solo";
     wrap.style.setProperty("--cols", this.cols);
@@ -265,7 +277,7 @@ export class KiteBoard extends HTMLElement {
     const rows = () => {
       const cols = splitCells(f("cols")).filter(Boolean);
       if (!c.items.length && !cols.length) return;
-      body.push(h("table", {}, cols.length && h("tr", {}, cols.map((x) => h("th", { text: x }))), c.items.map((i) => h("tr", {}, i.cells.map((x) => h("td", { text: b.show(x) }))))));
+      body.push(h("div", { class: "rows" }, h("table", {}, cols.length && h("tr", {}, cols.map((x) => h("th", { text: x }))), c.items.map((i) => h("tr", {}, i.cells.map((x) => h("td", { text: b.show(x) })))))));
     };
     switch (c.kind) {
       case "note":
@@ -350,7 +362,7 @@ export class KiteBoard extends HTMLElement {
         break;
       }
     }
-    return h("article", { class: `card ${c.kind}${c.id === b.focus ? " focus" : ""}${c.fields.get("tone") === "danger" ? " danger" : ""}`, style: `--w:${Math.min(Math.ceil((c.w * Math.max(this.cols, 6)) / 12) || 1, this.cols)};--h:${c.h}`, "data-id": c.id },
+    return h("article", { class: `card ${c.kind}${c.id === b.focus ? " focus" : ""}${c.fields.get("tone") === "danger" ? " danger" : ""}`, style: `--w:${this.#span(c.w)};--h:${c.h}`, "data-id": c.id },
       h("h3", { text: b.show(c.title) }, topicName && h("small", { text: topicName })), body);
   }
 
