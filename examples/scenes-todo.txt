@@ -1,0 +1,22 @@
+say Made a to-do list.
+topic chores Weekend Chores
+card k1 checklist chores 3x3 To do
+add k1 a todo | Laundry
+add k1 b todo | Groceries
+add k1 c todo | Call the plumber
+===
+say Ticked off the laundry. Added a status.
+upd k1 a done | Laundry
+add k1 d todo | Water the plants
+card s1 status chores 2x1 Progress
+set s1 state run
+set s1 text 1 of 4 done
+===
+say Groceries done. Pick a time for the plumber.
+upd k1 b done | Groceries
+set s1 text 2 of 4 done
+card q1 decision chores 3x3 Plumber visit
+set q1 text When should the plumber come?
+add q1 o1 Saturday morning | Quicker
+add q1 o2 Monday evening | After work
+focus q1

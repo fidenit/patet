@@ -1,0 +1,11 @@
+[package]
+name = "kite-protocol"
+version = "0.2.0"
+edition = "2024"
+license = "Apache-2.0"
+description = "KITE Protocol: the line language an AI writes to build and edit a screen. Reference implementation of the board, the parser and the serializer."
+repository = "https://github.com/fidenit/KITE"
+readme = "../README.md"
+
+# No dependencies on purpose: the protocol must be easy to carry into any program.
+[dependencies]

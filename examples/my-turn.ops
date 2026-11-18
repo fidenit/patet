@@ -1,0 +1,18 @@
+# kite-protocol 0.1
+T	2026-11-16
+A	say Two venues compared. Pick one.
+A	topic ws Team Workshop
+A	card k1 table ws 5x2 Venue comparison
+A	set k1 cols Venue | Travel | Cost per person
+A	add k1 r1 Gangneung | 2h 40m | 180,000 KRW
+A	add k1 r2 Gapyeong | 1h 10m | 120,000 KRW
+A	card k2 decision ws 3x3 Which venue?
+A	set k2 text Where should the workshop be?
+A	add k2 o1 Gangneung | Far, but better facilities
+A	add k2 o2 Gapyeong | Close and cheaper
+A	card k3 input ws 3x3 Dates and headcount
+A	set k3 text Needed to book the venue
+A	add k3 a Start date | date
+A	add k3 b People | number
+A	add k3 c Budget per person | slider 5~30 10k KRW
+A	focus k2

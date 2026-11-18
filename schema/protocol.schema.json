@@ -1,0 +1,193 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "KITE Board Protocol v0.1: a batch of board ops",
+  "description": "JSON form of the ops KITE's line parser accepts (src/lang.rs:28-111, src/core.rs:159-182). The wire format of KITE is plain text lines (docs/PROTOCOL.md); this schema describes the same ops as JSON objects so tools can validate and generate them. KITE itself does not read JSON: convert each op to its line with the 'x-line' template. Limits are those the app enforces; the app clips text past a limit instead of rejecting it, so 'maxLength' is what an emitter should stay within. Ids are restricted here to ASCII, which is what the app's prompt asks the model to use; the app also accepts other Unicode letters and digits (src/core.rs:266-268).",
+  "type": "object",
+  "required": ["kite", "ops"],
+  "additionalProperties": false,
+  "properties": {
+    "kite": { "const": "0.1", "description": "Protocol version of this document. Not carried on the wire in KITE 0.3.0; see PROTOCOL.md, Versioning." },
+    "ops": { "type": "array", "items": { "$ref": "#/$defs/op" }, "description": "Applied in order, each one checked and applied before the next." }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[0-9A-Za-z_-]{1,24}$", "description": "Topic, group, card, item and variable names. At most 24 characters (src/core.rs:266-268)." },
+    "line": { "type": "string", "pattern": "^[^\\n\\r]*$", "description": "One line of text. Newlines cannot be carried (the wire format ends a value at the line break)." },
+    "cell": { "type": "string", "maxLength": 60, "pattern": "^[^|\\n\\r]*$", "description": "One item cell. Cannot contain '|' (cell separator) or a line break. Longer than 60 characters is clipped (src/core.rs:148, 540-543)." },
+    "kind": { "enum": ["status", "metric", "chart", "route", "draw", "image", "table", "progress", "checklist", "decision", "input", "timeline", "note", "web"], "description": "The 14 card types registered in PARTS (src/core.rs:46-103)." },
+    "by": { "enum": ["ai", "user"], "default": "ai", "description": "Who made the change. Decides whether pinned cards may be moved or resized and who may pin (src/core.rs:428-457)." },
+    "op": {
+      "oneOf": [
+        {
+          "title": "topic",
+          "x-line": "topic <id> <name>",
+          "x-source": "src/lang.rs:35-38, src/core.rs:281-293",
+          "description": "Create a topic, or rename it if the id exists. Name is clipped to 24 characters; empty name uses the id.",
+          "type": "object", "required": ["op", "id"], "additionalProperties": false,
+          "properties": { "op": { "const": "topic" }, "id": { "$ref": "#/$defs/id" }, "name": { "$ref": "#/$defs/line", "maxLength": 24 }, "by": { "$ref": "#/$defs/by" } }
+        },
+        {
+          "title": "group",
+          "x-line": "group <id> <name>",
+          "x-source": "src/lang.rs:39-42, src/core.rs:294-311",
+          "description": "Create a group of topics, or rename it. Name clipped to 16 characters. At most 8 groups. The id must not already be a topic or card id.",
+          "type": "object", "required": ["op", "id"], "additionalProperties": false,
+          "properties": { "op": { "const": "group" }, "id": { "$ref": "#/$defs/id" }, "name": { "$ref": "#/$defs/line", "maxLength": 16 }, "by": { "$ref": "#/$defs/by" } }
+        },
+        {
+          "title": "mv",
+          "x-line": "mv <card> <topic>",
+          "x-source": "src/lang.rs:43-46, src/core.rs:312-321",
+          "description": "Move a card to another topic. Clears its grid position and its pin.",
+          "type": "object", "required": ["op", "card", "topic"], "additionalProperties": false,
+          "properties": { "op": { "const": "mv" }, "card": { "$ref": "#/$defs/id" }, "topic": { "$ref": "#/$defs/id" }, "by": { "$ref": "#/$defs/by" } }
+        },
+        {
+          "title": "put",
+          "x-line": "put <topic> <group>",
+          "x-source": "src/lang.rs:47-50, src/core.rs:322-328",
+          "description": "Place a topic in a group. The group must exist.",
+          "type": "object", "required": ["op", "topic", "group"], "additionalProperties": false,
+          "properties": { "op": { "const": "put" }, "topic": { "$ref": "#/$defs/id" }, "group": { "$ref": "#/$defs/id" }, "by": { "$ref": "#/$defs/by" } }
+        },
+        {
+          "title": "card",
+          "x-line": "card <id> <kind> <topic> [<w>x<h>] <title>",
+          "x-source": "src/lang.rs:51-63, src/core.rs:329-361",
+          "description": "Create a card. Fails if the id exists. The topic must exist. Without size the card type's default size is used. Title is clipped to 40 characters.",
+          "type": "object", "required": ["op", "id", "kind", "topic"], "additionalProperties": false,
+          "properties": {
+            "op": { "const": "card" }, "id": { "$ref": "#/$defs/id" }, "kind": { "$ref": "#/$defs/kind" }, "topic": { "$ref": "#/$defs/id" },
+            "size": { "$ref": "#/$defs/size" }, "title": { "$ref": "#/$defs/line", "maxLength": 40 }, "by": { "$ref": "#/$defs/by" }
+          }
+        },
+        {
+          "title": "set",
+          "x-line": "set <id> <field> <value>",
+          "x-source": "src/lang.rs:64-68, src/core.rs:362-390",
+          "description": "Set one field of a card; the value runs to the end of the line. 'title' is valid on every card type. Other fields and their limits depend on the type: see x-kite-card-kinds.",
+          "type": "object", "required": ["op", "id", "field", "value"], "additionalProperties": false,
+          "properties": { "op": { "const": "set" }, "id": { "$ref": "#/$defs/id" }, "field": { "type": "string", "pattern": "^[^\\s]+$" }, "value": { "$ref": "#/$defs/line" }, "by": { "$ref": "#/$defs/by" } }
+        },
+        {
+          "title": "add",
+          "x-line": "add <id> <item> <cell> | <cell> ...",
+          "x-source": "src/lang.rs:69-79, src/core.rs:391, 511-559",
+          "description": "Add an item to a list-like card. If the item id already exists its cells are replaced. 1 to 6 cells. At most 24 items per card (80 for draw).",
+          "type": "object", "required": ["op", "id", "item", "cells"], "additionalProperties": false,
+          "properties": { "op": { "const": "add" }, "id": { "$ref": "#/$defs/id" }, "item": { "$ref": "#/$defs/id" }, "cells": { "$ref": "#/$defs/cells" }, "by": { "$ref": "#/$defs/by" } }
+        },
+        {
+          "title": "upd",
+          "x-line": "upd <id> <item> <cell> | <cell> ...",
+          "x-source": "src/lang.rs:69-79, src/core.rs:392, 546",
+          "description": "Replace the cells of an existing item. Fails if the item does not exist.",
+          "type": "object", "required": ["op", "id", "item", "cells"], "additionalProperties": false,
+          "properties": { "op": { "const": "upd" }, "id": { "$ref": "#/$defs/id" }, "item": { "$ref": "#/$defs/id" }, "cells": { "$ref": "#/$defs/cells" }, "by": { "$ref": "#/$defs/by" } }
+        },
+        {
+          "title": "del",
+          "x-line": "del <id> [<item>]",
+          "x-source": "src/lang.rs:80-83, src/core.rs:393-425",
+          "description": "With item: remove that item from the card. Without item: remove the card with that id; if no card has it, remove an empty topic; if no topic has it, remove a group (its topics become ungrouped).",
+          "type": "object", "required": ["op", "id"], "additionalProperties": false,
+          "properties": { "op": { "const": "del" }, "id": { "$ref": "#/$defs/id" }, "item": { "$ref": "#/$defs/id" }, "by": { "$ref": "#/$defs/by" } }
+        },
+        {
+          "title": "size",
+          "x-line": "size <id> <w>x<h>",
+          "x-source": "src/lang.rs:84-88, src/core.rs:426-437",
+          "description": "Resize a card in grid cells (1 to 8 each). Rejected for 'ai' when the user pinned the card; a 'user' resize pins it.",
+          "type": "object", "required": ["op", "id", "w", "h"], "additionalProperties": false,
+          "properties": { "op": { "const": "size" }, "id": { "$ref": "#/$defs/id" }, "w": { "type": "integer", "minimum": 1, "maximum": 8 }, "h": { "type": "integer", "minimum": 1, "maximum": 8 }, "by": { "$ref": "#/$defs/by" } }
+        },
+        {
+          "title": "move",
+          "x-line": "move <id> <col> <row>",
+          "x-source": "src/lang.rs:89-96, src/core.rs:438-447",
+          "description": "Put a card at a grid cell (0-based). Negative values are clamped to 0. Rejected for 'ai' when pinned; a 'user' move pins it.",
+          "type": "object", "required": ["op", "id", "col", "row"], "additionalProperties": false,
+          "properties": { "op": { "const": "move" }, "id": { "$ref": "#/$defs/id" }, "col": { "type": "integer", "minimum": 0 }, "row": { "type": "integer", "minimum": 0 }, "by": { "$ref": "#/$defs/by" } }
+        },
+        {
+          "title": "let",
+          "x-line": "let <name> <value>",
+          "x-source": "src/lang.rs:97-100, src/core.rs:462-477",
+          "description": "Set a named value. Any card text containing {name} shows the value. An empty value removes the name. At most 64 names; value clipped to 60 characters.",
+          "type": "object", "required": ["op", "name"], "additionalProperties": false,
+          "properties": { "op": { "const": "let" }, "name": { "$ref": "#/$defs/id" }, "value": { "$ref": "#/$defs/line", "maxLength": 60 }, "by": { "$ref": "#/$defs/by" } }
+        },
+        {
+          "title": "archive",
+          "x-line": "archive <topic>",
+          "x-source": "src/lang.rs:101, src/core.rs:478-487",
+          "description": "Shelve a topic with all its cards. They keep their ids, which cannot be reused while shelved.",
+          "type": "object", "required": ["op", "topic"], "additionalProperties": false,
+          "properties": { "op": { "const": "archive" }, "topic": { "$ref": "#/$defs/id" }, "by": { "$ref": "#/$defs/by" } }
+        },
+        {
+          "title": "restore",
+          "x-line": "restore <topic>",
+          "x-source": "src/lang.rs:102, src/core.rs:488-500",
+          "description": "Bring a shelved topic back with its cards.",
+          "type": "object", "required": ["op", "topic"], "additionalProperties": false,
+          "properties": { "op": { "const": "restore" }, "topic": { "$ref": "#/$defs/id" }, "by": { "$ref": "#/$defs/by" } }
+        },
+        {
+          "title": "pin / unpin",
+          "x-line": "pin <id>  |  unpin <id>",
+          "x-source": "src/lang.rs:103, src/core.rs:448-457",
+          "description": "Lock or unlock a card's position and size. User only: rejected when by is 'ai'. Unpinning clears the grid position.",
+          "type": "object", "required": ["op", "id", "on", "by"], "additionalProperties": false,
+          "properties": { "op": { "const": "pin" }, "id": { "$ref": "#/$defs/id" }, "on": { "type": "boolean" }, "by": { "const": "user" } }
+        },
+        {
+          "title": "focus",
+          "x-line": "focus <id>",
+          "x-source": "src/lang.rs:104, src/core.rs:458-461",
+          "description": "Mark the card the user should look at. Not part of the serialized board.",
+          "type": "object", "required": ["op", "id"], "additionalProperties": false,
+          "properties": { "op": { "const": "focus" }, "id": { "$ref": "#/$defs/id" }, "by": { "$ref": "#/$defs/by" } }
+        },
+        {
+          "title": "say",
+          "x-line": "say <text>",
+          "x-source": "src/lang.rs:105, src/core.rs:501-506",
+          "description": "The one-line caption under the board. Clipped to 80 characters.",
+          "type": "object", "required": ["op", "text"], "additionalProperties": false,
+          "properties": { "op": { "const": "say" }, "text": { "$ref": "#/$defs/line", "maxLength": 80 }, "by": { "$ref": "#/$defs/by" } }
+        },
+        {
+          "title": "tell",
+          "x-line": "tell <text>",
+          "x-source": "src/lang.rs:106-107",
+          "description": "A sentence to be read aloud when voice is on. Not a board op: the parser returns no op for it. Included so a document can carry the full model output.",
+          "type": "object", "required": ["op", "text"], "additionalProperties": false,
+          "properties": { "op": { "const": "tell" }, "text": { "$ref": "#/$defs/line" } }
+        }
+      ]
+    },
+    "size": {
+      "type": "object", "required": ["w", "h"], "additionalProperties": false,
+      "properties": { "w": { "type": "integer", "minimum": 1, "maximum": 8 }, "h": { "type": "integer", "minimum": 1, "maximum": 8 } },
+      "description": "Grid cells. Values outside 1 to 8 are clamped by the app (src/core.rs:354-355)."
+    },
+    "cells": { "type": "array", "minItems": 1, "maxItems": 6, "items": { "$ref": "#/$defs/cell" } }
+  },
+  "x-kite-card-kinds": {
+    "description": "Per card type: default size, settable fields with maximum length, item format. Source: PARTS, src/core.rs:46-103. Every card also has 'title' (40). Fields not listed are rejected. 'asks' types are moved to the user's turn slot (src/core.rs:130-132).",
+    "status":    { "size": [2, 1], "fields": { "state": { "max": 8, "values": ["ok", "run", "wait", "fail", "idle"] }, "text": { "max": 80 } }, "items": null },
+    "metric":    { "size": [2, 2], "fields": { "value": { "max": 14 }, "unit": { "max": 8 }, "delta": { "max": 14, "note": "a leading + or - colors it" }, "text": { "max": 60 } }, "items": null },
+    "chart":     { "size": [4, 3], "fields": { "unit": { "max": 8 }, "form": { "max": 8, "values": ["bar", "line", "donut"], "note": "length is checked, the value is not" } }, "items": "name | number (checked: cell 2 must parse as a number, commas allowed)" },
+    "route":     { "size": [6, 5], "fields": { "total": { "max": 40 }, "text": { "max": 80 } }, "items": "name | lat,lon | distance/time to next stop (optional). Cell 2 must be two numbers split by a comma." },
+    "draw":      { "size": [5, 4], "fields": { "text": { "max": 80 } }, "items": "shape | coordinates | text | color | size. Cell 1 must be line, arrow, rect, circle or text. Up to 80 items." },
+    "image":     { "size": [4, 3], "fields": { "src": { "max": 600 }, "text": { "max": 80 } }, "items": null },
+    "table":     { "size": [4, 3], "fields": { "cols": { "max": 200, "note": "column names split by |" } }, "items": "cell | cell ... (up to 6 cells)" },
+    "progress":  { "size": [3, 3], "fields": { "pct": { "max": 3, "note": "integer 0 to 100, checked" }, "text": { "max": 60 } }, "items": "done|run|todo|fail | step name (cell 1 checked)" },
+    "checklist": { "size": [3, 3], "fields": {}, "items": "done|todo | text (cell 1 checked)" },
+    "decision":  { "size": [3, 3], "asks": true, "fields": { "text": { "max": 120 }, "chosen": { "max": 24, "note": "set by the user's click: the item id picked" } }, "items": "option name | one-line description" },
+    "input":     { "size": [3, 3], "asks": true, "fields": { "text": { "max": 120 }, "sent": { "max": 8, "note": "set to yes when the user sends" } }, "items": "field name | hint text, or kind: date, number, slider <lo>~<hi> <unit>" },
+    "timeline":  { "size": [3, 3], "fields": {}, "items": "when | text | done|run|todo (optional)" },
+    "note":      { "size": [3, 2], "fields": { "text": { "max": 240 } }, "items": null },
+    "web":       { "size": [6, 5], "fields": { "url": { "max": 600 } }, "items": null }
+  }
+}

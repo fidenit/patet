@@ -1,0 +1,20 @@
+# kite-protocol 0.1
+T	2026-11-16
+A	say Moving checklist ready. Two items are done.
+A	topic move Moving Day
+A	card k1 checklist move 3x3 Before the truck comes
+A	add k1 i1 done | Book the movers
+A	add k1 i2 done | Cancel the internet
+A	add k1 i3 todo | Pack the kitchen
+A	add k1 i4 todo | Return the keys
+A	card k2 progress move 3x3 Packing
+A	set k2 pct 40
+A	set k2 text 2 of 5 rooms boxed
+A	add k2 s1 done | Bedroom
+A	add k2 s2 done | Study
+A	add k2 s3 run | Kitchen
+A	add k2 s4 todo | Bathroom
+A	add k2 s5 todo | Living room
+A	card k3 metric move 2x2 Days left
+A	set k3 value 9
+A	set k3 unit days

@@ -1,0 +1,13 @@
+# kite-protocol 0.1
+T	2026-11-16
+A	say Drew a walk through central Seoul.
+A	topic walk Seoul Walk
+A	card r1 route walk 6x5 Station to the palace
+A	set r1 total 3.3 km, about 45 min on foot
+A	add r1 a Seoul Station | 37.5547,126.9707 | 2.8 km, 38 min
+A	add r1 b Gwanghwamun | 37.5759,126.9769 | 0.5 km, 7 min
+A	add r1 c Gyeongbokgung | 37.5796,126.9770
+A	card r2 timeline walk 3x3 Day plan
+A	add r2 a 09:00 | Leave the station | todo
+A	add r2 b 10:00 | Gwanghwamun Square | todo
+A	add r2 c 10:30 | Palace tour | todo

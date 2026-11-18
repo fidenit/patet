@@ -1,0 +1,152 @@
+{
+  "kite": "0.1",
+  "ops": [
+    {
+      "op": "say",
+      "text": "Moving checklist ready. Two items are done."
+    },
+    {
+      "op": "topic",
+      "id": "move",
+      "name": "Moving Day"
+    },
+    {
+      "op": "card",
+      "id": "k1",
+      "kind": "checklist",
+      "topic": "move",
+      "title": "Before the truck comes",
+      "size": {
+        "w": 3,
+        "h": 3
+      }
+    },
+    {
+      "op": "add",
+      "id": "k1",
+      "item": "i1",
+      "cells": [
+        "done",
+        "Book the movers"
+      ]
+    },
+    {
+      "op": "add",
+      "id": "k1",
+      "item": "i2",
+      "cells": [
+        "done",
+        "Cancel the internet"
+      ]
+    },
+    {
+      "op": "add",
+      "id": "k1",
+      "item": "i3",
+      "cells": [
+        "todo",
+        "Pack the kitchen"
+      ]
+    },
+    {
+      "op": "add",
+      "id": "k1",
+      "item": "i4",
+      "cells": [
+        "todo",
+        "Return the keys"
+      ]
+    },
+    {
+      "op": "card",
+      "id": "k2",
+      "kind": "progress",
+      "topic": "move",
+      "title": "Packing",
+      "size": {
+        "w": 3,
+        "h": 3
+      }
+    },
+    {
+      "op": "set",
+      "id": "k2",
+      "field": "pct",
+      "value": "40"
+    },
+    {
+      "op": "set",
+      "id": "k2",
+      "field": "text",
+      "value": "2 of 5 rooms boxed"
+    },
+    {
+      "op": "add",
+      "id": "k2",
+      "item": "s1",
+      "cells": [
+        "done",
+        "Bedroom"
+      ]
+    },
+    {
+      "op": "add",
+      "id": "k2",
+      "item": "s2",
+      "cells": [
+        "done",
+        "Study"
+      ]
+    },
+    {
+      "op": "add",
+      "id": "k2",
+      "item": "s3",
+      "cells": [
+        "run",
+        "Kitchen"
+      ]
+    },
+    {
+      "op": "add",
+      "id": "k2",
+      "item": "s4",
+      "cells": [
+        "todo",
+        "Bathroom"
+      ]
+    },
+    {
+      "op": "add",
+      "id": "k2",
+      "item": "s5",
+      "cells": [
+        "todo",
+        "Living room"
+      ]
+    },
+    {
+      "op": "card",
+      "id": "k3",
+      "kind": "metric",
+      "topic": "move",
+      "title": "Days left",
+      "size": {
+        "w": 2,
+        "h": 2
+      }
+    },
+    {
+      "op": "set",
+      "id": "k3",
+      "field": "value",
+      "value": "9"
+    },
+    {
+      "op": "set",
+      "id": "k3",
+      "field": "unit",
+      "value": "days"
+    }
+  ]
+}
