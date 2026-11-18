@@ -22,7 +22,7 @@ KITE Protocol is a UI description. It travels over a transport: its own line ses
 
 | | What the model writes | Vocabulary | Who lays it out | What lives between turns | How the user answers |
 |---|---|---|---|---|---|
-| **KITE Protocol** 0.2 | One edit per text line (`set k1 text ...`) | 14 card types that each mean something (`decision`, `timeline`, `route`) | The renderer | One board, which the model reads back in the same language before each edit | `decision` and `input` cards; the answer returns as an op |
+| **KITE Protocol** 0.3 | One edit per text line (`set k1 text ...`) | 16 card types that each mean something (`decision`, `timeline`, `route`), plus kinds a renderer adds | The renderer | One board, which the model reads back in the same language before each edit | `decision` and `input` cards; the answer returns as an op |
 | **A2UI** v1.0 | JSON messages (`createSurface`, `updateComponents`, `updateDataModel`, `deleteSurface`) | A catalog the app chooses; the basic one has 18 layout and input components | The writer (rows, columns, cards) | Surfaces and their data models | `action` messages from the renderer |
 | **json-render** | A JSON tree (`root`, `elements`), streamed | A catalog the developer defines; a shadcn/ui set of 36 is provided | The writer | The spec that was generated; state inside it | Actions the catalog declares |
 | **OpenUI Lang** | A compact DSL for a component tree | Component libraries for React, Vue, Svelte, Angular | The writer | The generated tree | Component callbacks |
@@ -52,11 +52,11 @@ KITE Protocol is a UI description. It travels over a transport: its own line ses
 Stated plainly, because the trade above has a price.
 
 - **No free layout.** A writer cannot build an arbitrary screen: a login form, a landing page, a custom dashboard arrangement. A2UI, json-render and OpenUI can.
-- **A closed vocabulary.** 14 card types, and a new one is a breaking change today. The others let an app register its own components. Renderer-registered card types are an open item ([SPEC.md, section 12](SPEC.md#12-versioning)).
+- **A small vocabulary.** 16 card types. A renderer can add kinds of its own (`x-...`), which fall back to a generic `record` card elsewhere, and a writer can use `record` for any entity with named fields. That is still far from the open component catalogs of the others: an extension kind has no declared schema or look in the protocol.
 - **No data binding.** There is no data model with paths, no computed values, no conditional visibility. KITE has only named values (`let`), which substitute text. A2UI and json-render have real binding.
-- **Short text only.** Cells hold 60 characters and no value holds a line break. That is the point of the design, and it rules out documents.
+- **Short text only.** Cells hold 60 characters. That is the point of the design. Long content is pointed at with a `doc` card and opened outside the board; it is never on it.
 - **One renderer family.** KITE for desktop and Android, from one author. A2UI has official renderers for Lit, Angular, React, Flutter and SwiftUI; json-render for React, Vue, Svelte, Solid, React Native and more.
-- **Young.** Version 0.2, one production user, no measurements published. A2UI and AG-UI are at 1.0 with many integrations.
+- **Young.** Version 0.3, one production user, no measurements published. A2UI and AG-UI are at 1.0 with many integrations.
 
 If you need an agent to draw arbitrary interfaces inside your own product, use A2UI or json-render. If you want an agent's work to live on a board a person can keep, KITE is built for that.
 
@@ -72,7 +72,7 @@ A declarative UI protocol with renderers: the agent sends JSON messages and the 
 
 A library, not a wire protocol: you define a catalog of components and actions, the model emits a JSON spec constrained to it, and the library renders it with your components. Apache-2.0; about 19.8k stars; renderers for React, Vue, Svelte, Solid, React Native, and targets such as PDF, email and terminal. Specs have a flat `elements` map and a `root`; state is bound with `$state` and `$bindState`; streaming is handled by a spec stream compiler.
 
-*Next to KITE:* the idea of constraining a model to a catalog is shared (KITE's card type table plays that role). json-render generates an interface for a prompt inside a developer's app; it has no board, no topics, no read-back and no notion of a card waiting for the user, all of which it leaves to the app. *Together:* a web renderer for KITE could be built on json-render by defining the 14 card types as a catalog.
+*Next to KITE:* the idea of constraining a model to a catalog is shared (KITE's card type table plays that role). json-render generates an interface for a prompt inside a developer's app; it has no board, no topics, no read-back and no notion of a card waiting for the user, all of which it leaves to the app. *Together:* a web renderer for KITE could be built on json-render by defining the card types as a catalog.
 
 ### OpenUI Lang (Thesys)
 

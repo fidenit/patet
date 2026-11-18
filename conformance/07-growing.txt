@@ -1,0 +1,94 @@
+# Version 0.3: records, extension kinds, documents, several answers, a pipe inside a cell.
+agent: topic sales Sales
+  -> ok
+agent: card r1 record sales Invoice 1042
+  -> ok
+agent: set r1 customer Acme Ltd
+  -> ok
+agent: set r1 due 2026-12-01
+  -> ok
+agent: set r1 a!b nope
+  -> err unknown-field
+agent: set r1 note <90 x>
+  -> ok clipped r1.note 80
+agent: set r1 text <240 t>
+  -> ok
+agent: set r1 cols Item | Hours | Amount
+  -> ok
+agent: add r1 l1 Design | 12h | 1,200
+  -> ok
+agent: card k1 x-kanban sales Sprint 12
+  -> ok
+agent: set k1 lane Doing
+  -> ok
+agent: add k1 a Write the spec | me
+  -> ok
+agent: card k2 kanban sales Not a kind
+  -> err unknown-kind
+agent: card k2 x- sales No name
+  -> err unknown-kind
+agent: card k2 x-a!b sales Bad name
+  -> err unknown-kind
+agent: card f1 doc sales Q3 report
+  -> ok
+agent: set f1 src C:\Users\me\reports\q3.md
+  -> ok
+agent: set f1 text Revenue up 12%.\nTwo regions behind plan.
+  -> ok
+agent: add f1 a x
+  -> err no-items
+agent: card d1 decision sales Which days?
+  -> ok
+agent: set d1 multi yes
+  -> ok
+agent: set d1 multi several
+  -> err bad-value
+agent: set d1 tone danger
+  -> ok
+agent: set d1 tone red
+  -> err bad-value
+agent: add d1 o1 Friday | 12/5
+  -> ok
+agent: add d1 o2 Saturday | 12/6
+  -> ok
+user: set d1 chosen o1,o2
+  -> ok
+agent: card t1 table sales Commands
+  -> ok
+agent: add t1 r1 ls \| wc -l | counts the files
+  -> ok
+agent: add t1 r2 C:\dir\ | a path that ends in a backslash
+  -> ok
+agent: add t1 r3 a\b | a backslash elsewhere is itself
+  -> ok
+agent: card i1 input sales Seat
+  -> ok
+agent: add i1 a Seat* | choice Window / Aisle / Any
+  -> ok
+board:
+topic sales Sales
+card r1 record sales 3x3 Invoice 1042
+set r1 cols Item | Hours | Amount
+set r1 customer Acme Ltd
+set r1 due 2026-12-01
+set r1 note <79 x>…
+set r1 text <240 t>
+add r1 l1 Design | 12h | 1,200
+card k1 x-kanban sales 3x3 Sprint 12
+set k1 lane Doing
+add k1 a Write the spec | me
+card f1 doc sales 3x2 Q3 report
+set f1 src C:\Users\me\reports\q3.md
+set f1 text Revenue up 12%.\nTwo regions behind plan.
+card d1 decision sales 3x3 Which days?
+set d1 chosen o1,o2
+set d1 multi yes
+set d1 tone danger
+add d1 o1 Friday | 12/5
+add d1 o2 Saturday | 12/6
+card t1 table sales 4x3 Commands
+add t1 r1 ls \| wc -l | counts the files
+add t1 r2 C:\dir\ | a path that ends in a backslash
+add t1 r3 a\b | a backslash elsewhere is itself
+card i1 input sales 3x3 Seat
+add i1 a Seat* | choice Window / Aisle / Any

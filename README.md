@@ -20,13 +20,13 @@ Each line is one op, applied the moment it ends. The result is a board of cards,
 user set k2 chosen o2
 ```
 
-Version **0.2**. Apache-2.0. The protocol is separate from any app: [KITE](../README.md) is the first product built on it.
+Version **0.3**. Apache-2.0. The protocol is separate from any app: [KITE](../README.md) is the first product built on it.
 
 ## Why another protocol
 
 - **It edits; it does not resend.** The board persists. An agent changes a field or an item, and reads the board back in the same ops before it edits. No screen is regenerated per answer.
 - **Any model can write it.** Plain lines, no JSON to keep balanced while streaming. A wrong line is rejected with a code and the next line still runs.
-- **Cards mean something.** `decision`, `timeline`, `route`, `checklist`: 14 types chosen for what they say, not rows and columns. Layout belongs to the renderer.
+- **Cards mean something.** `decision`, `timeline`, `route`, `checklist`: 16 types chosen for what they say, not rows and columns, and a renderer can add kinds of its own. Layout belongs to the renderer.
 - **Asking is part of it.** A `decision` or `input` card waits for the user, and the answer comes back as an op.
 
 It sits beside AG-UI, A2UI and MCP rather than against them: an agent can reach a KITE board over MCP or AG-UI today. How it differs from A2UI, json-render, AG-UI, MCP Apps and others, and what it does not do: [COMPARISON.md](COMPARISON.md).

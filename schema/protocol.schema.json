@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "KITE Protocol 0.2: a batch of board ops",
+  "title": "KITE Protocol 0.3: a batch of board ops",
   "description": "JSON form of the ops of the KITE Protocol (SPEC.md). The wire format is plain text lines; this schema describes the same ops as JSON objects so tools can validate and generate them. Convert each op to its line with the 'x-line' template. Text over a limit is clipped by a renderer rather than rejected, so 'maxLength' is what a writer should stay within. Ids are restricted here to ASCII, which is what writers are asked to use; a renderer also accepts other Unicode letters and digits.",
   "type": "object",
   "required": [
@@ -12,7 +12,8 @@
     "kite": {
       "enum": [
         "0.1",
-        "0.2"
+        "0.2",
+        "0.3"
       ],
       "description": "Protocol version of this document."
     },
@@ -38,27 +39,38 @@
     "cell": {
       "type": "string",
       "maxLength": 60,
-      "pattern": "^[^|\\n\\r]*$",
-      "description": "One item cell. Cannot contain '|' (cell separator) or a line break. Longer than 60 characters is clipped."
+      "pattern": "^[^\\n\\r]*$",
+      "description": "One item cell. Longer than 60 characters is clipped. In the line form, a '|' inside a cell is written as '\\|'; here it is the plain character."
     },
     "kind": {
-      "enum": [
-        "status",
-        "metric",
-        "chart",
-        "route",
-        "draw",
-        "image",
-        "table",
-        "progress",
-        "checklist",
-        "decision",
-        "input",
-        "timeline",
-        "note",
-        "web"
+      "anyOf": [
+        {
+          "enum": [
+            "status",
+            "metric",
+            "chart",
+            "route",
+            "draw",
+            "image",
+            "table",
+            "progress",
+            "checklist",
+            "decision",
+            "input",
+            "timeline",
+            "note",
+            "web",
+            "record",
+            "doc"
+          ]
+        },
+        {
+          "type": "string",
+          "pattern": "^x-[0-9A-Za-z_-]{1,22}$",
+          "description": "An extension kind. Every renderer accepts it; one that does not draw it shows a record."
+        }
       ],
-      "description": "The 14 card types registered in PARTS."
+      "description": "The 16 core card types (SPEC.md section 6), or an extension kind."
     },
     "by": {
       "enum": [
@@ -588,7 +600,7 @@
     }
   },
   "x-kite-card-kinds": {
-    "description": "Per card type: default size, settable fields with maximum length, item format. The same table as SPEC.md section 6. Every card also has 'title' (40). Fields not listed are rejected. 'asks' types wait for the user.",
+    "description": "Per card type: default size, settable fields with maximum length, item format. The same table as SPEC.md section 6. Every card also has 'title' (40). Fields not listed are rejected, except on a record. 'asks' types wait for the user. An extension kind (x-...) is checked as a record.",
     "status": {
       "size": [
         2,
@@ -743,9 +755,23 @@
         "text": {
           "max": 120
         },
+        "multi": {
+          "max": 8,
+          "values": [
+            "yes",
+            "no"
+          ]
+        },
+        "tone": {
+          "max": 8,
+          "values": [
+            "normal",
+            "danger"
+          ]
+        },
         "chosen": {
-          "max": 24,
-          "note": "set by the user's click: the item id picked"
+          "max": 120,
+          "note": "set by the user: the item id picked, or several joined by ',' when multi is yes"
         }
       },
       "items": "option name | one-line description"
@@ -765,7 +791,7 @@
           "note": "set to yes when the user sends"
         }
       },
-      "items": "field name | hint text, or kind: date, number, slider <lo>~<hi> <unit>"
+      "items": "box name (ends with * when required) | hint, or a kind: date / time / number / slider <lo>~<hi> <unit> / choice <a> / <b> / ..."
     },
     "timeline": {
       "size": [
@@ -795,6 +821,41 @@
       "fields": {
         "url": {
           "max": 600
+        }
+      },
+      "items": null
+    },
+    "record": {
+      "size": [
+        3,
+        3
+      ],
+      "fields": {
+        "text": {
+          "max": 240
+        },
+        "cols": {
+          "max": 200
+        },
+        "*": {
+          "max": 80,
+          "note": "any other field name that is a valid id; at most 12 fields"
+        }
+      },
+      "items": "cell | cell ... (up to 6 cells, optional)"
+    },
+    "doc": {
+      "size": [
+        3,
+        2
+      ],
+      "fields": {
+        "src": {
+          "max": 600,
+          "note": "absolute path on the renderer's machine, or an address"
+        },
+        "text": {
+          "max": 240
         }
       },
       "items": null

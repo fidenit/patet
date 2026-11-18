@@ -30,7 +30,7 @@ tell <sentence>                              a sentence to be read aloud (only w
 
 Ids are short ASCII: `trip` for a topic, `k3` for a card, `r1` for an item. Create before you refer: a topic before its cards, a card before its items, a group before `put`.
 
-A value cannot contain a line break, and a cell cannot contain `|`.
+A value cannot contain a line break. To put a `|` inside a cell, write `\|`. In a `text` field, the two characters `\n` are shown as a line break; use it sparingly.
 
 ## Card types
 
@@ -46,11 +46,13 @@ A value cannot contain a line break, and a cell cannot contain `|`.
 | table | a comparison or a list with several attributes | cols: column \| column ... | cell \| cell ... (up to 6 cells) | 4x3 |
 | progress | work in progress | pct(0-100), text(60) | done/run/todo/fail \| step name | 3x3 |
 | checklist | things to do (the user can tick them) | none | done/todo \| text | 3x3 |
-| decision | something the user has to decide (pick one) | text(the question, 120) | option name \| one-line description | 3x3 |
-| input | values the user has to give (fill in): a date, a name, a number, an address | text(what is asked and why, 120) | box name \| hint (an example) or the kind of box: date / number / slider 0~100 unit | 3x3 |
+| decision | something the user has to decide (pick one) | text(the question, 120), multi: yes when several may be picked, tone: danger when the choice cannot be undone | option name \| one-line description | 3x3 |
+| input | values the user has to give (fill in): a date, a name, a number, an address | text(what is asked and why, 120) | box name (end it with * when it must be filled) \| hint (an example) or the kind of box: date / time / number / slider 0~100 unit / choice A / B / C | 3x3 |
 | timeline | things in order of time | none | when \| text \| done/run/todo (optional) | 3x3 |
 | note | a short text that fits none of the above | text(240) | none | 3x2 |
 | web | a web page or an HTML file shown as it is, in a small browser | url: a web address, or the absolute path of a file on this computer | none | 6x5 |
+| record | one thing with named properties that no other type fits: an invoice, a contact, a ticket, a setting | any field name of your choosing, shown as label and value (80 each, up to 12), text(240), cols: column \| column ... (when it has rows) | cell \| cell ... (up to 6 cells, optional) | 3x3 |
+| doc | a document, file or link that is too long for the board: shown by name with a summary, opened by the user | src: absolute path of the file, or a web address, text(what it is and what it says, 240) | none | 3x2 |
 <!-- parts:end -->
 
 Every card has a `title` (40). A cell holds 60 characters and a card 24 items (a `draw` card 80). Text over a limit is cut, and you are told (`clipped <what> <limit>`): write shorter, or pick a type that fits.
@@ -84,6 +86,45 @@ add f1 c People | number
 add f1 d Budget per person | slider 5~30 10k KRW
 ```
 
+- **input**, continued: end a box name with `*` when it must be filled, and use `choice` when the answers are few and known.
+
+```
+add f1 e Seat* | choice Window / Aisle / Any
+add f1 f Departure* | time
+```
+
+- **decision**: `set d1 multi yes` lets the user pick several options (the answer is their ids joined by commas). `set d1 tone danger` marks a choice that cannot be undone, such as deleting or paying; say what will happen in the option's description.
+
+```
+card d1 decision trip 3x3 Which days suit you?
+set d1 multi yes
+add d1 o1 Friday | 12/5
+add d1 o2 Saturday | 12/6
+add d1 o3 Sunday | 12/7
+```
+
+- **record**: one thing with properties of its own. Name the fields yourself; they are shown as labels and values. Use it when the thing is an entity (an invoice, a person, an order), not a comparison (that is a table).
+
+```
+card r1 record sales 3x3 Invoice 1042
+set r1 customer Acme Ltd
+set r1 due 2026-12-01
+set r1 total 1,200 USD
+set r1 status sent
+```
+
+- **doc**: when the result is long (a report, a draft, code), write it to a file and put a `doc` card on the board that says what it is. Never paste a document into cards.
+
+```
+card f1 doc report 3x2 Q3 sales report
+set f1 src C:\Users\me\reports\q3.md
+set f1 text Revenue up 12%, two regions behind plan. 6 pages.
+```
+
+### Kinds a renderer adds
+
+A renderer may draw kinds of its own, named `x-...` (for example `x-kanban`). It tells you which ones it has. A card of an `x-` kind is written like a `record`: fields you name, and rows. A renderer that does not know that kind shows it as a record, so nothing is lost. Use only the kinds your renderer listed; a name it does not list and that does not start with `x-` is rejected.
+
 ### Named values
 
 When the same value appears on several cards (a budget, a headcount, a deadline), name it and write `{name}` on the cards. One `let` line then changes them all.
@@ -104,6 +145,19 @@ add k2 i3 todo | Book a table for {people}
 6. **Pinned cards stay put.** A card the user moved or resized cannot be moved or resized by you. Its content can still change.
 7. **One topic per subject.** A new subject gets a new topic, named in two or three words that tell what it is ("Weekend cleanup", not "Prep"). A card title does not repeat the topic name.
 8. **Write in the user's language.**
+
+## Know your renderer
+
+Renderers differ: a phone may have no web cards, another may add kinds. A renderer describes itself (the `hello` command of a line session, the end of this guide over MCP, `state.kite.renderer` over AG-UI) in lines like these:
+
+```
+kite-protocol 0.3
+renderer KITE 0.4.0
+kinds status metric chart route draw image table progress checklist decision input timeline note record doc
+features tell
+```
+
+Create only the kinds listed. `tell` under features means it can read aloud. If you were told nothing, assume the core kinds of the table above and no features.
 
 ## Reading the board
 

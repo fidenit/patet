@@ -51,6 +51,11 @@ pub enum Kind {
     Image,
     /// A web page or an HTML file shown as it is.
     Web,
+    /// A thing with named fields of the writer's choosing (an invoice, a contact, a ticket), and optional rows.
+    /// Also what a card of an extension kind (`x-...`) is to a renderer that does not draw that kind itself.
+    Record,
+    /// A document, file or link that lives outside the board: shown by name with a short summary.
+    Doc,
 }
 
 /// One registered card type. Everything about a type lives here: its name, default size, fields and their
@@ -114,7 +119,7 @@ pub const PARTS: &[Part] = &[
         name: "decision",
         size: (3, 3),
         purpose: "something the user has to decide (pick one)",
-        fields: &[("text", 120, "text(the question, 120)"), ("chosen", 24, "")],
+        fields: &[("text", 120, "text(the question, 120)"), ("multi", 8, "multi: yes when several may be picked"), ("tone", 8, "tone: danger when the choice cannot be undone"), ("chosen", 120, "")],
         items: "option name | one-line description",
     },
     Part {
@@ -123,12 +128,39 @@ pub const PARTS: &[Part] = &[
         size: (3, 3),
         purpose: "values the user has to give (fill in): a date, a name, a number, an address",
         fields: &[("text", 120, "text(what is asked and why, 120)"), ("sent", 8, "")],
-        items: "box name | hint (an example) or the kind of box: date / number / slider 0~100 unit",
+        items: "box name (end it with * when it must be filled) | hint (an example) or the kind of box: date / time / number / slider 0~100 unit / choice A / B / C",
     },
     Part { kind: Kind::Timeline, name: "timeline", size: (3, 3), purpose: "things in order of time", fields: &[], items: "when | text | done/run/todo (optional)" },
     Part { kind: Kind::Note, name: "note", size: (3, 2), purpose: "a short text that fits none of the above", fields: &[("text", 240, "text(240)")], items: "" },
     Part { kind: Kind::Web, name: "web", size: (6, 5), purpose: "a web page or an HTML file shown as it is, in a small browser", fields: &[("url", 600, "url: a web address, or the absolute path of a file on this computer")], items: "" },
+    Part {
+        kind: Kind::Record,
+        name: "record",
+        size: (3, 3),
+        purpose: "one thing with named properties that no other type fits: an invoice, a contact, a ticket, a setting",
+        fields: &[("text", 240, "any field name of your choosing, shown as label and value (80 each, up to 12), text(240)"), ("cols", 200, "cols: column | column ... (when it has rows)")],
+        items: "cell | cell ... (up to 6 cells, optional)",
+    },
+    Part {
+        kind: Kind::Doc,
+        name: "doc",
+        size: (3, 2),
+        purpose: "a document, file or link that is too long for the board: shown by name with a summary, opened by the user",
+        fields: &[("src", 600, "src: absolute path of the file, or a web address"), ("text", 240, "text(what it is and what it says, 240)")],
+        items: "",
+    },
 ];
+
+/// The card types this implementation knows, by name, in the order of [`PARTS`].
+pub fn kind_names() -> Vec<&'static str> {
+    PARTS.iter().map(|p| p.name).collect()
+}
+
+/// Is this the name of an extension kind? `x-` and then an id. Every renderer accepts a card of an extension
+/// kind; one that does not draw that kind itself treats the card as a `record`.
+pub fn is_extension_kind(name: &str) -> bool {
+    name.strip_prefix("x-").map(valid_id).unwrap_or(false) && chars(name) <= ID_LIMIT
+}
 
 /// The card type table for a model (Markdown), built from [`PARTS`].
 pub fn parts_table() -> String {
@@ -167,7 +199,11 @@ impl Kind {
         if field == "title" {
             return Some(TITLE_LIMIT);
         }
-        self.part().fields.iter().find(|f| f.0 == field).map(|f| f.1)
+        if let Some(f) = self.part().fields.iter().find(|f| f.0 == field) {
+            return Some(f.1);
+        }
+        // A record takes any field name that is a valid id.
+        (self == Kind::Record && valid_id(field)).then_some(RECORD_FIELD_LIMIT)
     }
 }
 
@@ -185,6 +221,10 @@ pub const GROUP_NAME_LIMIT: usize = 16;
 pub const MAX_GROUPS: usize = 8;
 pub const MAX_VARS: usize = 64;
 pub const SAY_LIMIT: usize = 80;
+/// A field of a record that the writer named itself.
+pub const RECORD_FIELD_LIMIT: usize = 80;
+/// Fields of a record, not counting the title.
+pub const MAX_RECORD_FIELDS: usize = 12;
 
 /// Who made a change. The protocol calls these "agent" and "user".
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -239,6 +279,8 @@ pub struct Topic {
 pub struct Card {
     pub id: String,
     pub kind: Kind,
+    /// The name of the extension kind (`x-...`) when the card was created as one. Its `kind` is then `Record`.
+    pub ext: Option<String>,
     pub topic: String,
     pub title: String,
     pub fields: BTreeMap<String, String>,
@@ -256,6 +298,10 @@ pub struct Card {
 }
 
 impl Card {
+    /// The kind as the writer named it: an extension kind keeps its own name.
+    pub fn kind_name(&self) -> &str {
+        self.ext.as_deref().unwrap_or(self.kind.name())
+    }
     pub fn field(&self, name: &str) -> &str {
         if let Some((f, v)) = &self.live {
             if f == name {
@@ -376,7 +422,11 @@ impl Board {
                 if self.card(&id).is_some() {
                     return Err(no("exists", format!("card '{id}' already exists; change it with set/add/upd instead of creating it again")));
                 }
-                let k = Kind::parse(&kind).ok_or_else(|| no("unknown-kind", format!("no card type '{kind}'")))?;
+                let (k, ext) = match Kind::parse(&kind) {
+                    Some(k) => (k, None),
+                    None if is_extension_kind(&kind) => (Kind::Record, Some(kind.clone())),
+                    None => return Err(no("unknown-kind", format!("no card type '{kind}'"))),
+                };
                 if !self.topics.iter().any(|t| t.id == topic) {
                     return Err(no("no-such-topic", format!("no topic '{topic}'; create it first with: topic {topic} <name>")));
                 }
@@ -387,6 +437,7 @@ impl Board {
                 self.cards.push(Card {
                     id,
                     kind: k,
+                    ext,
                     topic,
                     title: clip(&title, TITLE_LIMIT),
                     fields: BTreeMap::new(),
@@ -402,13 +453,22 @@ impl Board {
             Op::Set { id, field, value } => {
                 let mut note = None;
                 let c = self.card_mut(&id)?;
-                let limit = c.kind.field_limit(&field).ok_or_else(|| no("unknown-field", format!("{} has no field '{field}'", c.kind.name())))?;
+                let limit = c.kind.field_limit(&field).ok_or_else(|| no("unknown-field", format!("{} has no field '{field}'", c.kind_name())))?;
+                if c.kind == Kind::Record && field != "title" && !c.fields.contains_key(&field) && c.fields.len() >= MAX_RECORD_FIELDS {
+                    return Err(no("limit", format!("card '{id}' already has {MAX_RECORD_FIELDS} fields")));
+                }
                 match (c.kind, field.as_str()) {
                     (Kind::Status, "state") if !["ok", "run", "wait", "fail", "idle"].contains(&value.as_str()) => {
                         return Err(no("bad-value", format!("status.state is one of ok|run|wait|fail|idle (got '{value}')")));
                     }
                     (Kind::Progress, "pct") if value.parse::<u8>().map(|v| v > 100).unwrap_or(true) => {
                         return Err(no("bad-value", format!("progress.pct is a whole number from 0 to 100 (got '{value}')")));
+                    }
+                    (Kind::Decision, "multi") if !["yes", "no"].contains(&value.as_str()) => {
+                        return Err(no("bad-value", format!("decision.multi is yes or no (got '{value}')")));
+                    }
+                    (Kind::Decision, "tone") if !["normal", "danger"].contains(&value.as_str()) => {
+                        return Err(no("bad-value", format!("decision.tone is normal or danger (got '{value}')")));
                     }
                     _ => {}
                 }
@@ -549,7 +609,7 @@ impl Board {
         let mut note = None;
         let c = self.card_mut(id)?;
         if !c.kind.has_items() {
-            return Err(no("no-items", format!("{} takes no items", c.kind.name())));
+            return Err(no("no-items", format!("{} takes no items", c.kind_name())));
         }
         if !valid_id(item) {
             return Err(no("bad-id", format!("item id '{item}' is not valid (1 to {ID_LIMIT} letters, digits, _ or -)")));
@@ -632,7 +692,7 @@ mod part_tests {
         }
         // Fields the renderer sets itself are accepted but not listed.
         assert!(!table.contains("chosen"));
-        assert_eq!(Kind::Decision.field_limit("chosen"), Some(24));
+        assert_eq!(Kind::Decision.field_limit("chosen"), Some(120));
         assert_eq!(Kind::Note.field_limit("text"), Some(240));
         assert_eq!(Kind::Note.field_limit("nope"), None);
     }
@@ -657,6 +717,51 @@ mod part_tests {
         assert!(crate::lang::serialize(&b).contains("let budget 120만원"));
         run(&mut b, "let budget").unwrap();
         assert!(b.vars.is_empty());
+    }
+
+    #[test]
+    fn records_take_named_fields_and_extension_kinds_fall_back_to_them() {
+        let mut b = Board::default();
+        let run = |b: &mut Board, line: &str| match crate::lang::parse(line) {
+            Ok(Some(op)) => b.apply(op, Author::Ai).map_err(|e| e.code),
+            Ok(None) => Ok(()),
+            Err(e) => Err(e.code),
+        };
+        run(&mut b, "topic t T").unwrap();
+        run(&mut b, "card r1 record t Invoice 1042").unwrap();
+        run(&mut b, "set r1 customer Acme Ltd").unwrap();
+        run(&mut b, "set r1 due 2026-12-01").unwrap();
+        assert_eq!(run(&mut b, "set r1 not!valid x"), Err("unknown-field"));
+        run(&mut b, "add r1 l1 Design | 12h | 1,200").unwrap();
+        assert_eq!(b.card("r1").unwrap().field("customer"), "Acme Ltd");
+        // An extension kind is accepted by name and checked as a record.
+        run(&mut b, "card k1 x-kanban t Sprint 12").unwrap();
+        run(&mut b, "set k1 lane Doing").unwrap();
+        let k = b.card("k1").unwrap();
+        assert_eq!((k.kind, k.kind_name()), (Kind::Record, "x-kanban"));
+        assert!(crate::lang::serialize(&b).contains("card k1 x-kanban t 3x3 Sprint 12\nset k1 lane Doing\n"));
+        // A name that is neither known nor an extension is still a mistake.
+        assert_eq!(run(&mut b, "card k2 kanban t X"), Err("unknown-kind"));
+        assert_eq!(run(&mut b, "card k2 x- t X"), Err("unknown-kind"));
+        assert_eq!(run(&mut b, "card k2 x-a!b t X"), Err("unknown-kind"));
+        // Twelve fields of the writer's own, then no more; changing one of them still works.
+        run(&mut b, "card r2 record t Many").unwrap();
+        for n in 0..MAX_RECORD_FIELDS {
+            assert_eq!(run(&mut b, &format!("set r2 f{n} v")), Ok(()));
+        }
+        assert_eq!(run(&mut b, "set r2 one-more v"), Err("limit"));
+        assert_eq!(run(&mut b, "set r2 f0 changed"), Ok(()));
+        assert_eq!(run(&mut b, "set r2 title Renamed"), Ok(()));
+        // A decision that takes several answers, and one that cannot be undone.
+        run(&mut b, "card d1 decision t Pick").unwrap();
+        assert_eq!(run(&mut b, "set d1 multi yes"), Ok(()));
+        assert_eq!(run(&mut b, "set d1 multi many"), Err("bad-value"));
+        assert_eq!(run(&mut b, "set d1 tone danger"), Ok(()));
+        assert_eq!(run(&mut b, "set d1 tone scary"), Err("bad-value"));
+        // A document card points at something outside the board.
+        run(&mut b, "card f1 doc t Q3 report").unwrap();
+        assert_eq!(run(&mut b, "set f1 src C:\\Users\\me\\q3.pdf"), Ok(()));
+        assert_eq!(run(&mut b, "add f1 a x"), Err("no-items"));
     }
 
     #[test]

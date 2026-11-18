@@ -15,7 +15,7 @@ The distances and times in `route.ops` are hand-written. In the app they come fr
 
 ## File format
 
-`.ops` files are in the log format (SPEC.md 10.2). The first line is the version header `# kite-protocol 0.2`; after it comes one op per line: a letter, a tab, then the op. `A` is a model op, `U` a user op, and `T` followed by a date starts a new day (skipped when seeding). `scenes-todo.txt` is plain op lines, scenes separated by a line holding `===`.
+`.ops` files are in the log format (SPEC.md 10.2). The first line is the version header `# kite-protocol 0.3`; after it comes one op per line: a letter, a tab, then the op. `A` is a model op, `U` a user op, and `T` followed by a date starts a new day (skipped when seeding). `scenes-todo.txt` is plain op lines, scenes separated by a line holding `===`.
 
 ## Load one in KITE
 

@@ -4,7 +4,7 @@
 use crate::core::{Board, Op, Reject};
 
 /// The protocol version this implementation writes and reads (SPEC.md, Versioning).
-pub const VERSION: &str = "0.2";
+pub const VERSION: &str = "0.3";
 
 /// First line of a saved log or a stream. It starts with `#`, so a parser that predates it reads a comment.
 pub fn header() -> String {
@@ -43,8 +43,32 @@ fn parse_size(s: &str) -> Option<(u8, u8)> {
     Some((w.parse().ok()?, h.parse().ok()?))
 }
 
+/// Split a value into cells at `|`. Inside a cell, `\|` is a `|` that does not split.
+pub fn split_cells(rest: &str) -> Vec<String> {
+    let mut out = Vec::new();
+    let mut cur = String::new();
+    let mut it = rest.chars().peekable();
+    while let Some(c) = it.next() {
+        match c {
+            '\\' if it.peek() == Some(&'|') => {
+                it.next();
+                cur.push('|');
+            }
+            '|' => out.push(std::mem::take(&mut cur).trim().to_string()),
+            c => cur.push(c),
+        }
+    }
+    out.push(cur.trim().to_string());
+    out
+}
+
+/// Write cells back as one value: joined by ` | `, with a `|` inside a cell written as `\|`.
+pub fn join_cells(cells: &[String]) -> String {
+    cells.iter().map(|c| c.replace('|', "\\|")).collect::<Vec<_>>().join(" | ")
+}
+
 fn cells(rest: &str) -> Vec<String> {
-    rest.split('|').map(|c| c.trim().to_string()).collect()
+    split_cells(rest)
 }
 
 /// Is this line skipped without a verdict? Blank lines, `#` comments and code fences are.
@@ -173,7 +197,7 @@ pub fn serialize_with(b: &Board, level: &dyn Fn(&str) -> u8) -> String {
         if lv == 0 {
             continue;
         }
-        s += &format!("card {} {} {} {}x{} {}\n", c.id, c.kind.name(), c.topic, c.w, c.h, c.title);
+        s += &format!("card {} {} {} {}x{} {}\n", c.id, c.kind_name(), c.topic, c.w, c.h, c.title);
         if lv == 1 {
             continue;
         }
@@ -181,7 +205,7 @@ pub fn serialize_with(b: &Board, level: &dyn Fn(&str) -> u8) -> String {
             s += &format!("set {} {} {}\n", c.id, f, v);
         }
         for (i, cells) in &c.items {
-            s += &format!("add {} {} {}\n", c.id, i, cells.join(" | "));
+            s += &format!("add {} {} {}\n", c.id, i, join_cells(cells));
         }
         if let Some((col, row)) = c.grid {
             s += &format!("move {} {} {}\n", c.id, col, row);
@@ -337,6 +361,22 @@ mod tests {
         run(&mut b, &format!("topic t a\ncard k note t x\nset k text {long}"), Author::Ai);
         assert_eq!(b.card("k").unwrap().field("text").chars().count(), 240);
         assert_eq!(b.notes, ["clipped k.text 240"]);
+    }
+
+    #[test]
+    fn a_pipe_inside_a_cell() {
+        assert_eq!(split_cells("a | b\\|c | d"), ["a", "b|c", "d"]);
+        assert_eq!(split_cells("C:\\dir\\ | x"), ["C:\\dir\\", "x"]);
+        assert_eq!(split_cells(" | "), ["", ""]);
+        assert_eq!(join_cells(&["a|b".into(), "c".into()]), "a\\|b | c");
+        let mut b = Board::default();
+        assert!(run(&mut b, "topic t T\ncard k table t Shell\nadd k r1 ls \\| wc -l | counts files", Author::Ai).is_empty());
+        assert_eq!(b.card("k").unwrap().items[0].1, ["ls | wc -l", "counts files"]);
+        let text = serialize(&b);
+        assert!(text.contains("add k r1 ls \\| wc -l | counts files\n"), "{text}");
+        let mut again = Board::default();
+        assert!(run(&mut again, &text, Author::User).is_empty());
+        assert_eq!(serialize(&again), text);
     }
 
     #[test]

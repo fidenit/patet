@@ -1,4 +1,4 @@
-# KITE Protocol 0.2
+# KITE Protocol 0.3
 
 A line language an AI writes to build and edit a screen, and reads back to see what is on it.
 
@@ -23,7 +23,7 @@ A board is a tree.
 
 ```
 group  ->  topic  ->  card  ->  item
-(<= 8)                (14 types)  (<= 24 per card)
+(<= 8)                (16 types)  (<= 24 per card)
 ```
 
 - A **topic** is one subject of work and holds cards.
@@ -41,7 +41,9 @@ Every change has an **author**: `agent` (a model, or a program writing for one) 
 - Blank lines, lines starting with `#`, and lines starting with three backticks are skipped without a verdict. `#` is the comment mark.
 - A last line without `\n` is applied when the stream ends.
 - Tokens are separated by whitespace. The first token is the verb.
-- There is no escaping. A value runs to the end of its line, so it cannot contain a line break. Cells are separated by `|`, so a cell cannot contain `|`.
+- A value runs to the end of its line, so it cannot contain a line break.
+- Cells are separated by `|`. Inside a cell, `\|` is a `|` that does not separate; a backslash anywhere else is an ordinary character. A serializer MUST write a `|` inside a cell as `\|`.
+- In a field named `text`, a renderer SHOULD show the two characters `\n` as a line break. The stored value keeps them.
 - A renderer MAY show the text of `say` and of `set <id> text` while its line is still arriving.
 
 ## 4. Names and limits
@@ -73,7 +75,7 @@ Ids of topics, groups and cards SHOULD be unique across all three kinds. A rende
 | `topic` | `topic <id> <name>` | Create a topic, or rename it | `bad-id`; id is on the shelf (`shelved`) |
 | `group` | `group <id> <name>` | Create a group, or rename it | `bad-id`; id is a topic or card (`id-in-use`); 9th group (`limit`) |
 | `put` | `put <topic> <group>` | Place a topic in a group | `no-such-group`, `no-such-topic` |
-| `card` | `card <id> <kind> <topic> [<w>x<h>] <title>` | Create a card | id exists (`exists`); `bad-id`; id is on the shelf (`shelved`); `unknown-kind`; `no-such-topic` |
+| `card` | `card <id> <kind> <topic> [<w>x<h>] <title>` | Create a card | id exists (`exists`); `bad-id`; id is on the shelf (`shelved`); `unknown-kind`; `no-such-topic`; the renderer does not let this writer create that kind (`not-allowed`) |
 | `set` | `set <id> <field> <value>` | Set one field; `title` is a field of every card | `no-such-card`; `unknown-field`; value fails the field's check (`bad-value`) |
 | `add` | `add <id> <item> <cell> \| <cell> ...` | Add an item; an existing item id is replaced | `no-such-card`; type takes no items (`no-items`); `bad-id`; `cell-count`; a cell fails its check (`bad-value`); item limit (`limit`) |
 | `upd` | `upd <id> <item> <cell> \| <cell> ...` | Replace an existing item | as `add`, and `no-such-item` |
@@ -104,7 +106,7 @@ Details that are easy to miss:
 
 ## 6. Card types
 
-14 types. Every card also has `title` (40). "Default" is columns x rows. "Checked" is what a renderer MUST reject with `bad-value`; anything else is only clipped.
+16 core types, and extension kinds (below). Every card also has `title` (40). "Default" is columns x rows. "Checked" is what a renderer MUST reject with `bad-value`; anything else is only clipped.
 
 | Type | Default | Fields (limit) | Item cells | Checked |
 |---|---|---|---|---|
@@ -117,11 +119,13 @@ Details that are easy to miss:
 | `table` | 4x3 | `cols` (200) | up to 6 cells | |
 | `progress` | 3x3 | `pct` (3), `text` (60) | `done\|run\|todo\|fail \| step` | `pct` is an integer 0 to 100; cell 1 |
 | `checklist` | 3x3 | none | `done\|todo \| text` | cell 1 |
-| `decision` | 3x3 | `text` (120), `chosen` (24) | `option \| one-line description` | |
+| `decision` | 3x3 | `text` (120), `multi` (8), `tone` (8), `chosen` (120) | `option \| one-line description` | `multi` is `yes` `no`; `tone` is `normal` `danger` |
 | `input` | 3x3 | `text` (120), `sent` (8) | `box name \| hint or kind` | |
 | `timeline` | 3x3 | none | `when \| text \| done\|run\|todo` (cell 3 optional) | |
 | `note` | 3x2 | `text` (240) | none | |
 | `web` | 6x5 | `url` (600) | none | |
+| `record` | 3x3 | `text` (240), `cols` (200), and any other field name that is a valid id (80 each); at most 12 fields | up to 6 cells | |
+| `doc` | 3x2 | `src` (600), `text` (240) | none | |
 
 Meaning per type:
 
@@ -134,13 +138,43 @@ Meaning per type:
 - **table**: `cols` holds the column names separated by `|`.
 - **progress**: `pct` is the whole; items are steps with a state.
 - **checklist**: the user can tick items (section 9).
-- **decision**: asks the user to pick one item. The renderer writes the picked item id to `chosen`.
-- **input**: asks the user for values. Each item is a box; cell 2 is a hint, or a kind: `date`, `number`, or `slider <lo>~<hi> <unit>`. When the user sends the card the renderer writes each value as cell 3 and sets `sent` to `yes`.
+- **decision**: asks the user to pick one item. The renderer writes the picked item id to `chosen`. With `multi` set to `yes` the user may pick several, and `chosen` holds their ids joined by `,` in item order. `tone` set to `danger` marks a choice that cannot be undone; a renderer SHOULD make it look so.
+- **input**: asks the user for values. Each item is a box. A box whose name ends with `*` must be filled before the card can be sent. Cell 2 is a hint, or a kind: `date`, `time`, `number`, `slider <lo>~<hi> <unit>`, or `choice <a> / <b> / ...` (one of the listed values). A renderer shows a kind it does not know as a free text box. When the user sends the card the renderer writes each value as cell 3 and sets `sent` to `yes`.
 - **timeline**: entries in the order given.
 - **note**: a short text.
 - **web**: `url` is a web address, or an absolute path on the renderer's machine.
+- **record**: one thing with properties the writer names. Fields are shown as label and value in field-name order; items, if any, are rows, with `cols` naming the columns.
+- **doc**: something that lives outside the board: `src` is an absolute path on the renderer's machine or an address, `text` says what it is. A renderer shows its name and summary and lets the user open it. This is how long content reaches the user: the board points at it and does not contain it.
 
 `decision` and `input` are the **asking types**: they wait for the user. A renderer SHOULD bring asking cards to the user's attention one at a time.
+
+### Extension kinds
+
+A kind named `x-` followed by an id (`x-kanban`) is an extension kind, whose meaning is agreed between a writer and a renderer outside this document.
+
+- Every renderer MUST accept a card of an extension kind and check it as a `record`: any field name, rows of up to 6 cells.
+- A renderer that draws that kind itself MAY do so; any other MUST draw it as a `record`. Either way the card is serialized with its own kind name.
+- A kind name that is neither a core type nor an extension kind is rejected with `unknown-kind`.
+
+### What a renderer supports
+
+A renderer need not support every core type (a phone may have no `web`), and may forbid some to writers outside its own process (section 11). It says what a writer may use in a **description**, a few lines of the form `<key> <values>`:
+
+```
+kite-protocol 0.3
+renderer KITE 0.4.0
+kinds status metric chart route draw image table progress checklist decision input timeline note record doc
+features tell
+```
+
+| Key | Values |
+|---|---|
+| `kite-protocol` | the version it speaks |
+| `renderer` | its name and version; free text |
+| `kinds` | the kinds this writer may create: core types and the extension kinds the renderer draws itself |
+| `features` | `tell` when it can read aloud; a renderer may add words of its own |
+
+A reader ignores keys it does not know. A writer SHOULD create only the kinds listed, and one that was given no description assumes the 14 types of version 0.1 and no features. How the description travels is up to the binding (section 10).
 
 ## 7. Layout
 
@@ -194,6 +228,7 @@ Codes are stable; messages are for a model or a person to read and may change.
 | `limit` | a count limit was reached |
 | `pinned` | the user pinned the card |
 | `user-only` | only the user may do this |
+| `not-allowed` | the renderer does not let this writer do this (section 11) |
 
 How a verdict travels is up to the binding (section 10).
 
@@ -205,7 +240,7 @@ What the user does on a renderer is expressed as ops with author `user`. They ar
 |---|---|
 | tick or untick a checklist item | `upd <card> <item> done\|todo \| <text>` |
 | delete an item | `del <card> <item>` |
-| pick an option of a decision card | `set <card> chosen <item>` |
+| pick an option of a decision card | `set <card> chosen <item>`; with `multi`, `set <card> chosen <item>,<item>,...` once, when the user confirms |
 | send an input card | `upd <card> <item> <name> \| <hint> \| <value>` for each filled box, then `set <card> sent yes` |
 | move or resize a card | `move <card> <col> <row>`, `size <card> <w>x<h>` (these pin it) |
 | unpin a card | `unpin <card>` |
@@ -256,6 +291,7 @@ Client to renderer:
 | `# kite-protocol <major>.<minor>` | optional first line; a major the renderer cannot read ends the session |
 | `auth <token>` | required first when the renderer was given a token |
 | any op | applied with author `agent` |
+| `hello` | ask what the renderer supports (section 6): the description comes back as `\| ` lines |
 | `read [<topic>]` | ask for the board (section 8): all of it, or one topic with its cards |
 | `watch` | start receiving `user` and `input` events |
 | `watch all` | also receive `agent` events for ops written by others |
@@ -268,10 +304,10 @@ Renderer to client, one line per op line or command, in order:
 | `ok` | applied, or the command was done |
 | `ok clipped <what> <limit>` | applied with a note; several notes are joined with `; ` |
 | `err <code> <message>` | rejected |
-| `\| <line>` | one line of the board, sent before the `ok` that answers `read` |
+| `\| <line>` | one line of data, sent before the `ok` that answers `read` or `hello` |
 | `event <entry>` | pushed at any time while watching (section 9) |
 
-Blank lines and comments get no reply. A client that watches MUST expect `event` lines between its own replies. `auth`, `read`, `watch` and `unwatch` are reserved words of this binding and will not become verbs.
+Blank lines and comments get no reply. A client that watches MUST expect `event` lines between its own replies. `auth`, `hello`, `read`, `watch` and `unwatch` are reserved words of this binding and will not become verbs.
 
 Besides the op codes, a session may answer `auth-required`, `unsupported-version`, `line-too-long`, `bad-utf8`, `rate-limited`, `too-many-connections`, `http-refused` and `unavailable`.
 
@@ -284,7 +320,7 @@ A renderer is an MCP server and the agent is its client. This is the binding for
 | `screen` | `ops`: string, ops separated by line breaks | `applied`, or the lines that were rejected or clipped, one per line as `<line> → <code> <message>` or `clipped <what> <limit>` |
 | `board_read` | `topic`: string, optional | the board (section 8), or that topic |
 | `events` | `wait`: seconds, optional; `after`: integer, optional | event entries, one per line, then `cursor <n>`; `(nothing yet)` when none |
-| `guide` | none | the text of GUIDE.md |
+| `guide` | none | the text of GUIDE.md, followed by the renderer's description (section 6) |
 
 `events` returns `user` and `input` entries numbered above `after` and waits up to `wait` seconds when there are none. Without `after` the renderer continues from the caller's last call. The server's `instructions` SHOULD tell a model that the board is the answer and to read the guide first.
 
@@ -297,7 +333,7 @@ A renderer is an [AG-UI](https://docs.ag-ui.com) client and the agent is an AG-U
 For each run the renderer POSTs a `RunAgentInput`:
 
 - `messages` ends with a user message whose text is the turn: the board inside `<board>…</board>`, the events since the last run inside `<events>…</events>` (one entry per line), the verdicts that were not `applied` inside `<rejected>…</rejected>`, then `<input>…</input>` with what the user said (empty when the run was started by a gesture).
-- `state.kite` is the same as data: `{ "version": "0.2", "board": "<ops>", "events": ["user set k2 chosen o2", ...] }`.
+- `state.kite` is the same as data: `{ "version": "0.3", "board": "<ops>", "events": ["user set k2 chosen o2", ...], "renderer": ["kinds status metric ...", "features tell"] }`. `renderer` is the description of section 6, one line per entry.
 - `context` has one entry whose `value` is the text of GUIDE.md.
 - `tools` has one frontend tool, `screen`, with the input of section 10.4.
 
@@ -316,7 +352,7 @@ An agent that knows nothing of KITE still works when its model follows the guide
 ## 11. Security
 
 - A writer is not trusted. Every line passes the same checks, whoever sent it; a rejected line changes nothing.
-- `web` and `image` cards make the renderer load an address or a local path chosen by the writer. A renderer that takes ops from outside its own process SHOULD treat creating them as a capability, off unless the user turned it on, and SHOULD say so where the binding is switched on.
+- `web`, `image` and `doc` cards make the renderer load or offer to open an address or a local path chosen by the writer. A renderer that takes ops from outside its own process SHOULD NOT let those writers create them unless the user turned that on. It rejects them with `not-allowed` and leaves them out of the `kinds` it describes to that writer.
 - A binding reachable by other programs MUST listen on the loopback address only, SHOULD require a token, and MUST refuse what a web page can send to a local port: an HTTP request on a line session, and a request carrying an `Origin` header on an HTTP binding.
 - Ops carry no code. A renderer MUST NOT execute anything found in a title, a field or a cell.
 - What the user typed and picked travels to the writer. A renderer SHOULD make it visible when an outside agent is connected.
@@ -325,12 +361,13 @@ An agent that knows nothing of KITE still works when its model follows the guide
 
 The version is `<major>.<minor>`.
 
-- The **minor** number grows with additions an older reader can skip or will never be sent: a new session command, a new binding, a new error code.
-- The **major** number grows with a breaking change: a new verb, a new card type, a changed limit, a changed serialization order. A reader MUST NOT read a stream that declares another major.
+- The **minor** number grows with additions: a new session command, a new binding, a new error code, a new field, and, from 0.3 on, a new core card type. A writer learns which types a renderer has from its description (section 6), so a new type breaks nobody who reads it.
+- The **major** number grows with a breaking change: a new verb, a changed limit, a changed serialization order, a changed meaning. A reader MUST NOT read a stream that declares another major.
+- While the major number is 0, a file written by a newer minor may hold lines an older reader rejects (a card of a type it lacks). It skips them and reads the rest.
 
 A stream or file without a header is 0.1.
 
-Changes are listed in [CHANGELOG.md](CHANGELOG.md). Open for a later version: a way to carry `|` and a line break in a value; card types registered by a renderer; a declared set of capabilities per session.
+Changes are listed in [CHANGELOG.md](CHANGELOG.md). Open for a later version: a card that embeds another format's interface (an A2UI surface, an MCP App); declaring the fields and the look of an extension kind in the protocol itself; a batch of ops that applies as a whole or not at all.
 
 ## 13. Conformance
 
@@ -348,7 +385,7 @@ These solve neighbouring problems, and KITE is meant to work with them rather th
 |---|---|---|---|---|
 | What it is | An edit language for one persistent board | A declarative UI description with renderers | A library that renders model-written JSON with your components | An event protocol between an agent and an app |
 | What a model writes | One op per line | JSON messages: `createSurface`, `updateComponents`, `updateDataModel`, `deleteSurface` | A JSON tree of elements (`root`, `elements`) | Nothing itself; it carries the others |
-| Vocabulary | 14 card types with a meaning each | A catalog the app chooses; the basic one has 18 layout and input components | A catalog the app defines | Not its concern |
+| Vocabulary | 16 card types with a meaning each, and extension kinds | A catalog the app chooses; the basic one has 18 layout and input components | A catalog the app defines | Not its concern |
 | Unit of change | A field or an item of a card | A component, a data path, a surface | A spec, streamed as patches | Events |
 | State over time | The board persists and is read back every turn | Per surface | Per generated spec | Shared state (`STATE_SNAPSHOT`, `STATE_DELTA`) |
 | Asking the user | `decision` and `input` cards; the answer returns as an op | `action` messages | Actions the catalog declares | Frontend tools, interrupts |
