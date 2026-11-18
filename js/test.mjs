@@ -1,9 +1,9 @@
 // Runs the protocol's conformance cases (../conformance) and the examples against the JavaScript implementation.
-//   node protocol/js/test.mjs
+//   node js/test.mjs
 import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { Board, LineStream, joinCells, partsTable, serialize, splitCells } from "./kite-protocol.js";
+import { Board, LineStream, joinCells, partsTable, serialize, splitCells } from "./patet.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const expand = (s) => s.replace(/<(\d+) (.)>/gu, (_, n, c) => c.repeat(Number(n)));

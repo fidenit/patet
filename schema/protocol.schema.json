@@ -1,19 +1,20 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "KITE Protocol 0.3: a batch of board ops",
-  "description": "JSON form of the ops of the KITE Protocol (SPEC.md). The wire format is plain text lines; this schema describes the same ops as JSON objects so tools can validate and generate them. Convert each op to its line with the 'x-line' template. Text over a limit is clipped by a renderer rather than rejected, so 'maxLength' is what a writer should stay within. Ids are restricted here to ASCII, which is what writers are asked to use; a renderer also accepts other Unicode letters and digits.",
+  "title": "PATET 0.4: a batch of board ops",
+  "description": "JSON form of the ops of PATET (SPEC.md). The wire format is plain text lines; this schema describes the same ops as JSON objects so tools can validate and generate them. Convert each op to its line with the 'x-line' template. Text over a limit is clipped by a renderer rather than rejected, so 'maxLength' is what a writer should stay within. Ids are restricted here to ASCII, which is what writers are asked to use; a renderer also accepts other Unicode letters and digits.",
   "type": "object",
   "required": [
-    "kite",
+    "patet",
     "ops"
   ],
   "additionalProperties": false,
   "properties": {
-    "kite": {
+    "patet": {
       "enum": [
         "0.1",
         "0.2",
-        "0.3"
+        "0.3",
+        "0.4"
       ],
       "description": "Protocol version of this document."
     },
@@ -227,7 +228,7 @@
         {
           "title": "set",
           "x-line": "set <id> <field> <value>",
-          "description": "Set one field of a card; the value runs to the end of the line. 'title' is valid on every card type. Other fields and their limits depend on the type: see x-kite-card-kinds.",
+          "description": "Set one field of a card; the value runs to the end of the line. 'title' is valid on every card type. Other fields and their limits depend on the type: see x-patet-card-kinds.",
           "type": "object",
           "required": [
             "op",
@@ -599,7 +600,7 @@
       }
     }
   },
-  "x-kite-card-kinds": {
+  "x-patet-card-kinds": {
     "description": "Per card type: default size, settable fields with maximum length, item format. The same table as SPEC.md section 6. Every card also has 'title' (40). Fields not listed are rejected, except on a record. 'asks' types wait for the user. An extension kind (x-...) is checked as a record.",
     "status": {
       "size": [

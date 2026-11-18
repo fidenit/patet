@@ -1,4 +1,4 @@
-# KITE Protocol
+# PATET
 
 A line language an AI writes to build and edit a screen, and reads back to see what is on it.
 
@@ -20,7 +20,7 @@ Each line is one op, applied the moment it ends. The result is a board of cards,
 user set k2 chosen o2
 ```
 
-Version **0.3**. Apache-2.0. The protocol is separate from any app: [KITE](../README.md) is the first product built on it.
+Version **0.4**. Apache-2.0. The protocol is separate from any app: [KITE](https://github.com/fidenit/KITE) is the first product built on it.
 
 ## Why another protocol
 
@@ -29,7 +29,7 @@ Version **0.3**. Apache-2.0. The protocol is separate from any app: [KITE](../RE
 - **Cards mean something.** `decision`, `timeline`, `route`, `checklist`: 16 types chosen for what they say, not rows and columns, and a renderer can add kinds of its own. Layout belongs to the renderer.
 - **Asking is part of it.** A `decision` or `input` card waits for the user, and the answer comes back as an op.
 
-It sits beside AG-UI, A2UI and MCP rather than against them: an agent can reach a KITE board over MCP or AG-UI today. How it differs from A2UI, json-render, AG-UI, MCP Apps and others, and what it does not do: [COMPARISON.md](COMPARISON.md).
+It sits beside AG-UI, A2UI and MCP rather than against them: an agent can reach a PATET board over MCP or AG-UI today. How it differs from A2UI, json-render, AG-UI, MCP Apps and others, and what it does not do: [COMPARISON.md](COMPARISON.md).
 
 ## What is here
 
@@ -43,12 +43,12 @@ It sits beside AG-UI, A2UI and MCP rather than against them: an agent can reach 
 | [conformance/](conformance) | Cases a renderer runs to check itself |
 | [rust/](rust) | Reference implementation: board, parser, serializer. No dependencies |
 | [js/](js) | The same in JavaScript, one file, no dependencies. Runs in a browser, in Node, in a worker |
-| [web/](web) | `<kite-board>`: a renderer for the web, as one custom element you can put in your own app |
+| [web/](web) | `<patet-board>`: a renderer for the web, as one custom element you can put in your own app |
 | [CHANGELOG.md](CHANGELOG.md) | What changed between versions |
 
 ## Use it
 
-**Drive a board from an agent that speaks MCP** (Claude Code, Cursor, your own). Start a renderer with its MCP door open and point the agent at it. The agent gets four tools: `screen`, `board_read`, `events`, `guide`. With KITE: [docs/DRIVING.md](../docs/DRIVING.md).
+**Drive a board from an agent that speaks MCP** (Claude Code, Cursor, your own). Start a renderer with its MCP door open and point the agent at it. The agent gets four tools: `screen`, `board_read`, `events`, `guide`. With the KITE app: [DRIVING.md](https://github.com/fidenit/KITE/blob/main/docs/DRIVING.md).
 
 **Drive a board from a script.** Open a line session and write ops:
 
@@ -62,23 +62,23 @@ for line in ["topic demo Demo", "card k1 metric demo 2x2 Users", "set k1 value 4
 
 **Drive a board from an AG-UI agent.** Point a renderer at the agent's endpoint. The renderer sends the board, the guide and a `screen` tool with every run ([SPEC.md, section 10.5](SPEC.md#105-ag-ui)).
 
-**Put a board in your web app.** [`<kite-board>`](web) is one custom element with no dependencies:
+**Put a board in your web app.** [`<patet-board>`](web) is one custom element with no dependencies:
 
 ```html
-<script type="module" src="kite-board.js"></script>
-<kite-board id="board"></kite-board>
+<script type="module" src="patet-board.js"></script>
+<patet-board id="board"></patet-board>
 <script type="module">
   board.apply("topic ws Team Workshop");                             // what your agent writes goes in
   board.apply("card k2 decision ws 3x3 Which venue?");
   board.apply("add k2 o1 Gapyeong | Close and cheaper");
-  board.addEventListener("kite-event", (e) => send(e.detail.entry));  // "user set k2 chosen o1" comes out
+  board.addEventListener("patet-event", (e) => send(e.detail.entry));  // "user set k2 chosen o1" comes out
 </script>
 ```
 
 **Write a renderer.** Keep a board, apply lines, draw cards. The parser is about a hundred lines and the checker about three hundred; port [rust/](rust) or use it:
 
 ```rust
-use kite_protocol::{core::{Author, Board}, lang};
+use patet::{core::{Author, Board}, lang};
 
 let mut board = Board::default();
 match lang::parse("card k1 metric trip 2x2 Days left") {
@@ -93,4 +93,4 @@ Then run the [conformance cases](conformance).
 
 ## Status
 
-0.x: the language may still change between minor versions where the spec says so (section 12). Three implementations pass the conformance cases: Rust (used by KITE for Windows and macOS), Kotlin (the KITE Android app) and JavaScript (`<kite-board>`). Feedback, renderers and bindings for other transports are welcome.
+0.x: the language may still change between minor versions where the spec says so (section 12). Three implementations pass the conformance cases: Rust (used by KITE for Windows and macOS), Kotlin (the KITE Android app) and JavaScript (`<patet-board>`). Feedback, renderers and bindings for other transports are welcome.

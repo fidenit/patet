@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>KITE Protocol: web renderer</title>
+<title>PATET: web renderer</title>
 <style>
   :root { color-scheme: dark light; }
   body { margin: 0; background: #0f1012; color: #ececee; font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
@@ -23,8 +23,8 @@
 <body>
 <div class="page">
   <div class="side">
-    <h1>KITE Protocol in the browser</h1>
-    <p class="sub">Write ops on the left. The board on the right is <code>&lt;kite-board&gt;</code>, one file with no dependencies. What you do on the board comes back as events.</p>
+    <h1>PATET in the browser</h1>
+    <p class="sub">Write ops on the left. The board on the right is <code>&lt;patet-board&gt;</code>, one file with no dependencies. What you do on the board comes back as events.</p>
     <select id="example" aria-label="Example">
       <option value="">Load an example…</option>
       <option value="workshop">A decision that comes to you</option>
@@ -51,11 +51,11 @@
     <h2>What this renderer supports</h2>
     <pre id="hello"></pre>
   </div>
-  <kite-board id="board"></kite-board>
+  <patet-board id="board"></patet-board>
 </div>
 
 <script type="module">
-import "./kite-board.js";
+import "./patet-board.js";
 
 const $ = (id) => document.getElementById(id);
 const board = $("board");
@@ -114,7 +114,7 @@ function agent(entry) {
   const venue = m[1] === "o1" ? "Gangneung" : "Gapyeong";
   setTimeout(() => report(board.write(`say ${venue} it is.\ndel k2\ncard s1 status ws 3x1 Venue\nset s1 state ok\nset s1 text ${venue} chosen\ncard l1 checklist ws 3x2 Next\nadd l1 a todo | Book ${venue}\nadd l1 b todo | Tell the team`)), 350);
 }
-board.addEventListener("kite-event", (e) => { log($("events"), e.detail.entry); agent(e.detail.entry); });
+board.addEventListener("patet-event", (e) => { log($("events"), e.detail.entry); agent(e.detail.entry); });
 
 async function load(name) {
   if (name === "workshop") return WORKSHOP;

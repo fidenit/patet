@@ -1,12 +1,12 @@
-// KITE Protocol 0.3 in JavaScript: the board, the parser and the serializer. No dependencies.
+// PATET 0.4 in JavaScript: the board, the parser and the serializer. No dependencies.
 // A port of the reference implementation (protocol/rust); it runs the same conformance cases (test.mjs).
 //
-//   import { Board, parse, serialize } from "./kite-protocol.js";
+//   import { Board, parse, serialize } from "./patet.js";
 //   const board = new Board();
 //   const verdict = board.line("card k1 metric trip 2x2 Days left");   // "ok" | "ok clipped ..." | "err <code> <message>" | "skip"
 //   serialize(board);                                                  // the board as ops
 
-export const VERSION = "0.3";
+export const VERSION = "0.4";
 
 /** Why an op was not applied: a stable code for programs, an English message for whoever wrote the line. */
 export class Reject extends Error {

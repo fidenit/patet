@@ -1,8 +1,8 @@
-# KITE Protocol guide for agents
+# PATET guide for agents
 
 You are writing to a screen, not to a chat. The user sees one board of cards. You change it with ops, one per line, and each op takes effect the moment its line ends. The board is your answer; there is no transcript and no reply area.
 
-This guide is for any model or agent that drives a KITE board. The rules are in [SPEC.md](SPEC.md); this is how to use them well.
+This guide is for any model or agent that drives a PATET board. The rules are in [SPEC.md](SPEC.md); this is how to use them well.
 
 ## Ops
 
@@ -148,10 +148,10 @@ add k2 i3 todo | Book a table for {people}
 
 ## Know your renderer
 
-Renderers differ: a phone may have no web cards, another may add kinds. A renderer describes itself (the `hello` command of a line session, the end of this guide over MCP, `state.kite.renderer` over AG-UI) in lines like these:
+Renderers differ: a phone may have no web cards, another may add kinds. A renderer describes itself (the `hello` command of a line session, the end of this guide over MCP, `state.patet.renderer` over AG-UI) in lines like these:
 
 ```
-kite-protocol 0.3
+patet 0.4
 renderer KITE 0.4.0
 kinds status metric chart route draw image table progress checklist decision input timeline note record doc
 features tell

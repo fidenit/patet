@@ -1,4 +1,4 @@
-# KITE Protocol 0.3
+# PATET 0.4
 
 A line language an AI writes to build and edit a screen, and reads back to see what is on it.
 
@@ -8,7 +8,7 @@ The words MUST, SHOULD and MAY are used as in RFC 2119.
 
 ## 1. Purpose
 
-Chat puts an AI's answer in a scroll of paragraphs. KITE puts it on a board: a few cards, each shaped to its content, that the AI keeps editing as the work moves. The protocol is what makes that possible with any model and any app.
+Chat puts an AI's answer in a scroll of paragraphs. PATET puts it on a board: a few cards, each shaped to its content, that the AI keeps editing as the work moves. The protocol is what makes that possible with any model and any app.
 
 It rests on four choices.
 
@@ -162,7 +162,7 @@ A kind named `x-` followed by an id (`x-kanban`) is an extension kind, whose mea
 A renderer need not support every core type (a phone may have no `web`), and may forbid some to writers outside its own process (section 11). It says what a writer may use in a **description**, a few lines of the form `<key> <values>`:
 
 ```
-kite-protocol 0.3
+patet 0.4
 renderer KITE 0.4.0
 kinds status metric chart route draw image table progress checklist decision input timeline note record doc
 features tell
@@ -170,7 +170,7 @@ features tell
 
 | Key | Values |
 |---|---|
-| `kite-protocol` | the version it speaks |
+| `patet` | the version it speaks |
 | `renderer` | its name and version; free text |
 | `kinds` | the kinds this writer may create: core types and the extension kinds the renderer draws itself |
 | `features` | `tell` when it can read aloud; a renderer may add words of its own |
@@ -300,10 +300,10 @@ The instructions for the model are [GUIDE.md](GUIDE.md); its section "How a turn
 
 ### 10.2 Log
 
-A board saved as a file is its accepted ops, in order. The first line is the header `# kite-protocol <major>.<minor>` (a comment, so a reader that predates it skips it). Each other line is a letter, a tab and a payload:
+A board saved as a file is its accepted ops, in order. The first line is the header `# patet <major>.<minor>` (a comment, so a reader that predates it skips it). Each other line is a letter, a tab and a payload:
 
 ```
-# kite-protocol 0.3
+# patet 0.4
 T	2026-11-18
 A	topic ws Team Workshop
 A	card k2 decision ws 3x3 Which venue?
@@ -320,7 +320,7 @@ Client to renderer:
 
 | Line | Meaning |
 |---|---|
-| `# kite-protocol <major>.<minor>` | optional first line; a major the renderer cannot read ends the session |
+| `# patet <major>.<minor>` | optional first line; a major the renderer cannot read ends the session |
 | `auth <token>` | required first when the renderer was given a token |
 | any op | applied with author `agent` |
 | `hello` | ask what the renderer supports (section 6): the description comes back as `\| ` lines |
@@ -365,7 +365,7 @@ A renderer is an [AG-UI](https://docs.ag-ui.com) client and the agent is an AG-U
 For each run the renderer POSTs a `RunAgentInput`:
 
 - `messages` ends with a user message whose text is the turn in the layout of section 10.1, without `<earlier>`: the earlier messages of the conversation are in `messages` themselves.
-- `state.kite` is the same as data: `{ "version": "0.3", "board": "<ops>", "events": ["user set k2 chosen o2", ...], "renderer": ["kinds status metric ...", "features tell"] }`. `renderer` is the description of section 6, one line per entry.
+- `state.patet` is the same as data: `{ "version": "0.4", "board": "<ops>", "events": ["user set k2 chosen o2", ...], "renderer": ["kinds status metric ...", "features tell"] }`. `renderer` is the description of section 6, one line per entry.
 - `context` has one entry whose `value` is the text of GUIDE.md.
 - `tools` has one frontend tool, `screen`, with the input of section 10.4.
 
@@ -375,11 +375,11 @@ The renderer applies ops from any of these, in the order they arrive:
 |---|---|
 | `TEXT_MESSAGE_CONTENT` / `TEXT_MESSAGE_CHUNK` | the text is an op stream (section 10.1) |
 | `TOOL_CALL_START` / `_ARGS` / `_END` for `screen` | applies `ops`; the verdict goes back as a `tool` message in a following run |
-| `CUSTOM` with `name` `kite.ops` | `value` is a string of ops, or an array of op strings |
-| `STATE_SNAPSHOT`, `STATE_DELTA` | kept and sent back as `state` in the next run (the `kite` key is the renderer's) |
+| `CUSTOM` with `name` `patet.ops` | `value` is a string of ops, or an array of op strings |
+| `STATE_SNAPSHOT`, `STATE_DELTA` | kept and sent back as `state` in the next run (the `patet` key is the renderer's) |
 | `RUN_ERROR` | shown to the user |
 
-An agent that knows nothing of KITE still works when its model follows the guide in `context` and answers in ops. A renderer MAY show text that contains no op in a way of its own.
+An agent that knows nothing of PATET still works when its model follows the guide in `context` and answers in ops. A renderer MAY show text that contains no op in a way of its own.
 
 ## 11. Security
 
@@ -411,9 +411,9 @@ A **renderer** conforms if it applies lines in order; rejects exactly what secti
 
 ## 14. Next to A2UI, AG-UI and json-render
 
-These solve neighbouring problems, and KITE is meant to work with them rather than replace them. This is the short form; [COMPARISON.md](COMPARISON.md) covers more projects, what KITE does not do, and the sources. Facts below are from their public repositories and specifications as of 2026-11-18.
+These solve neighbouring problems, and PATET is meant to work with them rather than replace them. This is the short form; [COMPARISON.md](COMPARISON.md) covers more projects, what PATET does not do, and the sources. Facts below are from their public repositories and specifications as of 2026-11-18.
 
-| | KITE Protocol | A2UI (v1.0) | json-render | AG-UI (1.0) |
+| | PATET | A2UI (v1.0) | json-render | AG-UI (1.0) |
 |---|---|---|---|---|
 | What it is | An edit language for one persistent board | A declarative UI description with renderers | A library that renders model-written JSON with your components | An event protocol between an agent and an app |
 | What a model writes | One op per line | JSON messages: `createSurface`, `updateComponents`, `updateDataModel`, `deleteSurface` | A JSON tree of elements (`root`, `elements`) | Nothing itself; it carries the others |
@@ -423,6 +423,6 @@ These solve neighbouring problems, and KITE is meant to work with them rather th
 | Asking the user | `decision` and `input` cards; the answer returns as an op | `action` messages | Actions the catalog declares | Frontend tools, interrupts |
 | Layout | The renderer's | The writer's (rows, columns) | The writer's | Not its concern |
 
-- **AG-UI** is a transport. KITE rides on it (section 10.5): an AG-UI agent can drive a KITE board without knowing more than the guide.
-- **A2UI** and **json-render** describe an interface component by component. KITE describes a workspace card by card and leaves layout to the renderer. A KITE card type could be offered as a custom component in an A2UI or json-render catalog; that mapping is not specified here.
-- **MCP** is how an agent reaches tools. KITE offers a board as tools (section 10.4).
+- **AG-UI** is a transport. PATET rides on it (section 10.5): an AG-UI agent can drive a PATET board without knowing more than the guide.
+- **A2UI** and **json-render** describe an interface component by component. PATET describes a workspace card by card and leaves layout to the renderer. A PATET card type could be offered as a custom component in an A2UI or json-render catalog; that mapping is not specified here.
+- **MCP** is how an agent reaches tools. PATET offers a board as tools (section 10.4).

@@ -1,4 +1,4 @@
-//! KITE Protocol, reference implementation.
+//! PATET, reference implementation.
 //!
 //! The protocol is a line language: one op per line, applied the moment the line ends.
 //! A model, a person or a program writes ops; a renderer keeps a [`core::Board`] and draws it.
@@ -7,10 +7,10 @@
 //! - [`lang`]: parse a line into an [`core::Op`], serialize a board, cut a token stream into lines.
 //! - [`core`]: the board, the card types, and `Board::apply`, the one function every change passes through.
 //!
-//! The specification is `protocol/SPEC.md`. This crate has no dependencies.
+//! The specification is `SPEC.md` at the root of the repository. This crate has no dependencies.
 //!
 //! ```
-//! use kite_protocol::{core::{Author, Board}, lang};
+//! use patet::{core::{Author, Board}, lang};
 //!
 //! let mut board = Board::default();
 //! for line in ["topic trip Trip", "card k1 metric trip 2x2 Days left", "set k1 value 9"] {

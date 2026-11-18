@@ -1,10 +1,23 @@
-# KITE Protocol changes
+# PATET changes
+
+## 0.4
+
+The protocol has a name and a home of its own: **PATET** (Latin *patet*: it lies open, it is plain to see), in its own repository. It was "KITE Protocol", a folder inside the KITE app. KITE is now one app built on PATET.
+
+Names on the wire changed with it, so a 0.3 peer has to be updated:
+
+- the version line of a log and the renderer description: `patet 0.4` (was `kite-protocol 0.3`)
+- the web element and its event: `<patet-board>`, `patet-event`
+- AG-UI: the state key `patet`, the custom event `patet.ops`
+- packages: `patet` (Rust, JavaScript)
+
+The language itself (verbs, card types, verdicts, events) is as in 0.3, with two additions from the last days of 0.3: a host should run one more turn at once when lines were rejected, and the guide says that a card needs a topic that exists.
 
 ## 0.3 (2026-11-18)
 
 The vocabulary can grow without breaking readers, and a writer can find out what a renderer has.
 
-- **A renderer describes itself** (SPEC.md section 6): the kinds a writer may create and the features it has. Over a line session: `hello`. Over MCP: at the end of `guide`. Over AG-UI: `state.kite.renderer`.
+- **A renderer describes itself** (SPEC.md section 6): the kinds a writer may create and the features it has. Over a line session: `hello`. Over MCP: at the end of `guide`. Over AG-UI: `state.patet.renderer`.
 - **Extension kinds.** A kind named `x-<id>` is accepted by every renderer and falls back to a `record` where it is not drawn natively.
 - **`record`**: a card with fields the writer names (up to 12) and optional rows.
 - **`doc`**: a card that points at a document, file or link outside the board. Long content is pointed at, never pasted.
@@ -29,9 +42,9 @@ The protocol becomes a specification of its own, apart from the KITE app.
 - **Line session** (SPEC.md 10.3): replies are `ok`, `ok clipped ...`, `err <code> <message>`. New commands `read [<topic>]`, `watch [all]`, `unwatch`. 0.1 answered `err <line> → <reason>` and had no way to read the board or hear the user.
 - **MCP binding** (10.4): tools `screen`, `board_read`, `events`, `guide`.
 - **AG-UI binding** (10.5).
-- **Conformance cases** and a reference implementation without dependencies (`kite-protocol`).
+- **Conformance cases** and a reference implementation without dependencies (`patet`).
 - **Guide for agents** (GUIDE.md).
-- The header reads `# kite-protocol 0.2`. Files and streams of 0.1 are read unchanged: no verb, card type, limit or serialization order changed.
+- The header reads `# patet 0.2`. Files and streams of 0.1 are read unchanged: no verb, card type, limit or serialization order changed.
 
 ## 0.1 (2026-11-16)
 

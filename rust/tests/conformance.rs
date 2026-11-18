@@ -1,7 +1,7 @@
-//! Runs every case in protocol/conformance against this implementation (the format is in its README).
+//! Runs every case in conformance against this implementation (the format is in its README).
 
-use kite_protocol::core::{Author, Board};
-use kite_protocol::lang;
+use patet::core::{Author, Board};
+use patet::lang;
 
 /// `<N c>` stands for the character `c` repeated N times.
 fn expand(s: &str) -> String {
@@ -69,7 +69,7 @@ fn run_case(name: &str, text: &str) {
 fn conformance_cases() {
     let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../conformance");
     let mut ran = 0;
-    let mut files: Vec<_> = std::fs::read_dir(&dir).expect("protocol/conformance").flatten().map(|e| e.path()).filter(|p| p.extension().map(|x| x == "txt").unwrap_or(false)).collect();
+    let mut files: Vec<_> = std::fs::read_dir(&dir).expect("conformance").flatten().map(|e| e.path()).filter(|p| p.extension().map(|x| x == "txt").unwrap_or(false)).collect();
     files.sort();
     for path in files {
         let name = path.file_name().unwrap().to_string_lossy().to_string();
@@ -83,7 +83,7 @@ fn conformance_cases() {
 fn examples_apply_without_a_rejection() {
     let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../examples");
     let mut ran = 0;
-    for path in std::fs::read_dir(&dir).expect("protocol/examples").flatten().map(|e| e.path()).filter(|p| p.extension().map(|x| x == "ops").unwrap_or(false)) {
+    for path in std::fs::read_dir(&dir).expect("examples").flatten().map(|e| e.path()).filter(|p| p.extension().map(|x| x == "ops").unwrap_or(false)) {
         let mut board = Board::default();
         for (n, l) in std::fs::read_to_string(&path).unwrap().lines().enumerate() {
             let Some((who, op)) = l.split_once('\t') else { continue };

@@ -4,16 +4,16 @@
 use crate::core::{Board, Op, Reject};
 
 /// The protocol version this implementation writes and reads (SPEC.md, Versioning).
-pub const VERSION: &str = "0.3";
+pub const VERSION: &str = "0.4";
 
 /// First line of a saved log or a stream. It starts with `#`, so a parser that predates it reads a comment.
 pub fn header() -> String {
-    format!("# kite-protocol {VERSION}")
+    format!("# patet {VERSION}")
 }
 
 /// The version a header line declares, or None when the line is not a header.
 pub fn declared_version(line: &str) -> Option<&str> {
-    let rest = line.trim().strip_prefix('#')?.trim_start().strip_prefix("kite-protocol")?;
+    let rest = line.trim().strip_prefix('#')?.trim_start().strip_prefix("patet")?;
     if !rest.starts_with(char::is_whitespace) {
         return None;
     }
@@ -320,12 +320,12 @@ mod tests {
 
     #[test]
     fn version_header() {
-        assert_eq!(header(), format!("# kite-protocol {VERSION}"));
-        assert_eq!(declared_version("# kite-protocol 0.1"), Some("0.1"));
-        assert_eq!(declared_version("  #kite-protocol 0.2  "), Some("0.2"));
-        assert_eq!(declared_version("# kite-protocolX 0.1"), None);
+        assert_eq!(header(), format!("# patet {VERSION}"));
+        assert_eq!(declared_version("# patet 0.1"), Some("0.1"));
+        assert_eq!(declared_version("  #patet 0.2  "), Some("0.2"));
+        assert_eq!(declared_version("# patetX 0.1"), None);
         assert_eq!(declared_version("# note"), None);
-        assert_eq!(declared_version("say # kite-protocol 0.1"), None);
+        assert_eq!(declared_version("say # patet 0.1"), None);
         assert!(can_read("0.1") && can_read("0.9") && !can_read("1.0") && !can_read("x"));
         // The header is a comment: it changes no board.
         assert!(matches!(parse(&header()), Ok(None)));

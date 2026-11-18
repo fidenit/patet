@@ -16,4 +16,4 @@ topic t Trip                   serialized as in SPEC.md section 8
 
 To run a case: start from an empty board, apply each line with its author, compare each verdict, then compare the serialized board. A line the spec says is skipped (blank, comment, code fence, `tell`) has the verdict `skip`.
 
-Three implementations run every file in this folder: Rust (`cargo test -p kite-protocol`), JavaScript (`node protocol/js/test.mjs`) and Kotlin (`./gradlew testFreeDebugUnitTest` in `android/`).
+Three implementations run every file in this folder: Rust (`cargo test -p patet`), JavaScript (`node protocol/js/test.mjs`) and Kotlin (`./gradlew testFreeDebugUnitTest` in `android/`).

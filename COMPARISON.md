@@ -1,6 +1,6 @@
-# KITE Protocol next to other ways of letting an AI build an interface
+# PATET next to other ways of letting an AI build an interface
 
-Many projects now let a model produce an interface instead of a paragraph. They are not all the same kind of thing, and most of them are not competitors of each other. This page says what each one is, where KITE differs, and how they fit together.
+Many projects now let a model produce an interface instead of a paragraph. They are not all the same kind of thing, and most of them are not competitors of each other. This page says what each one is, where PATET differs, and how they fit together.
 
 **How this was written.** Facts about other projects come from their own repositories, specifications and documentation, read on 2026-11-18. Sources are listed at the end. Where only a secondary source was found, or only part of a document was read, the text says so. Star counts and versions are as of that date and will age. Nothing here was measured by us unless it says so; in particular, **we have not benchmarked token use or output quality across formats**. Corrections are welcome.
 
@@ -11,18 +11,18 @@ The projects sit on different layers. Comparing across layers is the usual sourc
 | Layer | The question it answers | Projects |
 |---|---|---|
 | **Transport** | How do an agent and an app exchange events? | AG-UI, MCP, A2A |
-| **UI description** | What does the model write so that an interface appears? | **KITE Protocol**, A2UI, json-render specs, OpenUI Lang, Open-JSON-UI |
+| **UI description** | What does the model write so that an interface appears? | **PATET**, A2UI, json-render specs, OpenUI Lang, Open-JSON-UI |
 | **Host card formats** | What structured message will this particular host draw? | Adaptive Cards, Slack Block Kit, ChatKit widgets |
 | **Shipped UI** | How does a tool bring its own ready-made interface? | MCP Apps |
 | **App frameworks** | How do I build a product with an agent in it? | CopilotKit, Vercel AI SDK, Tambo, assistant-ui |
 
-KITE Protocol is a UI description. It travels over a transport: its own line session, MCP, or AG-UI ([SPEC.md, section 10](SPEC.md#10-bindings)).
+PATET is a UI description. It travels over a transport: its own line session, MCP, or AG-UI ([SPEC.md, section 10](SPEC.md#10-bindings)).
 
 ## At a glance
 
 | | What the model writes | Vocabulary | Who lays it out | What lives between turns | How the user answers |
 |---|---|---|---|---|---|
-| **KITE Protocol** 0.3 | One edit per text line (`set k1 text ...`) | 16 card types that each mean something (`decision`, `timeline`, `route`), plus kinds a renderer adds | The renderer | One board, which the model reads back in the same language before each edit | `decision` and `input` cards; the answer returns as an op |
+| **PATET** 0.4 | One edit per text line (`set k1 text ...`) | 16 card types that each mean something (`decision`, `timeline`, `route`), plus kinds a renderer adds | The renderer | One board, which the model reads back in the same language before each edit | `decision` and `input` cards; the answer returns as an op |
 | **A2UI** v1.0 | JSON messages (`createSurface`, `updateComponents`, `updateDataModel`, `deleteSurface`) | A catalog the app chooses; the basic one has 18 layout and input components | The writer (rows, columns, cards) | Surfaces and their data models | `action` messages from the renderer |
 | **json-render** | A JSON tree (`root`, `elements`), streamed | A catalog the developer defines; a shadcn/ui set of 36 is provided | The writer | The spec that was generated; state inside it | Actions the catalog declares |
 | **OpenUI Lang** | A compact DSL for a component tree | Component libraries for React, Vue, Svelte, Angular | The writer | The generated tree | Component callbacks |
@@ -33,32 +33,32 @@ KITE Protocol is a UI description. It travels over a transport: its own line ses
 | **MCP Apps** | Nothing at run time: the tool's author ships HTML | Anything HTML can do | The author | Whatever the page keeps | The page itself, in a sandboxed frame |
 | **AG-UI** 1.0 | Not a UI format | Not its concern | Not its concern | Shared state (`STATE_SNAPSHOT`, `STATE_DELTA`) | Frontend tools, interrupts |
 
-## What is different about KITE
+## What is different about PATET
 
-**It edits a board that stays.** In the other UI descriptions, the unit of work is an interface produced for an answer: a surface, a spec, a card in a message. In KITE the unit is a workspace that outlives the answer. A model changes one field or one item of a card that is already there, and a topic that comes back next week is continued on its old cards. Chat-hosted formats (Adaptive Cards, Block Kit, ChatKit widgets) are messages in a transcript by design; KITE has no transcript.
+**It edits a board that stays.** In the other UI descriptions, the unit of work is an interface produced for an answer: a surface, a spec, a card in a message. In PATET the unit is a workspace that outlives the answer. A model changes one field or one item of a card that is already there, and a topic that comes back next week is continued on its old cards. Chat-hosted formats (Adaptive Cards, Block Kit, ChatKit widgets) are messages in a transcript by design; PATET has no transcript.
 
 **The model reads the screen in the language it writes.** The board is given back as the ops that would rebuild it, so the writer needs no memory of what it drew and no second format to learn. A2UI and json-render keep surface or spec state on the client; how the model is shown the current interface is left to the application.
 
-**Lines, not a document.** One op is one line of plain text, applied when the line ends. There is no bracket to balance and no partial document to repair mid-stream, and a wrong line is rejected with a code while the next line still runs. JSON formats stream too (A2UI as JSONL messages, json-render as patches), with the cost that every message must be valid JSON. OpenUI Lang makes the same bet against JSON as KITE does, for a different shape of output: a component tree rather than edits.
+**Lines, not a document.** One op is one line of plain text, applied when the line ends. There is no bracket to balance and no partial document to repair mid-stream, and a wrong line is rejected with a code while the next line still runs. JSON formats stream too (A2UI as JSONL messages, json-render as patches), with the cost that every message must be valid JSON. OpenUI Lang makes the same bet against JSON as PATET does, for a different shape of output: a component tree rather than edits.
 
-**Cards carry meaning; layout is not the writer's.** A KITE writer says "this is a decision with these options", never "a column holding a row holding two buttons". Where the card goes, how large it gets, and what is folded away when a topic is crowded are the renderer's work. This is the largest difference from A2UI, json-render and OpenUI, where the writer composes layout from primitives. It is also the largest limitation: see below.
+**Cards carry meaning; layout is not the writer's.** A PATET writer says "this is a decision with these options", never "a column holding a row holding two buttons". Where the card goes, how large it gets, and what is folded away when a topic is crowded are the renderer's work. This is the largest difference from A2UI, json-render and OpenUI, where the writer composes layout from primitives. It is also the largest limitation: see below.
 
 **Asking the user is part of the language.** A `decision` or `input` card waits for the user, the renderer brings such cards forward one at a time, and the answer returns as an op (`user set k2 chosen o2`) in the same stream as everything else. Elsewhere this is an action callback into application code.
 
 **The user's hand outranks the writer's.** A card the user moved or resized is pinned, and an agent's attempt to move it is rejected by the protocol itself. We found no equivalent rule in the other descriptions.
 
-## What KITE does not do
+## What PATET does not do
 
 Stated plainly, because the trade above has a price.
 
 - **No free layout.** A writer cannot build an arbitrary screen: a login form, a landing page, a custom dashboard arrangement. A2UI, json-render and OpenUI can.
 - **A small vocabulary.** 16 card types. A renderer can add kinds of its own (`x-...`), which fall back to a generic `record` card elsewhere, and a writer can use `record` for any entity with named fields. That is still far from the open component catalogs of the others: an extension kind has no declared schema or look in the protocol.
-- **No data binding.** There is no data model with paths, no computed values, no conditional visibility. KITE has only named values (`let`), which substitute text. A2UI and json-render have real binding.
+- **No data binding.** There is no data model with paths, no computed values, no conditional visibility. PATET has only named values (`let`), which substitute text. A2UI and json-render have real binding.
 - **Short text only.** Cells hold 60 characters. That is the point of the design. Long content is pointed at with a `doc` card and opened outside the board; it is never on it.
-- **Few renderers.** KITE for desktop and Android, and a web element (`<kite-board>`), all from one author. A2UI has official renderers for Lit, Angular, React, Flutter and SwiftUI; json-render for React, Vue, Svelte, Solid, React Native and more.
-- **Young.** Version 0.3, one production user, no measurements published. A2UI and AG-UI are at 1.0 with many integrations.
+- **Few renderers.** KITE for desktop and Android, and a web element (`<patet-board>`), all from one author. A2UI has official renderers for Lit, Angular, React, Flutter and SwiftUI; json-render for React, Vue, Svelte, Solid, React Native and more.
+- **Young.** Version 0.4, one production user, no measurements published. A2UI and AG-UI are at 1.0 with many integrations.
 
-If you need an agent to draw arbitrary interfaces inside your own product, use A2UI or json-render. If you want an agent's work to live on a board a person can keep, KITE is built for that.
+If you need an agent to draw arbitrary interfaces inside your own product, use A2UI or json-render. If you want an agent's work to live on a board a person can keep, PATET is built for that.
 
 ## Project by project
 
@@ -66,19 +66,19 @@ If you need an agent to draw arbitrary interfaces inside your own product, use A
 
 A declarative UI protocol with renderers: the agent sends JSON messages and the client draws native components from a catalog it trusts. Version 1.0 is the current specification; Apache-2.0; about 17.6k stars. Components form a flat list linked by id, with exactly one `root` per surface; data lives in a per-surface model addressed by JSON Pointer; custom catalogs are JSON Schema documents the renderer advertises. Transports named by the spec include A2A, AG-UI, MCP, SSE and WebSockets.
 
-*Next to KITE:* the same layer, a different unit. A2UI describes a surface component by component, including its layout; KITE edits a board card by card and leaves layout out. In the part of the specification we read, whole surfaces are removed with `deleteSurface` and we did not find a message that removes a single component; KITE's `del` removes one item or one card. *Together:* A2UI's catalogs are open, so KITE's card types could be offered as an A2UI catalog. That mapping is not specified yet.
+*Next to PATET:* the same layer, a different unit. A2UI describes a surface component by component, including its layout; PATET edits a board card by card and leaves layout out. In the part of the specification we read, whole surfaces are removed with `deleteSurface` and we did not find a message that removes a single component; PATET's `del` removes one item or one card. *Together:* A2UI's catalogs are open, so PATET's card types could be offered as an A2UI catalog. That mapping is not specified yet.
 
 ### json-render (Vercel Labs)
 
 A library, not a wire protocol: you define a catalog of components and actions, the model emits a JSON spec constrained to it, and the library renders it with your components. Apache-2.0; about 19.8k stars; renderers for React, Vue, Svelte, Solid, React Native, and targets such as PDF, email and terminal. Specs have a flat `elements` map and a `root`; state is bound with `$state` and `$bindState`; streaming is handled by a spec stream compiler.
 
-*Next to KITE:* the idea of constraining a model to a catalog is shared (KITE's card type table plays that role). json-render generates an interface for a prompt inside a developer's app; it has no board, no topics, no read-back and no notion of a card waiting for the user, all of which it leaves to the app. *Together:* a web renderer for KITE could be built on json-render by defining the card types as a catalog.
+*Next to PATET:* the idea of constraining a model to a catalog is shared (PATET's card type table plays that role). json-render generates an interface for a prompt inside a developer's app; it has no board, no topics, no read-back and no notion of a card waiting for the user, all of which it leaves to the app. *Together:* a web renderer for PATET could be built on json-render by defining the card types as a catalog.
 
 ### OpenUI Lang (Thesys)
 
 A compact, streaming language for model-generated component trees, with runtimes for React, Vue, Svelte and Angular; MIT. Its authors report roughly half the output tokens of JSON formats in their own benchmark of seven screens; an independent write-up notes the JSON in that benchmark was not model-written.
 
-*Next to KITE:* the closest relative in spirit, since both reject JSON as what a model should write. OpenUI Lang describes a tree for one response; KITE describes edits to a persistent board.
+*Next to PATET:* the closest relative in spirit, since both reject JSON as what a model should write. OpenUI Lang describes a tree for one response; PATET describes edits to a persistent board.
 
 ### Open-JSON-UI
 
@@ -88,38 +88,38 @@ Described in CopilotKit's and AG-UI's documentation as an open standardization o
 
 Card formats owned by a host. Adaptive Cards is a JSON schema (up to 1.6; what renders depends on the host, and Teams stops at 1.5 according to Microsoft's guidance) drawn natively by Teams, Outlook and Copilot. Block Kit is an array of blocks, up to 50 in a message. ChatKit widgets are JSON widgets with `Card` and `ListView` roots for OpenAI's embeddable chat.
 
-*Next to KITE:* these are rich messages inside a conversation, and each is tied to its host. They are mature, widely deployed, and the right choice when the user already lives in that host. KITE is a place of its own with no conversation to scroll. *Together:* a KITE card could be exported to any of them as a snapshot; the reverse loses nothing but layout.
+*Next to PATET:* these are rich messages inside a conversation, and each is tied to its host. They are mature, widely deployed, and the right choice when the user already lives in that host. PATET is a place of its own with no conversation to scroll. *Together:* a PATET card could be exported to any of them as a snapshot; the reverse loses nothing but layout.
 
 ### MCP Apps
 
 The official MCP extension for interfaces (specification 2026-01-26, stable; Apache-2.0): a tool declares a `ui://` resource holding HTML, and the host renders it in a sandboxed frame that can talk back to the host. Supported by ChatGPT, Claude, VS Code and others, to varying degrees.
 
-*Next to KITE:* a different problem. In MCP Apps the interface is written ahead of time by the tool's author and delivered whole; the model chooses when to show it but does not compose it. In KITE the model composes the screen at run time from a small vocabulary and nothing executes. *Together:* they complement each other. A KITE `web` card can already show a page; showing an MCP App inside a card would be a natural extension.
+*Next to PATET:* a different problem. In MCP Apps the interface is written ahead of time by the tool's author and delivered whole; the model chooses when to show it but does not compose it. In PATET the model composes the screen at run time from a small vocabulary and nothing executes. *Together:* they complement each other. A PATET `web` card can already show a page; showing an MCP App inside a card would be a natural extension.
 
 ### AG-UI (CopilotKit)
 
 An event protocol between an agent backend and a frontend: version 1.0, 31 event types in eight families (runs, text, tool calls, state, reasoning, activity, subagents, passthrough), MIT, about 20k stars, with integrations for LangGraph, CrewAI, Pydantic AI, Google ADK, Microsoft Agent Framework and others. Its documentation states that it "is not a generative UI specification" and that it carries A2UI, Open-JSON-UI and MCP-UI.
 
-*Next to KITE:* not an alternative but a road. KITE defines an AG-UI binding ([SPEC.md, section 10.5](SPEC.md#105-ag-ui)): a KITE renderer is an AG-UI client that sends the board and a `screen` tool with each run, and an AG-UI agent drives the board with text, tool calls or `CUSTOM` events.
+*Next to PATET:* not an alternative but a road. PATET defines an AG-UI binding ([SPEC.md, section 10.5](SPEC.md#105-ag-ui)): a PATET renderer is an AG-UI client that sends the board and a `screen` tool with each run, and an AG-UI agent drives the board with text, tool calls or `CUSTOM` events.
 
 ### App frameworks
 
 CopilotKit (the maker of AG-UI), Vercel AI SDK, Tambo and assistant-ui are frameworks for building a product with an agent in it. Their generative UI is mostly a model choosing among components the developer registered and filling in props, shown inside a chat. Vercel's original `streamUI` over React Server Components is marked experimental with development paused; its documentation points to rendering typed tool results in AI SDK UI instead.
 
-*Next to KITE:* these are toolkits for developers; KITE is a protocol and a finished app. A product built with any of them could embed a KITE renderer as its workspace.
+*Next to PATET:* these are toolkits for developers; PATET is a protocol, with a finished app (PATET) built on it. A product built with any of them could embed a PATET renderer as its workspace.
 
 ## Choosing
 
 | You want | Look at |
 |---|---|
-| An agent's ongoing work on one board a person keeps, with decisions that come to them | KITE Protocol |
+| An agent's ongoing work on one board a person keeps, with decisions that come to them | PATET |
 | An agent drawing arbitrary native interfaces across web and mobile | A2UI |
 | A model generating UI from your own React, Vue or Svelte components | json-render, OpenUI, Tambo |
 | Rich replies inside Teams, Slack or ChatGPT | Adaptive Cards, Block Kit, ChatKit widgets |
 | A tool that brings its own ready-made interface to any MCP host | MCP Apps |
 | To connect an agent framework to a frontend | AG-UI |
 
-These combine. A plausible stack: an agent built with LangGraph, speaking AG-UI, writing KITE ops to a board, on which one card shows an MCP App.
+These combine. A plausible stack: an agent built with LangGraph, speaking AG-UI, writing PATET ops to a board, on which one card shows an MCP App.
 
 ## Sources
 

@@ -1,19 +1,19 @@
-// <kite-board>: a KITE Protocol renderer for the web, as one custom element with no dependencies.
+// <patet-board>: a PATET renderer for the web, as one custom element with no dependencies.
 //
-//   <script type="module" src="kite-board.js"></script>
-//   <kite-board id="board"></kite-board>
+//   <script type="module" src="patet-board.js"></script>
+//   <patet-board id="board"></patet-board>
 //
 //   board.apply("card k1 metric trip 2x2 Days left")   -> "ok" | "ok clipped ..." | "err <code> <message>" | "skip"
 //   board.feed(chunk); board.end()                      a model's text as it streams
 //   board.read()                                        the board as ops, to show a model before it edits
 //   board.describe()                                    what this renderer supports (SPEC.md section 6)
-//   board.addEventListener("kite-event", e => e.detail.entry)   "user set k2 chosen o2", to send to your agent
+//   board.addEventListener("patet-event", e => e.detail.entry)   "user set k2 chosen o2", to send to your agent
 //
 // Attributes: `media` lets writers create web, image and doc cards (off by default: they load what the writer
 // chose); `theme="light"` or `theme="dark"` overrides the system setting.
 // Every text a writer sends is put on the page as text, never as HTML.
 
-import { Board, LineStream, VERSION, asks, joinCells, kindNames, parse, serialize, splitCells } from "../js/kite-protocol.js";
+import { Board, LineStream, VERSION, asks, joinCells, kindNames, parse, serialize, splitCells } from "../js/patet.js";
 
 const MEDIA = ["web", "image", "doc"];
 const SVG = "http://www.w3.org/2000/svg";
@@ -94,7 +94,7 @@ a { color:var(--accent); }
 
 const COLORS = { accent: "var(--accent)", orange: "var(--accent)", green: "var(--green)", red: "var(--red)", amber: "var(--amber)", yellow: "var(--amber)", dim: "var(--dim)", gray: "var(--dim)", faint: "var(--faint)", white: "var(--text)" };
 
-export class KiteBoard extends HTMLElement {
+export class PatetBoard extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
@@ -176,7 +176,7 @@ export class KiteBoard extends HTMLElement {
   /** What this renderer supports, one line per entry. */
   describe() {
     const kinds = kindNames().filter((k) => this.media || !MEDIA.includes(k));
-    return [`kite-protocol ${VERSION}`, "renderer kite-board 0.1", `kinds ${kinds.join(" ")}`];
+    return [`patet ${VERSION}`, "renderer patet-board 0.1", `kinds ${kinds.join(" ")}`];
   }
 
   /** Remove everything. */
@@ -191,7 +191,7 @@ export class KiteBoard extends HTMLElement {
 
   #user(...lines) {
     for (const line of lines) {
-      if (this.apply(line, "user").startsWith("ok")) this.dispatchEvent(new CustomEvent("kite-event", { detail: { entry: `user ${line}` }, bubbles: true, composed: true }));
+      if (this.apply(line, "user").startsWith("ok")) this.dispatchEvent(new CustomEvent("patet-event", { detail: { entry: `user ${line}` }, bubbles: true, composed: true }));
     }
   }
 
@@ -507,4 +507,4 @@ function drawing(c, b) {
   return h("svg", { viewBox: "0 0 100 100", preserveAspectRatio: "xMidYMid meet", style: "max-height:320px" }, shapes);
 }
 
-if (!customElements.get("kite-board")) customElements.define("kite-board", KiteBoard);
+if (!customElements.get("patet-board")) customElements.define("patet-board", PatetBoard);
