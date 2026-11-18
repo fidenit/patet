@@ -68,7 +68,9 @@ for line in ["topic demo Demo", "card k1 metric demo 2x2 Users", "set k1 value 4
 <script type="module" src="kite-board.js"></script>
 <kite-board id="board"></kite-board>
 <script type="module">
-  board.apply("card k2 decision ws 3x3 Which venue?");               // what your agent writes goes in
+  board.apply("topic ws Team Workshop");                             // what your agent writes goes in
+  board.apply("card k2 decision ws 3x3 Which venue?");
+  board.apply("add k2 o1 Gapyeong | Close and cheaper");
   board.addEventListener("kite-event", (e) => send(e.detail.entry));  // "user set k2 chosen o1" comes out
 </script>
 ```

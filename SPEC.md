@@ -75,9 +75,9 @@ Ids of topics, groups and cards SHOULD be unique across all three kinds. A rende
 | `topic` | `topic <id> <name>` | Create a topic, or rename it | `bad-id`; id is on the shelf (`shelved`) |
 | `group` | `group <id> <name>` | Create a group, or rename it | `bad-id`; id is a topic or card (`id-in-use`); 9th group (`limit`) |
 | `put` | `put <topic> <group>` | Place a topic in a group | `no-such-group`, `no-such-topic` |
-| `card` | `card <id> <kind> <topic> [<w>x<h>] <title>` | Create a card | id exists (`exists`); `bad-id`; id is on the shelf (`shelved`); `unknown-kind`; `no-such-topic`; the renderer does not let this writer create that kind (`not-allowed`) |
-| `set` | `set <id> <field> <value>` | Set one field; `title` is a field of every card | `no-such-card`; `unknown-field`; value fails the field's check (`bad-value`) |
-| `add` | `add <id> <item> <cell> \| <cell> ...` | Add an item; an existing item id is replaced | `no-such-card`; type takes no items (`no-items`); `bad-id`; `cell-count`; a cell fails its check (`bad-value`); item limit (`limit`) |
+| `card` | `card <id> <kind> <topic> [<w>x<h>] [<title>]` | Create a card | id exists (`exists`); `bad-id`; id is on the shelf (`shelved`); `unknown-kind`; `no-such-topic`; the renderer does not let this writer create that kind (`not-allowed`) |
+| `set` | `set <id> <field> <value>` | Set one field; `title` is a field of every card | `no-such-card`; `unknown-field`; value fails the field's check (`bad-value`); an agent sets a field that holds the user's answer (`user-only`) |
+| `add` | `add <id> <item> <cell> \| <cell> ...` | Add an item; an existing item id is replaced | `no-such-card`; type takes no items (`no-items`); `bad-id`; `cell-count`; a cell fails its check (`bad-value`); item limit (`limit`); an agent writes the value cell of an input box (`user-only`) |
 | `upd` | `upd <id> <item> <cell> \| <cell> ...` | Replace an existing item | as `add`, and `no-such-item` |
 | `del` | `del <id> [<item>]` | With an item: remove it. Without: remove the card, else the empty topic, else the group | `no-such-item`; nothing has that id (`not-found`); topic still has cards (`not-empty`) |
 | `mv` | `mv <card> <topic>` | Move a card to another topic; clears its position and pin | `no-such-topic`, `no-such-card` |
@@ -99,6 +99,7 @@ Details that are easy to miss:
 - `card` on an existing id is rejected: a writer changes a card with `set`, `add`, `upd`, and does not recreate it. `add` on an existing item id overwrites. `topic` and `group` on an existing id rename.
 - In `card`, the token after the topic is the size if it has the form `<w>x<h>` (two integers joined by `x` or `X`); otherwise it starts the title. Without a size the type's default applies.
 - `del <id>` looks the id up as a card first, then a topic, then a group. Deleting a group leaves its topics without a group.
+- **The user's answers are the user's.** `chosen` of a decision, `sent` of an input card, and the third cell of an input box hold what the user answered. An agent's op that writes one of them is rejected with `user-only`. An agent asks; it does not answer for the user.
 - **Pinning.** When the user moves or resizes a card it becomes pinned. An agent's `move` and `size` on a pinned card are rejected; its content ops still apply. Only the user pins and unpins.
 - `focus` and `say` are not part of the serialized board (section 8).
 - `{name}` in a title, a field or a cell shows the value set by `let`. The renderer substitutes at draw time; the stored text keeps `{name}`.
@@ -120,7 +121,7 @@ Details that are easy to miss:
 | `progress` | 3x3 | `pct` (3), `text` (60) | `done\|run\|todo\|fail \| step` | `pct` is an integer 0 to 100; cell 1 |
 | `checklist` | 3x3 | none | `done\|todo \| text` | cell 1 |
 | `decision` | 3x3 | `text` (120), `multi` (8), `tone` (8), `chosen` (120) | `option \| one-line description` | `multi` is `yes` `no`; `tone` is `normal` `danger` |
-| `input` | 3x3 | `text` (120), `sent` (8) | `box name \| hint or kind` | |
+| `input` | 3x3 | `text` (120), `sent` (8) | `box name \| hint or kind` | `sent` is `yes` |
 | `timeline` | 3x3 | none | `when \| text \| done\|run\|todo` (cell 3 optional) | |
 | `note` | 3x2 | `text` (240) | none | |
 | `web` | 6x5 | `url` (600) | none | |
@@ -139,7 +140,7 @@ Meaning per type:
 - **progress**: `pct` is the whole; items are steps with a state.
 - **checklist**: the user can tick items (section 9).
 - **decision**: asks the user to pick one item. The renderer writes the picked item id to `chosen`. With `multi` set to `yes` the user may pick several, and `chosen` holds their ids joined by `,` in item order. `tone` set to `danger` marks a choice that cannot be undone; a renderer SHOULD make it look so.
-- **input**: asks the user for values. Each item is a box. A box whose name ends with `*` must be filled before the card can be sent. Cell 2 is a hint, or a kind: `date`, `time`, `number`, `slider <lo>~<hi> <unit>`, or `choice <a> / <b> / ...` (one of the listed values). A renderer shows a kind it does not know as a free text box. When the user sends the card the renderer writes each value as cell 3 and sets `sent` to `yes`.
+- **input**: asks the user for values. Each item is a box. A box whose name ends with `*` must be filled before the card can be sent. Cell 2 is a hint, or a kind: `date`, `time`, `number`, `slider <lo>~<hi> <unit>`, or `choice <a> / <b> / ...` (one of the listed values). A renderer shows a kind it does not know as a free text box. When the user sends the card the renderer writes each value as cell 3 (with `-` as cell 2 when the box had no hint) and sets `sent` to `yes`.
 - **timeline**: entries in the order given.
 - **note**: a short text.
 - **web**: `url` is a web address, or an absolute path on the renderer's machine.
@@ -174,7 +175,7 @@ features tell
 | `kinds` | the kinds this writer may create: core types and the extension kinds the renderer draws itself |
 | `features` | `tell` when it can read aloud; a renderer may add words of its own |
 
-A reader ignores keys it does not know. A writer SHOULD create only the kinds listed, and one that was given no description assumes the 14 types of version 0.1 and no features. How the description travels is up to the binding (section 10).
+A reader ignores keys it does not know. A writer SHOULD create only the kinds listed, and one that was given no description assumes the core types of this document and no features. How the description travels is up to the binding (section 10).
 
 ## 7. Layout
 
@@ -227,7 +228,7 @@ Codes are stable; messages are for a model or a person to read and may change.
 | `not-shelved` | the topic is not on the shelf |
 | `limit` | a count limit was reached |
 | `pinned` | the user pinned the card |
-| `user-only` | only the user may do this |
+| `user-only` | only the user may do this: pin and unpin, and write the user's own answers |
 | `not-allowed` | the renderer does not let this writer do this (section 11) |
 
 How a verdict travels is up to the binding (section 10).
@@ -264,14 +265,43 @@ A binding says how lines, verdicts and events travel. A renderer may offer any o
 
 The text a model generates is the op stream. The renderer cuts it into lines as tokens arrive and applies each. Rejections and notes go into the model's next input, each as `<line> → <code> <message>`. This is the binding with the least in the way, for an app that calls a model itself.
 
-The input a renderer builds for the model is its own business. It SHOULD contain the board (section 8), the events since the last turn, the verdicts that were not `applied`, and what the user said.
+What a renderer gives the model each turn is its own business, but a turn that lacks one of these parts goes wrong in a known way, so a renderer SHOULD send all of them. This layout works as it is:
+
+```
+<board>
+topic ws Team Workshop
+card k2 decision ws 3x3 Which venue?
+...
+</board>
+<events>
+user set k2 chosen o2
+</events>
+<rejected>
+card k2 decision ws Again → exists card 'k2' already exists; ...
+</rejected>
+<earlier>
+user: pick a venue for next week's workshop
+you: Two venues compared. Pick one.
+</earlier>
+<input></input>
+```
+
+| Part | Holds | Without it |
+|---|---|---|
+| `<board>` | the board (section 8) | the model recreates cards that exist |
+| `<events>` | the event entries since the last turn (section 9); left out when there are none | the model does not know what the user did |
+| `<rejected>` | lines of the last turn that were rejected or clipped, as `<line> → <code> <message>`; left out when there are none | the model repeats the mistake |
+| `<earlier>` | the last few things the user said and the `say` each got | on a turn started by a gesture the model has no idea what the user wanted, and does nothing useful |
+| `<input>` | what the user said now; empty when a gesture started the turn | |
+
+The instructions for the model are [GUIDE.md](GUIDE.md); its section "How a turn reaches you" describes this layout, so the guide can be used as the system prompt as it is. Add the renderer's description (section 6) after it.
 
 ### 10.2 Log
 
 A board saved as a file is its accepted ops, in order. The first line is the header `# kite-protocol <major>.<minor>` (a comment, so a reader that predates it skips it). Each other line is a letter, a tab and a payload:
 
 ```
-# kite-protocol 0.2
+# kite-protocol 0.3
 T	2026-11-18
 A	topic ws Team Workshop
 A	card k2 decision ws 3x3 Which venue?
@@ -332,7 +362,7 @@ A renderer is an [AG-UI](https://docs.ag-ui.com) client and the agent is an AG-U
 
 For each run the renderer POSTs a `RunAgentInput`:
 
-- `messages` ends with a user message whose text is the turn: the board inside `<board>…</board>`, the events since the last run inside `<events>…</events>` (one entry per line), the verdicts that were not `applied` inside `<rejected>…</rejected>`, then `<input>…</input>` with what the user said (empty when the run was started by a gesture).
+- `messages` ends with a user message whose text is the turn in the layout of section 10.1, without `<earlier>`: the earlier messages of the conversation are in `messages` themselves.
 - `state.kite` is the same as data: `{ "version": "0.3", "board": "<ops>", "events": ["user set k2 chosen o2", ...], "renderer": ["kinds status metric ...", "features tell"] }`. `renderer` is the description of section 6, one line per entry.
 - `context` has one entry whose `value` is the text of GUIDE.md.
 - `tools` has one frontend tool, `screen`, with the input of section 10.4.

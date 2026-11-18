@@ -18,7 +18,7 @@ const check = (ok, what) => {
 
 const dir = join(here, "..", "conformance");
 const files = readdirSync(dir).filter((f) => f.endsWith(".txt")).sort();
-check(files.length >= 7, `expected the conformance cases, found ${files.length}`);
+check(files.length >= 8, `expected the conformance cases, found ${files.length}`);
 let lines = 0;
 for (const file of files) {
   const text = readFileSync(join(dir, file), "utf8").replaceAll("\r\n", "\n");

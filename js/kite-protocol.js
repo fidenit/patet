@@ -308,6 +308,9 @@ export class Board {
         const limit = fieldLimit(c.kind, op.field);
         if (limit === null) throw no("unknown-field", `${c.ext ?? c.kind} has no field '${op.field}'`);
         if (c.kind === "record" && op.field !== "title" && !c.fields.has(op.field) && c.fields.size >= LIMITS.recordFields) throw no("limit", `card '${op.id}' already has ${LIMITS.recordFields} fields`);
+        // The user's answers are the user's: an agent does not write them.
+        if (agent && ((c.kind === "decision" && op.field === "chosen") || (c.kind === "input" && op.field === "sent"))) throw no("user-only", `'${op.field}' is the user's answer; it is set when the user picks or sends, never by an agent`);
+        if (c.kind === "input" && op.field === "sent" && op.value !== "yes") throw no("bad-value", `input.sent is yes (got '${op.value}')`);
         const check = (kind, field, ok, what) => {
           if (c.kind === kind && op.field === field && !ok) throw no("bad-value", `${kind}.${field} is ${what} (got '${op.value}')`);
         };
@@ -324,7 +327,7 @@ export class Board {
       }
       case "add":
       case "upd":
-        return this.#putItem(op.id, op.item, op.cells, op.op === "upd");
+        return this.#putItem(op.id, op.item, op.cells, op.op === "upd", agent);
       case "del": {
         if (op.item !== null) {
           const c = this.#card(op.id);
@@ -415,12 +418,14 @@ export class Board {
     }
   }
 
-  #putItem(id, item, cells, update) {
+  #putItem(id, item, cells, update, agent) {
     const c = this.#card(id);
     const name = c.ext ?? c.kind;
     if (PART.get(c.kind).items === "") throw no("no-items", `${name} takes no items`);
     if (!validId(item)) throw no("bad-id", `item id '${item}' is not valid ${ID}`);
     if (cells.length === 0 || cells.length > LIMITS.cells) throw no("cell-count", `an item has 1 to ${LIMITS.cells} cells`);
+    // The third cell of an input box is what the user typed. An agent writes the name and the hint only.
+    if (agent && c.kind === "input" && cells.length > 2) throw no("user-only", "the third cell of an input box is the user's value; write 'box name | hint or kind' only");
     const states = c.kind === "checklist" ? ["done", "todo"] : c.kind === "progress" ? ["done", "run", "todo", "fail"] : [];
     if (states.length && !states.includes(cells[0])) throw no("bad-value", `the first cell of a ${c.kind} item is one of ${states.join("|")} (got '${cells[0]}')`);
     const number = (s) => s.trim() !== "" && Number.isFinite(Number(s.trim()));

@@ -40,7 +40,7 @@ The demo page has examples, streams them as a model would, shows the verdicts th
 | | |
 |---|---|
 | `apply(line, by = "agent")` | Apply one op. Returns the verdict: `ok`, `ok clipped <what> <limit>`, `err <code> <message>`, or `skip` for a blank line or comment |
-| `write(text, by = "agent")` | Apply several lines. Returns what was not simply applied: `[{ line, verdict }]`. Give this back to your model |
+| `write(text, by = "agent")` | Apply several lines. Returns what was not simply applied: `[{ line, verdict }]`, an array that also carries the counts `applied`, `rejected`, `clipped`. Give the entries back to your model |
 | `feed(chunk)`, `end()` | A model's text as it streams: lines are applied as they end. Same return as `write` |
 | `read(topic?)` | The board as ops, all of it or one topic |
 | `describe()` | What this renderer supports, to tell your agent ([SPEC.md, section 6](../SPEC.md#6-card-types)) |
@@ -59,7 +59,18 @@ Colors are CSS custom properties on the element (`--bg`, `--card`, `--text`, `--
 
 The element does not care how lines travel. Three shapes that work:
 
-- **Your own backend, streaming.** Send the user's message and `board.read()` to your server; stream the model's text back (SSE, WebSocket, fetch stream) into `board.feed(chunk)`; send `board.write` problems and `kite-event` entries with the next request. Give your model [GUIDE.md](../GUIDE.md) as its instructions.
+- **Your own backend, streaming.** Give your model [GUIDE.md](../GUIDE.md) followed by `board.describe()` as its system prompt. For each turn send it the text below, and stream its reply (SSE, WebSocket, fetch stream) into `board.feed(chunk)`.
+
+  ```js
+  const turn = (input, events, rejected, earlier) =>
+    `<board>\n${board.read()}</board>\n` +
+    (events.length ? `<events>\n${events.join("\n")}\n</events>\n` : "") +
+    (rejected.length ? `<rejected>\n${rejected.map((p) => `${p.line} → ${p.verdict.replace(/^(err|ok) /, "")}`).join("\n")}\n</rejected>\n` : "") +
+    (earlier.length ? `<earlier>\n${earlier.join("\n")}\n</earlier>\n` : "") +
+    `<input>${input}</input>`;
+  ```
+
+  `events` are the `kite-event` entries since the last turn, `rejected` what `feed` and `end` returned last time, `earlier` the last few `user: ...` / `you: <say>` pairs. Start a turn when the user types, and also when they act on the board (wait a moment first, so a sent form is one turn). Leave out `<earlier>` and a turn started by a gesture goes nowhere: the model no longer knows what was asked. The layout is specified in [SPEC.md, section 10.1](../SPEC.md#101-model-output).
 - **Tool calls.** Offer your model a `screen` tool whose input is `ops`; on a call, `board.write(ops)` and return the verdicts as the tool's result.
 - **AG-UI.** Follow the binding in [SPEC.md, section 10.5](../SPEC.md#105-ag-ui): the element is the renderer, your AG-UI client carries the events.
 

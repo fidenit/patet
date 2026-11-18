@@ -457,6 +457,13 @@ impl Board {
                 if c.kind == Kind::Record && field != "title" && !c.fields.contains_key(&field) && c.fields.len() >= MAX_RECORD_FIELDS {
                     return Err(no("limit", format!("card '{id}' already has {MAX_RECORD_FIELDS} fields")));
                 }
+                // The user's answers are the user's: an agent does not write them.
+                if by == Author::Ai && matches!((c.kind, field.as_str()), (Kind::Decision, "chosen") | (Kind::Input, "sent")) {
+                    return Err(no("user-only", format!("'{field}' is the user's answer; it is set when the user picks or sends, never by an agent")));
+                }
+                if c.kind == Kind::Input && field == "sent" && value != "yes" {
+                    return Err(no("bad-value", format!("input.sent is yes (got '{value}')")));
+                }
                 match (c.kind, field.as_str()) {
                     (Kind::Status, "state") if !["ok", "run", "wait", "fail", "idle"].contains(&value.as_str()) => {
                         return Err(no("bad-value", format!("status.state is one of ok|run|wait|fail|idle (got '{value}')")));
@@ -485,8 +492,8 @@ impl Board {
                 c.rev += 1;
                 self.notes.extend(note);
             }
-            Op::Add { id, item, cells } => self.put_item(&id, &item, cells, false)?,
-            Op::Upd { id, item, cells } => self.put_item(&id, &item, cells, true)?,
+            Op::Add { id, item, cells } => self.put_item(&id, &item, cells, false, by)?,
+            Op::Upd { id, item, cells } => self.put_item(&id, &item, cells, true, by)?,
             Op::Del { id, item: Some(item) } => {
                 let c = self.card_mut(&id)?;
                 let n = c.items.len();
@@ -605,7 +612,7 @@ impl Board {
         Ok(())
     }
 
-    fn put_item(&mut self, id: &str, item: &str, cells: Vec<String>, update: bool) -> Result<(), Reject> {
+    fn put_item(&mut self, id: &str, item: &str, cells: Vec<String>, update: bool, by: Author) -> Result<(), Reject> {
         let mut note = None;
         let c = self.card_mut(id)?;
         if !c.kind.has_items() {
@@ -616,6 +623,10 @@ impl Board {
         }
         if cells.is_empty() || cells.len() > MAX_CELLS {
             return Err(no("cell-count", format!("an item has 1 to {MAX_CELLS} cells")));
+        }
+        // The third cell of an input box is what the user typed. An agent writes the name and the hint only.
+        if by == Author::Ai && c.kind == Kind::Input && cells.len() > 2 {
+            return Err(no("user-only", "the third cell of an input box is the user's value; write 'box name | hint or kind' only"));
         }
         let states: &[&str] = match c.kind {
             Kind::Checklist => &["done", "todo"],
@@ -700,9 +711,7 @@ mod part_tests {
     /// The guide for agents carries the same table. It is written by hand, so this keeps it from drifting.
     #[test]
     fn the_guide_lists_the_registered_card_types() {
-        let guide = include_str!("../../GUIDE.md").replace("
-", "
-");
+        let guide = include_str!("../../GUIDE.md").replace('\r', "");
         let table = guide.split("<!-- parts:begin -->
 ").nth(1).and_then(|t| t.split("<!-- parts:end -->").next()).expect("GUIDE.md has the parts markers");
         assert_eq!(table, parts_table());

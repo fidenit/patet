@@ -1,0 +1,68 @@
+# The user's answers belong to the user. An agent asks; it does not answer for them.
+agent: topic t Trip
+  -> ok
+agent: card d1 decision t Where to stay?
+  -> ok
+agent: add d1 o1 Aewol | Quiet
+  -> ok
+agent: add d1 o2 Seogwipo | Central
+  -> ok
+agent: set d1 chosen o1
+  -> err user-only
+user: set d1 chosen o2
+  -> ok
+agent: card d2 decision t Which days?
+  -> ok
+agent: set d2 multi yes
+  -> ok
+agent: add d2 a Friday
+  -> ok
+agent: add d2 b Saturday
+  -> ok
+user: set d2 chosen a, b
+  -> ok
+agent: card f1 input t Dates
+  -> ok
+agent: add f1 a Start date* | date
+  -> ok
+agent: add f1 b People
+  -> ok
+agent: add f1 c Budget | number | 300
+  -> err user-only
+agent: upd f1 a Start date* | date | 12/3
+  -> err user-only
+agent: set f1 sent yes
+  -> err user-only
+user: upd f1 a Start date* | date | 12/3
+  -> ok
+user: upd f1 b People | - | 4
+  -> ok
+user: set f1 sent maybe
+  -> err bad-value
+user: set f1 sent yes
+  -> ok
+agent: upd f1 a Start day* | date
+  -> ok
+agent: card c1 checklist t To do
+  -> ok
+agent: add c1 i1 todo | Book
+  -> ok
+agent: upd c1 i1 done | Book
+  -> ok
+board:
+topic t Trip
+card d1 decision t 3x3 Where to stay?
+set d1 chosen o2
+add d1 o1 Aewol | Quiet
+add d1 o2 Seogwipo | Central
+card d2 decision t 3x3 Which days?
+set d2 chosen a, b
+set d2 multi yes
+add d2 a Friday
+add d2 b Saturday
+card f1 input t 3x3 Dates
+set f1 sent yes
+add f1 a Start day* | date
+add f1 b People | - | 4
+card c1 checklist t 3x3 To do
+add c1 i1 done | Book

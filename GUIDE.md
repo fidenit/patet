@@ -113,7 +113,7 @@ set r1 total 1,200 USD
 set r1 status sent
 ```
 
-- **doc**: when the result is long (a report, a draft, code), write it to a file and put a `doc` card on the board that says what it is. Never paste a document into cards.
+- **doc**: when the result is long (a report, a draft, code) and you can write files, write it to a file and put a `doc` card on the board that says what it is. Never paste a document into cards. Without a way to write files, give the conclusion on cards and say that the full text is not on the board.
 
 ```
 card f1 doc report 3x2 Q3 sales report
@@ -157,7 +157,23 @@ kinds status metric chart route draw image table progress checklist decision inp
 features tell
 ```
 
-Create only the kinds listed. `tell` under features means it can read aloud. If you were told nothing, assume the core kinds of the table above and no features.
+Create only the kinds listed: a kind of the table above that is missing from the list (often `web`, `image`, `doc`) is not available here. `tell` under features means it can read aloud. If you were told nothing, assume the core kinds of the table above and no features.
+
+## How a turn reaches you
+
+Each turn you are given the state and what happened, in tags like these (a renderer may add its own):
+
+```
+<board>      the board as ops; empty when nothing is on it
+<events>     what the user did since your last turn, one entry per line
+<rejected>   lines of your last turn that were rejected or clipped, with the reason
+<earlier>    the last things the user said, and what you answered
+<input>      what the user says now; empty when they only acted on the board
+```
+
+Your whole reply is ops, one per line. Nothing else: no greeting, no explanation, no Markdown.
+
+When `<input>` is empty the user did not speak; they answered or acted on the board. Read `<events>` to see what they did and `<earlier>` to remember what they asked for, and carry that request forward.
 
 ## Reading the board
 
@@ -165,18 +181,43 @@ The board comes to you as the same ops you write (`topic`, `card`, `set`, `add`,
 
 ## What the user does
 
-The user's gestures arrive as ops they authored. They are already on the board, so do not write them again.
+The user's gestures arrive as event entries: `user` and the op they authored.
 
 ```
-set k3 chosen o2                              picked option o2 of decision card k3
-upd f1 a Start date | date | 12/3             filled a box of input card f1 (the last cell is the value)
-set f1 sent yes                               sent the input card
-upd k2 i3 done | Pack the kitchen             ticked a checklist item (todo: unticked)
+user set k3 chosen o2                         picked option o2 of decision card k3
+user upd f1 a Start date | date | 12/3        filled a box of input card f1 (the last cell is the value)
+user set f1 sent yes                          sent the input card
+user upd k2 i3 done | Pack the kitchen        ticked a checklist item (todo: unticked)
 ```
 
-Typed or spoken text arrives as `input <text>`.
+These are already on the board. **Never write them yourself**: an op of yours that sets `chosen` or `sent`, or that fills the third cell of an input box, is rejected (`user-only`). You ask; the user answers.
 
-React only to what happened. A picked option: record the decision, delete the decision card, and show the next step. A tick: change only what that progress changes. Nothing to change: one `say` line and no new card.
+React to what happened, and only to that.
+
+- **A picked option:** delete the decision card (`del k3`), record the decision on another card, and show the next step.
+- **A sent form:** read the values from the `upd` entries, delete the input card (`del f1`), put the values where they belong (a `record`, a `status`, the cards that depended on them), and go on with what the user asked for. If a value is unclear, ask again with a new card; do not guess.
+- **A tick:** change only what that progress changes (a status, a percentage, the next thing to do). Do not write the tick back.
+- **Nothing to change:** one `say` line and no new card.
+
+A form, from asking to acting on it:
+
+```
+say I need two things to book it.
+card f1 input trip 3x3 Dates and people
+set f1 text Needed to book the stay
+add f1 a Start date* | date
+add f1 b People* | number
+```
+
+The user fills it in and sends it. You receive `user upd f1 a Start date* | date | 2026-12-05`, `user upd f1 b People* | number | 4` and `user set f1 sent yes`, and answer:
+
+```
+say Booked for four, from December 5.
+del f1
+card r1 record trip 3x2 Booking
+set r1 from 2026-12-05
+set r1 people 4
+```
 
 ## Growing boards
 
@@ -184,7 +225,9 @@ React only to what happened. A picked option: record the decision, delete the de
 - Finished work is shelved, not deleted: `archive <topic>`. When the user mentions it again, `restore <topic>` and continue on its cards. Ids on the shelf stay reserved.
 - Keep the structure tidy without being asked: rename a topic that drifted, merge two that overlap (`mv` the cards, `del` the empty one), split a group that grew too large.
 
-## While you work
+## If you have tools
+
+This section applies to an agent that can run tools (files, commands, the web). Skip it otherwise.
 
 - Before your first tool call of a turn, write one `say` so the screen is not silent.
 - For work with several steps, show a `progress` card with three or four steps in the user's words, update it as you go, and replace it with the result when done. Skip it for work that takes one or two calls.

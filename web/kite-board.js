@@ -46,7 +46,7 @@ aside { background:var(--panel); border:1px solid var(--line); border-radius:22p
 .turn { display:flex; align-items:center; gap:8px; font-weight:700; margin-bottom:10px; }
 .turn i { width:8px; height:8px; border-radius:50%; background:var(--accent); }
 .turn small { color:var(--accent); font-weight:600; }
-.say { margin-top:14px; padding-top:12px; border-top:1px solid var(--line); font-weight:700; }
+.say { font-weight:700; } .card + .say { margin-top:14px; padding-top:12px; border-top:1px solid var(--line); }
 .say:empty { display:none; }
 .group { color:var(--dim); font-size:12px; letter-spacing:.06em; text-transform:uppercase; margin:6px 4px 8px; }
 section { border:1px solid var(--line); border-radius:24px; padding:12px; margin-bottom:16px; }
@@ -140,12 +140,19 @@ export class KiteBoard extends HTMLElement {
     return verdict;
   }
 
-  /** Apply several lines. Returns what was not simply applied: [{ line, verdict }]. */
+  /**
+   * Apply several lines. Returns what was not simply applied: [{ line, verdict }]. The array also carries the
+   * counts of this call as `applied`, `rejected` and `clipped`.
+   */
   write(text, by = "agent") {
-    const out = [];
+    const out = Object.assign([], { applied: 0, rejected: 0, clipped: 0 });
     for (const line of text.split("\n")) {
       const verdict = this.apply(line, by);
-      if (verdict !== "ok" && verdict !== "skip") out.push({ line: line.trim(), verdict });
+      if (verdict === "skip") continue;
+      if (verdict.startsWith("err")) out.rejected++;
+      else out.applied++;
+      if (verdict.startsWith("ok clipped")) out.clipped++;
+      if (verdict !== "ok") out.push({ line: line.trim(), verdict });
     }
     return out;
   }
@@ -168,7 +175,7 @@ export class KiteBoard extends HTMLElement {
   /** What this renderer supports, one line per entry. */
   describe() {
     const kinds = kindNames().filter((k) => this.media || !MEDIA.includes(k));
-    return [`kite-protocol ${VERSION}`, "renderer kite-board 0.1", `kinds ${kinds.join(" ")}`, "features"];
+    return [`kite-protocol ${VERSION}`, "renderer kite-board 0.1", `kinds ${kinds.join(" ")}`];
   }
 
   /** Remove everything. */

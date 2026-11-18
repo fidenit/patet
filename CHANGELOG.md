@@ -11,6 +11,10 @@ The vocabulary can grow without breaking readers, and a writer can find out what
 - **Asking, extended.** `decision` takes `multi` (several answers, `chosen` holds ids joined by `,`; its limit is now 120) and `tone` (`danger`). An `input` box is required when its name ends with `*`, and has two new kinds: `time`, `choice a / b / c`.
 - **`\|`** inside a cell is a `|` that does not separate. In a `text` field, `\n` is shown as a line break.
 - **`not-allowed`**: a renderer may refuse to let outside writers create `web`, `image` and `doc` cards.
+- **The user's answers are the user's.** An agent's op that sets `chosen` or `sent`, or writes the value cell of an input box, is rejected with `user-only`. (Found by a model that answered its own questions.)
+- **A turn for a model, written down** (SPEC.md 10.1): `<board>`, `<events>`, `<rejected>`, `<earlier>`, `<input>`, and what goes wrong without each. The guide describes the same layout, so it works as a system prompt as it is.
+- The guide says how to react to a sent form, with a worked example, and keeps tool advice in a section of its own.
+- `card` takes an optional title, as implementations always did.
 - Versioning: from 0.3 on, a new core card type is a minor change, because writers read the renderer's description.
 - A board of 0.2 is read unchanged. A cell that ended in a backslash directly before a `|` now reads differently (`a\|b` is one cell); write a space before the separator.
 

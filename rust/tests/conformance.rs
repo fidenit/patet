@@ -76,7 +76,7 @@ fn conformance_cases() {
         run_case(&name, &std::fs::read_to_string(&path).unwrap());
         ran += 1;
     }
-    assert!(ran >= 6, "expected the conformance cases, found {ran}");
+    assert!(ran >= 8, "expected the conformance cases, found {ran}");
 }
 
 #[test]
