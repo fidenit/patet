@@ -227,7 +227,9 @@ export class PatetBoard extends HTMLElement {
   // and no card is narrower than two columns.
   #span(w) {
     const cols = this.cols;
-    return Math.min(cols, Math.max(cols >= 4 ? 2 : 1, Math.ceil((w * cols) / (cols >= 10 ? 12 : 9))));
+    // On a phone-wide board a card takes the whole row: half-width cards leave gaps nobody can use.
+    if (cols <= 5) return w <= 2 && cols >= 4 ? Math.ceil(cols / 2) : cols;
+    return Math.min(cols, Math.max(2, Math.ceil((w * cols) / (cols >= 10 ? 12 : 9))));
   }
 
   #pending = false;
@@ -376,7 +378,7 @@ export class PatetBoard extends HTMLElement {
         break;
       }
     }
-    return h("article", { class: `card ${c.kind}${c.id === b.focus ? " focus" : ""}${c.fields.get("tone") === "danger" ? " danger" : ""}`, style: `--w:${this.#span(c.w)};--h:${c.h}`, "data-id": c.id, part: `card ${c.kind}` },
+    return h("article", { class: `card ${c.kind}${c.id === b.focus ? " focus" : ""}${c.fields.get("tone") === "danger" ? " danger" : ""}`, style: `--w:${this.#span(c.w)};--h:${this.cols <= 5 ? 1 : c.h}`, "data-id": c.id, part: `card ${c.kind}` },
       h("h3", { text: b.show(c.title) }, topicName && h("small", { text: topicName })), body);
   }
 
