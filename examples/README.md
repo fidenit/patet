@@ -4,6 +4,7 @@ Boards in the PATET ([SPEC.md](../SPEC.md)). The reference implementation applie
 
 | File | Shows |
 |---|---|
+| [assistant/](assistant) | **A whole assistant in two files**: a page with `<patet-board>`, a brand of its own, and a real model behind it. Start here |
 | [todo.ops](todo.ops) | A checklist, a progress card and a metric on one topic |
 | [route.ops](route.ops) | A route card with three stops, and a timeline beside it |
 | [my-turn.ops](my-turn.ops) | A decision card and an input form, which come to the "my turn" slot |

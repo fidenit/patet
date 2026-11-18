@@ -4,7 +4,7 @@ Ten minutes, any model that can produce text. You need three things: the guide a
 
 ## 1. The system prompt is a file
 
-Give your model [GUIDE.md](GUIDE.md) as it is, followed by what your renderer can draw:
+Give your model [GUIDE.md](GUIDE.md) as it is, followed by what your renderer can draw. You do not have to write that part by hand: `describe()` in [js/](js) and [python/](python), and `board.describe()` on `<patet-board>`, give these lines.
 
 ```
 <contents of GUIDE.md>
@@ -41,6 +41,10 @@ you: Two venues compared. Pick one.
 
 The model keeps no memory of its own. The board is the memory.
 
+- Leave a part out when it is empty, except `<board>` and `<input>`.
+- `<earlier>` is the last few exchanges, as `user: <what they typed>` and `you: <your say line>`. Without it, a turn started by a click has no idea what was wanted.
+- `<events>` and `<rejected>` are told once: what is in this turn is not repeated in the next.
+
 ## 3. Apply the answer line by line
 
 The model's whole answer is ops, one per line. Feed it to a board as it streams. Each line gets a verdict.
@@ -63,8 +67,8 @@ function take(lines) {
 }
 
 for await (const delta of modelStream) take(stream.feed(delta));   // draws while the model is still writing
-const rest = stream.finish();
-if (rest) take([rest]);
+const rest = stream.finish();                      // the last line, when the stream ended without a newline
+if (rest !== null) take([rest]);
 
 const next = serialize(board);                        // the <board> of the next turn
 ```
@@ -86,8 +90,8 @@ def take(lines):
 
 for delta in model_stream:
     take(stream.feed(delta))
-rest = stream.finish()
-if rest:
+rest = stream.finish()            # the last line, when the stream ended without a newline
+if rest is not None:
     take([rest])
 
 next_board = serialize(board)
@@ -115,6 +119,12 @@ Start that turn at once, with an empty `<input>`. Only the user may set `chosen`
 
 1. **If lines were rejected, run one more turn at once**, with an empty `<input>` and the rejected lines in `<rejected>`. Otherwise the user stares at a board that lacks what the model meant to show. One such turn, not a loop.
 2. **Do not parse prose.** A line that is not an op is rejected (`unknown-verb`). That is the protocol working: the model is told, and writes ops the next time.
+
+## The whole thing, running
+
+[examples/assistant](examples/assistant) is all of the above in two files, with a real model behind it. Copy it and change it.
+
+If your server has to keep the board (several pages on one board, checks in Python), see ["When the server keeps the board"](web/README.md#when-the-server-keeps-the-board).
 
 ## Check your work
 

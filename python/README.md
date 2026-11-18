@@ -2,8 +2,11 @@
 
 [PATET](https://github.com/fidenit/patet) 0.4 in Python: the board, the parser and the serializer. PATET is a line language an AI writes to build and edit a board of cards, and reads back to see what is on it. No dependencies; Python 3.9 or later.
 
-```
-pip install patet
+It is not on PyPI yet. Use it from a copy of the repository, or install it from there:
+
+```sh
+PYTHONPATH=/path/to/patet/python python your_app.py                       # no install at all
+pip install "git+https://github.com/fidenit/patet#subdirectory=python"    # or as a package
 ```
 
 ## Quickstart

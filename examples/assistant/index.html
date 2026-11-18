@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>An assistant that answers with a board</title>
+<style>
+  /* Make it yours here. Every variable is listed in web/README.md, "Theming". */
+  patet-board {
+    --accent: #7c3aed;          /* small labels, links, the dot of "my turn" */
+    --primary: #7c3aed;         /* Send, Done, a chosen option */
+    --primary-text: #ffffff;
+    --bg: #0b1020;  --panel: #10162a;  --card: #141a2e;  --raised: #1c2440;  --line: #263055;
+    --radius: 8px;
+    --font: Georgia, "Noto Serif KR", serif;
+  }
+  patet-board::part(card) { box-shadow: 0 1px 0 #ffffff10 inset; }   /* what a variable cannot say */
+
+  body { margin: 0; background: #0b1020; color: #ececee; font: 15px/1.5 Georgia, serif; }
+  form { display: flex; gap: 8px; padding: 16px 18px 0; }
+  input { flex: 1; font: inherit; color: inherit; background: #141a2e; border: 1px solid #263055; border-radius: 8px; padding: 10px 14px; }
+  button { font: inherit; font-weight: 700; color: #fff; background: #7c3aed; border: 0; border-radius: 8px; padding: 10px 20px; cursor: pointer; }
+  button:disabled { opacity: .5; }
+  #state { padding: 6px 20px; color: #8f93b0; font-size: 12px; min-height: 18px; }
+</style>
+</head>
+<body>
+<form id="form">
+  <input id="text" placeholder="Ask for something. The answer is a board." autocomplete="off" autofocus>
+  <button id="go">Send</button>
+</form>
+<div id="state"></div>
+<patet-board id="board" theme="dark"></patet-board>
+
+<script type="module">
+import "/web/patet-board.js";
+
+const board = document.getElementById("board");
+const state = document.getElementById("state");
+let events = [];      // what the user did on the board since the last turn: "user set k2 chosen o2"
+let rejected = [];    // lines of the last turn that were not simply applied
+const earlier = [];   // the last things said, so a turn started by a click still knows what was wanted
+let busy = Promise.resolve();
+
+// The five parts of a turn (SPEC.md 10.1).
+const turnText = (input) =>
+  `<board>\n${board.read()}</board>\n` +
+  (events.length ? `<events>\n${events.join("\n")}\n</events>\n` : "") +
+  (rejected.length ? `<rejected>\n${rejected.map((r) => `${r.line} → ${r.verdict.replace(/^(err|ok) /, "")}`).join("\n")}\n</rejected>\n` : "") +
+  (earlier.length ? `<earlier>\n${earlier.slice(-6).join("\n")}\n</earlier>\n` : "") +
+  `<input>${input}</input>`;
+
+async function turn(input, repair = false) {
+  state.textContent = "writing…";
+  const text = turnText(input);
+  events = [];
+  rejected = [];
+  const res = await fetch("/turn", { method: "POST", body: JSON.stringify({ describe: board.describe(), turn: text }) });
+  // The answer is applied as it streams: cards appear while the model is still writing.
+  const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    rejected.push(...board.feed(value));
+  }
+  rejected.push(...board.end());
+  if (input) earlier.push(`user: ${input}`);
+  if (board.board.say) earlier.push(`you: ${board.board.say}`);
+  state.textContent = rejected.length ? `${rejected.length} line(s) were not simply applied` : "";
+  // Lines were rejected: the board lacks what the model meant. One more turn at once, never a loop.
+  if (rejected.some((r) => r.verdict.startsWith("err")) && !repair) return turn("", true);
+}
+const queue = (input) => (busy = busy.then(() => turn(input)).catch((e) => (state.textContent = String(e))));
+
+document.getElementById("form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const input = document.getElementById("text");
+  if (input.value.trim()) queue(input.value.trim());
+  input.value = "";
+});
+
+// http://127.0.0.1:8787/?ask=Plan+a+picnic asks at once: handy for a demo link.
+const asked = new URLSearchParams(location.search).get("ask");
+if (asked) queue(asked);
+
+// A tick, a pick, a sent form. A form is several entries, so wait a moment and send them as one turn.
+let timer;
+board.addEventListener("patet-event", (e) => {
+  events.push(e.detail.entry);
+  clearTimeout(timer);
+  timer = setTimeout(() => queue(""), 300);
+});
+</script>
+</body>
+</html>

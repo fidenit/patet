@@ -47,6 +47,17 @@ const PART = new Map(PARTS.map((p) => [p.name, p]));
 
 export const kindNames = () => PARTS.map((p) => p.name);
 
+/** Card types that make a renderer load or open what the writer chose (SPEC.md section 11). */
+export const MEDIA_KINDS = ["web", "image", "doc"];
+
+/** What a renderer supports, one line per entry (SPEC.md section 6): give it to the model after GUIDE.md. */
+export function describe({ renderer = "patet-js 0.4", media = false, extraKinds = [], features = [] } = {}) {
+  const kinds = [...kindNames().filter((k) => media || !MEDIA_KINDS.includes(k)), ...extraKinds];
+  const out = [`patet ${VERSION}`, `renderer ${renderer}`, `kinds ${kinds.join(" ")}`];
+  if (features.length) out.push(`features ${features.join(" ")}`);
+  return out;
+}
+
 /** The card type table for a model (Markdown), the same text the reference implementation builds. */
 export function partsTable() {
   let t = "| Type | Use | Fields (length limit) | Item | Default size |\n|---|---|---|---|---|\n";

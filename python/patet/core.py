@@ -6,9 +6,9 @@ import math
 import re
 import unicodedata
 from dataclasses import dataclass, field
-from typing import Dict, List, NamedTuple, Optional, Tuple
+from typing import Dict, Iterable, List, NamedTuple, Optional, Tuple
 
-from .lang import WS, Op, Reject, join_cells, parse
+from .lang import VERSION, WS, Op, Reject, join_cells, parse
 
 _ID = "(1 to 24 letters, digits, _ or -)"
 _ID_ASCII = frozenset("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-")
@@ -55,6 +55,24 @@ _PART: Dict[str, Part] = {p.name: p for p in PARTS}
 
 def kind_names() -> List[str]:
     return [p.name for p in PARTS]
+
+
+#: Card types that make a renderer load or open what the writer chose. A renderer that takes ops from
+#: outside its own process leaves them out of what it describes unless the user allowed them (SPEC.md section 11).
+MEDIA_KINDS = ("web", "image", "doc")
+
+
+def describe(renderer: str = "patet-python 0.4", media: bool = False, extra_kinds: Iterable[str] = (), features: Iterable[str] = ()) -> List[str]:
+    """What a renderer supports, one line per entry (SPEC.md section 6): give it to the model after GUIDE.md.
+
+    `extra_kinds` are the extension kinds (`x-...`) you draw yourself; `features` is `tell` when you can read aloud.
+    """
+    kinds = [k for k in kind_names() if media or k not in MEDIA_KINDS] + list(extra_kinds)
+    out = [f"patet {VERSION}", f"renderer {renderer}", "kinds " + " ".join(kinds)]
+    features = list(features)
+    if features:
+        out.append("features " + " ".join(features))
+    return out
 
 
 def parts_table() -> str:

@@ -35,25 +35,26 @@ function h(tag, props = {}, ...kids) {
 const STYLE = `
 :host { --bg:#0f1012; --panel:#16171a; --card:#1c1d21; --raised:#25262b; --line:#2e3036; --edge:#4a4d55; --text:#ececee; --soft:#c9cacf; --dim:#8f9198; --faint:#63656c;
   --accent:#f0932b; --green:#4cc38a; --red:#e5605a; --amber:#e0a93b; --on:#ececee; --on-text:#16171a;
-  display:block; background:var(--bg); color:var(--text); font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans KR",sans-serif; }
+  --primary:var(--on); --primary-text:var(--on-text); --radius:20px; --font:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans KR",sans-serif;
+  display:block; background:var(--bg); color:var(--text); font:14px/1.45 var(--font); }
 :host([theme="light"]) { --bg:#f3f3f1; --panel:#fafaf8; --card:#ffffff; --raised:#f0f0ee; --line:#e2e2df; --edge:#b9b9b4; --text:#1b1c1e; --soft:#3a3b3f; --dim:#74767c; --faint:#a0a2a8; --on:#1b1c1e; --on-text:#ffffff; }
 @media (prefers-color-scheme: light) { :host(:not([theme="dark"])) { --bg:#f3f3f1; --panel:#fafaf8; --card:#ffffff; --raised:#f0f0ee; --line:#e2e2df; --edge:#b9b9b4; --text:#1b1c1e; --soft:#3a3b3f; --dim:#74767c; --faint:#a0a2a8; --on:#1b1c1e; --on-text:#ffffff; } }
 * { box-sizing:border-box; }
 .wrap { display:grid; grid-template-columns:minmax(260px,320px) 1fr; gap:18px; padding:18px; align-items:start; }
 .wrap.solo { grid-template-columns:1fr; }
 @media (max-width:760px) { .wrap { grid-template-columns:1fr; } }
-aside { background:var(--panel); border:1px solid var(--line); border-radius:22px; padding:16px; position:sticky; top:12px; }
+aside { background:var(--panel); border:1px solid var(--line); border-radius:calc(var(--radius) * 1.1); padding:16px; position:sticky; top:12px; }
 .turn { display:flex; align-items:center; gap:8px; font-weight:700; margin-bottom:10px; }
 .turn i { width:8px; height:8px; border-radius:50%; background:var(--accent); }
 .turn small { color:var(--accent); font-weight:600; }
 .say { font-weight:700; } .card + .say { margin-top:14px; padding-top:12px; border-top:1px solid var(--line); }
 .say:empty { display:none; }
 .group { color:var(--dim); font-size:12px; letter-spacing:.06em; text-transform:uppercase; margin:6px 4px 8px; }
-section { border:1px solid var(--line); border-radius:24px; padding:12px; margin-bottom:16px; }
+section { border:1px solid var(--line); border-radius:calc(var(--radius) * 1.2); padding:12px; margin-bottom:16px; }
 section > h2 { font-size:14px; margin:4px 8px 10px; color:var(--soft); }
 section > h2 small { color:var(--faint); font-weight:400; margin-left:6px; }
 .grid { display:grid; grid-template-columns:repeat(var(--cols,12),minmax(0,1fr)); grid-auto-rows:minmax(72px,auto); gap:12px; }
-.card { background:var(--card); border:1px solid var(--line); border-radius:20px; padding:16px; min-width:0; overflow:hidden; grid-column:span var(--w); grid-row:span var(--h); }
+.card { background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:16px; min-width:0; overflow:hidden; grid-column:span var(--w); grid-row:span var(--h); }
 .card.focus { border-color:var(--edge); }
 aside .card { border:1px solid var(--edge); }
 .card > h3 { font-size:16px; margin:0 0 10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -70,23 +71,23 @@ p { margin:0 0 8px; color:var(--soft); white-space:pre-wrap; overflow-wrap:anywh
 .rows { overflow-x:auto; } table { width:100%; border-collapse:collapse; } th { text-align:left; color:var(--faint); font-size:11px; font-weight:400; padding:0 12px 6px 0; }
 td { padding:6px 14px 6px 0; color:var(--dim); vertical-align:top; min-width:5.5em; } td:first-child, th { white-space:nowrap; } td:first-child { color:var(--text); font-weight:700; }
 .kv { display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin-bottom:8px; } .kv span:nth-child(odd) { color:var(--faint); font-size:12px; align-self:center; } .kv span:nth-child(even) { font-weight:700; overflow-wrap:anywhere; }
-.bar { height:6px; border-radius:3px; background:var(--raised); overflow:hidden; flex:1; } .bar > i { display:block; height:100%; background:var(--soft); border-radius:3px; }
-.check { flex:none; width:20px; height:20px; border-radius:6px; border:1.5px solid var(--faint); background:none; cursor:pointer; padding:0; }
+.bar { height:6px; border-radius:min(3px,var(--radius)); background:var(--raised); overflow:hidden; flex:1; } .bar > i { display:block; height:100%; background:var(--soft); border-radius:min(3px,var(--radius)); }
+.check { flex:none; width:20px; height:20px; border-radius:min(6px,var(--radius)); border:1.5px solid var(--faint); background:none; cursor:pointer; padding:0; }
 .check.done { background:var(--green); border-color:var(--green); }
-button.opt { display:block; width:100%; text-align:left; background:var(--card); color:var(--text); border:1px solid var(--line); border-radius:16px; padding:10px 14px; margin-bottom:8px; cursor:pointer; font:inherit; }
+button.opt { display:block; width:100%; text-align:left; background:var(--card); color:var(--text); border:1px solid var(--line); border-radius:calc(var(--radius) * 0.8); padding:10px 14px; margin-bottom:8px; cursor:pointer; font:inherit; }
 button.opt:hover { background:var(--raised); border-color:var(--edge); } button.opt b { display:block; } button.opt span { color:var(--dim); font-size:12px; }
-button.opt.on { background:var(--on); color:var(--on-text); border-color:var(--on); } button.opt.on span { color:var(--on-text); opacity:.7; }
+button.opt.on { background:var(--primary); color:var(--primary-text); border-color:var(--primary); } button.opt.on span { color:var(--primary-text); opacity:.7; }
 .danger button.opt { border-color:color-mix(in srgb, var(--red) 45%, var(--line)); } .danger button.opt:hover { border-color:var(--red); }
-button.go { float:right; background:var(--on); color:var(--on-text); border:0; border-radius:17px; padding:8px 20px; font:inherit; font-weight:700; cursor:pointer; }
+button.go { float:right; background:var(--primary); color:var(--primary-text); border:0; border-radius:calc(var(--radius) * 0.85); padding:8px 20px; font:inherit; font-weight:700; cursor:pointer; }
 button.go:disabled { background:var(--raised); color:var(--faint); cursor:default; }
 label { display:block; color:var(--dim); font-size:12px; margin:8px 0 4px; }
-input[type=text],input[type=number],input[type=date],input[type=time] { width:100%; background:var(--raised); color:var(--text); border:1px solid var(--line); border-radius:11px; padding:8px 12px; font:inherit; color-scheme:dark light; }
+input[type=text],input[type=number],input[type=date],input[type=time] { width:100%; background:var(--raised); color:var(--text); border:1px solid var(--line); border-radius:calc(var(--radius) * 0.55); padding:8px 12px; font:inherit; color-scheme:dark light; }
 input[type=range] { width:100%; accent-color:var(--soft); }
-.pill { display:inline-block; background:var(--card); color:var(--text); border:1px solid var(--line); border-radius:15px; padding:5px 13px; margin:0 6px 6px 0; cursor:pointer; font:inherit; font-weight:700; font-size:12.5px; }
-.pill.on { background:var(--on); color:var(--on-text); border-color:var(--on); }
-svg { display:block; width:100%; } svg text { fill:var(--soft); font:10px system-ui,sans-serif; }
-.media { background:var(--raised); border-radius:10px; padding:18px; text-align:center; color:var(--faint); font-size:12px; }
-img { max-width:100%; border-radius:10px; display:block; } iframe { width:100%; height:320px; border:0; border-radius:10px; background:#fff; }
+.pill { display:inline-block; background:var(--card); color:var(--text); border:1px solid var(--line); border-radius:calc(var(--radius) * 0.75); padding:5px 13px; margin:0 6px 6px 0; cursor:pointer; font:inherit; font-weight:700; font-size:12.5px; }
+.pill.on { background:var(--primary); color:var(--primary-text); border-color:var(--primary); }
+svg { display:block; width:100%; } svg text { fill:var(--soft); font:10px var(--font); }
+.media { background:var(--raised); border-radius:calc(var(--radius) * 0.5); padding:18px; text-align:center; color:var(--faint); font-size:12px; }
+img { max-width:100%; border-radius:calc(var(--radius) * 0.5); display:block; } iframe { width:100%; height:320px; border:0; border-radius:calc(var(--radius) * 0.5); background:#fff; }
 a { color:var(--accent); }
 .empty { color:var(--faint); padding:40px; text-align:center; }
 .shelf { margin:4px 4px 0; color:var(--faint); font-size:12px; } .shelf button { margin-left:6px; }
@@ -123,7 +124,7 @@ export class PatetBoard extends HTMLElement {
 
   /** Apply one line. `by` is "agent" (the default) or "user". Returns the verdict. */
   apply(line, by = "agent") {
-    if (by !== "user" && !this.media) {
+    if (by === "agent" && !this.media) {
       // Cards that load what the writer chose are refused unless the page allowed them.
       let op = null;
       try {
@@ -171,6 +172,19 @@ export class PatetBoard extends HTMLElement {
   /** The board as ops (all of it, or one topic). */
   read(topic = null) {
     return serialize(this.board, topic);
+  }
+
+  /**
+   * Replace the board with one written back as ops: what `read()` gave earlier, or the board a server keeps.
+   * The lines are applied with the author `restore`, so answers and pins come back as they were (SPEC.md section 8).
+   * `say` and `focus` are not part of a written board: give them if you kept them.
+   */
+  load(ops, { say = "", focus = null } = {}) {
+    this.clear();
+    const left = this.write(ops, "restore");
+    if (say) this.apply(`say ${say}`, "restore");
+    if (focus) this.apply(`focus ${focus}`, "restore");
+    return left;
   }
 
   /** What this renderer supports, one line per entry. */
@@ -236,7 +250,7 @@ export class PatetBoard extends HTMLElement {
     const kids = [];
     if (turn || b.say) {
       kids.push(
-        h("aside", {},
+        h("aside", { part: "turn" },
           turn && h("div", { class: "turn" }, h("i"), h("span", { text: "My turn" }), h("small", { text: `${asking.length} left` })),
           turn && this.#card(turn, b.topics.find((t) => t.id === turn.topic)?.name),
           h("div", { class: "say", text: b.say })),
@@ -251,7 +265,7 @@ export class PatetBoard extends HTMLElement {
         lastGroup = t.group;
         main.append(h("div", { class: "group", text: b.groups.find((g) => g.id === t.group)?.name ?? "Other" }));
       }
-      main.append(h("section", {}, h("h2", { text: t.name }, h("small", { text: String(cards.length) })), h("div", { class: "grid" }, cards.map((c) => this.#card(c)))));
+      main.append(h("section", { part: "topic" }, h("h2", { text: t.name }, h("small", { text: String(cards.length) })), h("div", { class: "grid" }, cards.map((c) => this.#card(c)))));
     }
     if (b.topics.length === 0 && b.shelf.length === 0) main.append(h("div", { class: "empty", text: "Nothing on the board yet." }));
     if (b.shelf.length) {
@@ -362,7 +376,7 @@ export class PatetBoard extends HTMLElement {
         break;
       }
     }
-    return h("article", { class: `card ${c.kind}${c.id === b.focus ? " focus" : ""}${c.fields.get("tone") === "danger" ? " danger" : ""}`, style: `--w:${this.#span(c.w)};--h:${c.h}`, "data-id": c.id },
+    return h("article", { class: `card ${c.kind}${c.id === b.focus ? " focus" : ""}${c.fields.get("tone") === "danger" ? " danger" : ""}`, style: `--w:${this.#span(c.w)};--h:${c.h}`, "data-id": c.id, part: `card ${c.kind}` },
       h("h3", { text: b.show(c.title) }, topicName && h("small", { text: topicName })), body);
   }
 

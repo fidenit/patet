@@ -22,6 +22,13 @@ user set k2 chosen o2
 
 Version **0.4**. Apache-2.0. The protocol is separate from any app: [APERIT](https://github.com/fidenit/aperit) (until now called KITE) is the first product built on it.
 
+## Start here
+
+- **See it work in a minute:** `node examples/assistant/server.mjs`, then open `http://127.0.0.1:8787/`. Two files, no dependencies, a canned answer until you give it a model ([examples/assistant](examples/assistant)).
+- **Build it into your product:** [QUICKSTART.md](QUICKSTART.md). The system prompt is a file ([GUIDE.md](GUIDE.md)), a turn has five parts, and each line of the answer gets a verdict.
+- **Make it look like yours:** colours, corners and font are CSS variables on [`<patet-board>`](web/README.md#theming).
+- **You are a model reading this:** your instructions are [GUIDE.md](GUIDE.md), whole. Answer in ops, one per line.
+
 ## Why another protocol
 
 - **It edits; it does not resend.** The board persists. An agent changes a field or an item, and reads the board back in the same ops before it edits. No screen is regenerated per answer.

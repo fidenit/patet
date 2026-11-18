@@ -18,6 +18,8 @@ from .core import (
     asks,
     is_extension_kind,
     kind_names,
+    describe,
+    MEDIA_KINDS,
     parts_table,
     serialize,
     valid_id,
@@ -41,5 +43,5 @@ __version__ = "0.4.0"
 __all__ = [
     "VERSION", "LIMITS", "PARTS", "Part", "Board", "Card", "Group", "Item", "Topic", "Reject", "LineStream",
     "parse", "serialize", "split_cells", "join_cells", "is_blank", "valid_id", "is_extension_kind", "asks",
-    "kind_names", "parts_table", "header", "declared_version", "can_read", "strip_bom",
+    "kind_names", "parts_table", "describe", "MEDIA_KINDS", "header", "declared_version", "can_read", "strip_bom",
 ]
