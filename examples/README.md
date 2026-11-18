@@ -19,7 +19,7 @@ The distances and times in `route.ops` are hand-written. In the app they come fr
 
 ## Load one in KITE
 
-[KITE](https://github.com/fidenit/KITE) is an app built on PATET. The paths below are relative to a copy of this repository.
+[KITE](https://github.com/fidenit/aperit) is an app built on PATET. The paths below are relative to a copy of this repository.
 
 Get the files from this repository; the Windows zip does not contain them. Run these from the repository root.
 

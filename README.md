@@ -20,7 +20,7 @@ Each line is one op, applied the moment it ends. The result is a board of cards,
 user set k2 chosen o2
 ```
 
-Version **0.4**. Apache-2.0. The protocol is separate from any app: [KITE](https://github.com/fidenit/KITE) is the first product built on it.
+Version **0.4**. Apache-2.0. The protocol is separate from any app: [APERIT](https://github.com/fidenit/aperit) (until now called KITE) is the first product built on it.
 
 ## Why another protocol
 
@@ -48,7 +48,7 @@ It sits beside AG-UI, A2UI and MCP rather than against them: an agent can reach 
 
 ## Use it
 
-**Drive a board from an agent that speaks MCP** (Claude Code, Cursor, your own). Start a renderer with its MCP door open and point the agent at it. The agent gets four tools: `screen`, `board_read`, `events`, `guide`. With the KITE app: [DRIVING.md](https://github.com/fidenit/KITE/blob/main/docs/DRIVING.md).
+**Drive a board from an agent that speaks MCP** (Claude Code, Cursor, your own). Start a renderer with its MCP door open and point the agent at it. The agent gets four tools: `screen`, `board_read`, `events`, `guide`. With the KITE app: [DRIVING.md](https://github.com/fidenit/aperit/blob/main/docs/DRIVING.md).
 
 **Drive a board from a script.** Open a line session and write ops:
 
