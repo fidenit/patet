@@ -7,6 +7,11 @@ description = "PATET: the line language an AI writes to build and edit a screen.
 repository = "https://github.com/fidenit/patet"
 readme = "../README.md"
 keywords = ["ai", "agent", "ui", "protocol", "generative-ui"]
+categories = ["parser-implementations", "data-structures"]
+homepage = "https://github.com/fidenit/patet"
+documentation = "https://github.com/fidenit/patet/blob/main/SPEC.md"
+# The tests read the conformance cases and the guide from the repository around this crate; they stay there.
+exclude = ["tests/"]
 
 # No dependencies on purpose: the protocol must be easy to carry into any program.
 [dependencies]
