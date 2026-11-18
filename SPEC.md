@@ -342,7 +342,7 @@ A **renderer** conforms if it applies lines in order; rejects exactly what secti
 
 ## 14. Next to A2UI, AG-UI and json-render
 
-These solve neighbouring problems, and KITE is meant to work with them rather than replace them. Facts below are from their public repositories and specifications as of 2026-11-18.
+These solve neighbouring problems, and KITE is meant to work with them rather than replace them. This is the short form; [COMPARISON.md](COMPARISON.md) covers more projects, what KITE does not do, and the sources. Facts below are from their public repositories and specifications as of 2026-11-18.
 
 | | KITE Protocol | A2UI (v1.0) | json-render | AG-UI (1.0) |
 |---|---|---|---|---|

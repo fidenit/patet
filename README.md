@@ -29,7 +29,7 @@ Version **0.2**. Apache-2.0. The protocol is separate from any app: [KITE](../RE
 - **Cards mean something.** `decision`, `timeline`, `route`, `checklist`: 14 types chosen for what they say, not rows and columns. Layout belongs to the renderer.
 - **Asking is part of it.** A `decision` or `input` card waits for the user, and the answer comes back as an op.
 
-It sits beside AG-UI, A2UI and MCP rather than against them: an agent can reach a KITE board over MCP or AG-UI today. See [SPEC.md, section 14](SPEC.md#14-next-to-a2ui-ag-ui-and-json-render).
+It sits beside AG-UI, A2UI and MCP rather than against them: an agent can reach a KITE board over MCP or AG-UI today. How it differs from A2UI, json-render, AG-UI, MCP Apps and others, and what it does not do: [COMPARISON.md](COMPARISON.md).
 
 ## What is here
 
@@ -37,6 +37,7 @@ It sits beside AG-UI, A2UI and MCP rather than against them: an agent can reach 
 |---|---|
 | [SPEC.md](SPEC.md) | The specification: ops, card types, limits, verdicts and codes, events, bindings, security, versioning |
 | [GUIDE.md](GUIDE.md) | For agents: how to compose a board that reads at a glance. Give this to your model |
+| [COMPARISON.md](COMPARISON.md) | Next to A2UI, json-render, AG-UI, MCP Apps, Adaptive Cards and others: what each is, what differs, when to use which |
 | [schema/](schema) | The ops as JSON Schema, for tools that validate or generate them |
 | [examples/](examples) | Boards you can load |
 | [conformance/](conformance) | Cases a renderer runs to check itself |
