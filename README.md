@@ -40,15 +40,20 @@ It sits beside AG-UI, A2UI and MCP rather than against them: an agent can reach 
 | [COMPARISON.md](COMPARISON.md) | Next to A2UI, json-render, AG-UI, MCP Apps, Adaptive Cards and others: what each is, what differs, when to use which |
 | [schema/](schema) | The ops as JSON Schema, for tools that validate or generate them |
 | [examples/](examples) | Boards you can load |
-| [conformance/](conformance) | Cases a renderer runs to check itself |
+| [QUICKSTART.md](QUICKSTART.md) | Ten minutes: make your own model answer with a board |
+| [conformance/](conformance) | 36 cases a renderer runs to check itself, with a table of what each covers |
+| [grammar/](grammar) | The line syntax as EBNF, and as GBNF for constrained decoding with local models |
 | [rust/](rust) | Reference implementation: board, parser, serializer. No dependencies |
 | [js/](js) | The same in JavaScript, one file, no dependencies. Runs in a browser, in Node, in a worker |
+| [python/](python) | The same in Python (standard library only), with `python -m patet check` to check a saved answer |
+| [kotlin/](kotlin) | The same in Kotlin, as used on Android |
 | [web/](web) | `<patet-board>`: a renderer for the web, as one custom element you can put in your own app |
 | [CHANGELOG.md](CHANGELOG.md) | What changed between versions |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | How the language changes, and what "supports PATET" means |
 
 ## Use it
 
-**Drive a board from an agent that speaks MCP** (Claude Code, Cursor, your own). Start a renderer with its MCP door open and point the agent at it. The agent gets four tools: `screen`, `board_read`, `events`, `guide`. With the KITE app: [DRIVING.md](https://github.com/fidenit/aperit/blob/main/docs/DRIVING.md).
+**Drive a board from an agent that speaks MCP** (Claude Code, Cursor, your own). Start a renderer with its MCP door open and point the agent at it. The agent gets four tools: `screen`, `board_read`, `events`, `guide`. With the APERIT app: [DRIVING.md](https://github.com/fidenit/aperit/blob/main/docs/DRIVING.md).
 
 **Drive a board from a script.** Open a line session and write ops:
 
@@ -93,4 +98,4 @@ Then run the [conformance cases](conformance).
 
 ## Status
 
-0.x: the language may still change between minor versions where the spec says so (section 12). Three implementations pass the conformance cases: Rust (used by KITE for Windows and macOS), Kotlin (the KITE Android app) and JavaScript (`<patet-board>`). Feedback, renderers and bindings for other transports are welcome.
+0.x: the language may still change between minor versions where the spec says so (section 12). Four implementations pass the 36 conformance cases: Rust (used by APERIT for Windows and macOS), Kotlin (the APERIT Android app), JavaScript (`<patet-board>`) and Python. Feedback, renderers and bindings for other transports are welcome.

@@ -1,0 +1,86 @@
+# An id is 1 to 24 characters, each an ASCII letter or digit, `_`, `-`, or any character above U+007F that is
+# neither white space nor a control character (SPEC.md section 4). So words of every script are ids, with
+# their combining marks, and no Unicode table is needed to tell.
+agent: topic हिंदी Hindi, with vowel signs
+  -> ok
+agent: topic สวัสดี Thai, with vowel marks
+  -> ok
+agent: topic café A decomposed accent
+  -> ok
+agent: topic café The same word, composed
+  -> ok
+agent: topic שָׁלוֹם Hebrew with points
+  -> ok
+agent: topic مرحبا Arabic
+  -> ok
+agent: topic 😀 An emoji
+  -> ok
+agent: topic a·b A middle dot
+  -> ok
+agent: topic ① A circled digit
+  -> ok
+agent: topic ¡hola¿ Inverted marks
+  -> ok
+agent: topic <24 😀> 24 characters
+  -> ok
+agent: topic <25 😀> 25 characters
+  -> err bad-id
+# Above U+007F, only the control characters U+0080 to U+009F are refused (white space would end the id).
+# The two lines below hold U+0080 and U+009F between a and b.
+agent: topic ab A control character
+  -> err bad-id
+agent: topic ab A control character
+  -> err bad-id
+# In ASCII, nothing changed: letters, digits, `_` and `-`.
+agent: topic a.b A dot
+  -> err bad-id
+agent: topic a~b A tilde
+  -> err bad-id
+agent: topic a'b An apostrophe
+  -> err bad-id
+agent: topic ab U+007F between a and b
+  -> err bad-id
+# The same rule wherever an id is read.
+agent: group 🏠 Home
+  -> ok
+agent: put café 🏠
+  -> ok
+agent: card โน้ต note café A Thai card id
+  -> ok
+agent: card ✓ checklist café Done list
+  -> ok
+agent: add ✓ ① todo | A circled digit as the item id
+  -> ok
+agent: card r record café Record
+  -> ok
+agent: set r नाम Asha
+  -> ok
+agent: set r ab x
+  -> err unknown-field
+agent: let मूल्य 120
+  -> ok
+agent: card x x-कार्ड café An extension kind
+  -> ok
+agent: card y x-ab café Not an id
+  -> err unknown-kind
+board:
+let मूल्य 120
+group 🏠 Home
+topic हिंदी Hindi, with vowel signs
+topic สวัสดี Thai, with vowel marks
+topic café A decomposed accent
+topic café The same word, composed
+put café 🏠
+topic שָׁלוֹם Hebrew with points
+topic مرحبا Arabic
+topic 😀 An emoji
+topic a·b A middle dot
+topic ① A circled digit
+topic ¡hola¿ Inverted marks
+topic <24 😀> 24 characters
+card โน้ต note café 3x2 A Thai card id
+card ✓ checklist café 3x3 Done list
+add ✓ ① todo | A circled digit as the item id
+card r record café 3x3 Record
+set r नाम Asha
+card x x-कार्ड café 3x3 An extension kind

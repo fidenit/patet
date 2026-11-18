@@ -1,0 +1,108 @@
+# The shelf. `archive` takes a topic off the board with its cards, `restore` brings them back as they were.
+# Meanwhile their ids stay reserved, and nothing on the board can refer to them.
+agent: group g Work
+  -> ok
+agent: topic a Alpha
+  -> ok
+agent: topic b Beta
+  -> ok
+agent: put b g
+  -> ok
+agent: card k1 note a One
+  -> ok
+agent: card k2 note b Two
+  -> ok
+agent: set k2 text Kept on the shelf.
+  -> ok
+agent: card k3 checklist b Three
+  -> ok
+agent: add k3 i1 todo | Still here
+  -> ok
+user: move k3 2 1
+  -> ok
+agent: archive b
+  -> ok
+# Off the board.
+agent: set k2 text x
+  -> err no-such-card
+agent: add k3 i2 todo | x
+  -> err no-such-card
+agent: focus k2
+  -> err no-such-card
+agent: mv k2 a
+  -> err no-such-card
+agent: mv k1 b
+  -> err no-such-topic
+agent: put b g
+  -> err no-such-topic
+agent: card k9 note b New
+  -> err no-such-topic
+agent: archive b
+  -> err no-such-topic
+agent: del b
+  -> err not-found
+agent: del k2
+  -> err not-found
+# Reserved.
+agent: topic b Again
+  -> err shelved
+agent: card k2 note a Again
+  -> err shelved
+agent: card k3 note a Again
+  -> err shelved
+# Only what is on the shelf can be restored.
+agent: restore a
+  -> err not-shelved
+agent: restore k2
+  -> err not-shelved
+agent: restore nowhere
+  -> err not-shelved
+agent: restore b
+  -> ok
+agent: restore b
+  -> err not-shelved
+agent: set k2 text Back on the board.
+  -> ok
+agent: move k3 0 0
+  -> err pinned
+# Several topics can be on the shelf. The user can restore too.
+agent: archive a
+  -> ok
+agent: archive b
+  -> ok
+agent: topic a Again
+  -> err shelved
+user: restore a
+  -> ok
+user: restore b
+  -> ok
+# A topic without cards can be shelved. A group deleted meanwhile is not waiting for the topic that comes back.
+agent: group h Home
+  -> ok
+agent: topic c Gamma
+  -> ok
+agent: put c h
+  -> ok
+agent: archive c
+  -> ok
+agent: topic c Again
+  -> err shelved
+agent: del h
+  -> ok
+agent: restore c
+  -> ok
+agent: topic c Gamma, renamed
+  -> ok
+board:
+group g Work
+topic a Alpha
+topic b Beta
+put b g
+topic c Gamma, renamed
+card k1 note a 3x2 One
+card k2 note b 3x2 Two
+set k2 text Back on the board.
+card k3 checklist b 3x3 Three
+add k3 i1 todo | Still here
+move k3 2 1
+pin k3

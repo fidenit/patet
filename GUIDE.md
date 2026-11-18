@@ -152,7 +152,7 @@ Renderers differ: a phone may have no web cards, another may add kinds. A render
 
 ```
 patet 0.4
-renderer KITE 0.4.0
+renderer APERIT 0.4.0
 kinds status metric chart route draw image table progress checklist decision input timeline note record doc
 features tell
 ```

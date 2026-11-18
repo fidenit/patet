@@ -1,0 +1,119 @@
+# A number in a chart or a route (SPEC.md section 6): an optional sign, digits with an optional fraction or a
+# fraction alone, an optional exponent, in ASCII; and a value a double can hold. A chart drops commas first.
+agent: topic t T
+  -> ok
+agent: card c chart t Chart
+  -> ok
+agent: add c a A | 12
+  -> ok
+agent: add c b B | 12.
+  -> ok
+agent: add c d D | .5
+  -> ok
+agent: add c e E | +7
+  -> ok
+agent: add c f F | -.5e-3
+  -> ok
+agent: add c g G | 1e3
+  -> ok
+agent: add c h H | 1E+3
+  -> ok
+agent: add c i I | 1,234,567.89
+  -> ok
+agent: add c j J | 007
+  -> ok
+agent: add c k K | 1e308
+  -> ok
+agent: add c n1 N | 1e400
+  -> err bad-value
+agent: add c n2 N | -1e400
+  -> err bad-value
+agent: add c n3 N | 0x10
+  -> err bad-value
+agent: add c n4 N | 0b11
+  -> err bad-value
+agent: add c n5 N | 0o17
+  -> err bad-value
+agent: add c n6 N | inf
+  -> err bad-value
+agent: add c n7 N | -inf
+  -> err bad-value
+agent: add c n8 N | Infinity
+  -> err bad-value
+agent: add c n9 N | nan
+  -> err bad-value
+agent: add c n10 N | NaN
+  -> err bad-value
+agent: add c n11 N | 1e
+  -> err bad-value
+agent: add c n12 N | 1e+
+  -> err bad-value
+agent: add c n13 N | e3
+  -> err bad-value
+agent: add c n14 N | .
+  -> err bad-value
+agent: add c n15 N | +
+  -> err bad-value
+agent: add c n16 N | ,
+  -> err bad-value
+agent: add c n17 N | 1_000
+  -> err bad-value
+agent: add c n18 N | 1 000
+  -> err bad-value
+agent: add c n19 N | 1.2.3
+  -> err bad-value
+agent: add c n20 N | --1
+  -> err bad-value
+agent: add c n21 N | ١٢
+  -> err bad-value
+agent: add c n22 N | １２
+  -> err bad-value
+agent: add c n23 N | $12
+  -> err bad-value
+# A route: two such numbers around the first comma, spaces around each dropped.
+agent: card r route t Route
+  -> ok
+agent: add r a A | 37.5547,126.9707
+  -> ok
+agent: add r b B | 37.5 , 126.9
+  -> ok
+agent: add r d D | -33.,+151.
+  -> ok
+agent: add r e E | 1e1,1.5e2
+  -> ok
+agent: add r n1 N | 0x10,1
+  -> err bad-value
+agent: add r n2 N | 1,0x10
+  -> err bad-value
+agent: add r n3 N | inf,1
+  -> err bad-value
+agent: add r n4 N | nan,nan
+  -> err bad-value
+agent: add r n5 N | 1e400,1
+  -> err bad-value
+agent: add r n6 N | 37.5,126.9,5
+  -> err bad-value
+agent: add r n7 N | 37,5;126,9
+  -> err bad-value
+agent: add r n8 N | 37.5,
+  -> err bad-value
+agent: add r n9 N | ,126.9
+  -> err bad-value
+board:
+topic t T
+card c chart t 4x3 Chart
+add c a A | 12
+add c b B | 12.
+add c d D | .5
+add c e E | +7
+add c f F | -.5e-3
+add c g G | 1e3
+add c h H | 1E+3
+add c i I | 1,234,567.89
+add c j J | 007
+add c k K | 1e308
+card r route t 6x5 Route
+add r a A | 37.5547,126.9707
+add r b B | 37.5 , 126.9
+add r d D | -33.,+151.
+add r e E | 1e1,1.5e2

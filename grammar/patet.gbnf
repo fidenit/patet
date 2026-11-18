@@ -1,0 +1,56 @@
+# PATET 0.4: one turn of a model, for constrained decoding (GBNF, the grammar format of llama.cpp).
+#
+# A turn is lines of ops, each ended by a line break, and the first line is `say`.
+# The op syntax is that of patet.ebnf, narrowed to what a model should write:
+#   - tokens are separated by one space, and a line has no space before or after it;
+#   - no comments, blank lines or code fences;
+#   - no `pin` and `unpin`: they are the user's, and a renderer rejects them from an agent;
+#   - a size is 1x1 to 8x8 (a larger one would be clamped) and a grid cell is 0 to 99.
+#
+# Like any grammar of lines, it cannot check what is on the board (that an id exists), the limits
+# (lengths, counts), the fields and checked values of each card type, or the user-only rule for
+# the user's answers. A line that passes can still be rejected; feed the verdict back to the model.
+#
+# To let only some card types through (the `kinds` a renderer describes), shorten the `kind` rule.
+
+root ::= say-line op-line*
+say-line ::= "say" (" " text)? "\n"
+op-line ::= op "\n"
+op ::= topic | group | put | card | set | add | upd | del | mv | size | move | focus | let | archive | restore | say | tell
+
+topic ::= "topic " id (" " text)?
+group ::= "group " id (" " text)?
+put ::= "put " id " " id
+card ::= "card " id " " kind " " id (" " dim)? (" " text)?
+set ::= "set " id " " id (" " text)?
+add ::= "add " id " " id " " cells
+upd ::= "upd " id " " id " " cells
+del ::= "del " id (" " id)?
+mv ::= "mv " id " " id
+size ::= "size " id " " dim
+move ::= "move " id " " int " " int
+focus ::= "focus " id
+let ::= "let " id (" " text)?
+archive ::= "archive " id
+restore ::= "restore " id
+say ::= "say" (" " text)?
+tell ::= "tell" (" " text)?
+
+kind ::= "status" | "metric" | "chart" | "route" | "draw" | "image" | "table" | "progress" | "checklist" | "decision" | "input" | "timeline" | "note" | "web" | "record" | "doc" | "x-" idchar+
+dim ::= [1-8] "x" [1-8]
+int ::= [0-9] [0-9]?
+id ::= idchar+
+# Above U+007F: anything but the control characters U+0080 to U+009F and white space.
+idchar ::= [a-zA-Z0-9_-] | [^\x00-\xA0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]
+
+# A value runs to the end of the line and starts with a character that is not white space.
+text ::= [^\x09-\x0D \x85\xA0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000] [^\r\n]*
+
+# 1 to 6 cells separated by "|". Inside a cell "\|" is a pipe that does not separate.
+cells ::= (first more? | more) more? more? more? more? tail? | tail
+more ::= "|" cell
+cell ::= part*
+first ::= ([^|\\\x09-\x0D \x85\xA0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000] | "\\"+ ("|" | plain)) part*
+part ::= plain | "\\"+ ("|" | plain)
+plain ::= [^|\\\r\n]
+tail ::= "\\"+

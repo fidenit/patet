@@ -22,7 +22,7 @@ export class Reject extends Error {
 const no = (code, message) => new Reject(code, message);
 
 const ID = "(1 to 24 letters, digits, _ or -)";
-export const LIMITS = { id: 24, title: 40, topic: 24, group: 16, cell: 60, cells: 6, items: 24, drawItems: 80, groups: 8, vars: 64, say: 80, size: 8, recordField: 80, recordFields: 12 };
+export const LIMITS = { id: 24, title: 40, topic: 24, group: 16, cell: 60, cells: 6, items: 24, drawItems: 80, groups: 8, vars: 64, say: 80, size: 8, recordField: 80, recordFields: 12, gridCell: 9999 };
 
 /** The card types: name, default size, fields with limits (an empty description marks a field the renderer sets), item shape. */
 export const PARTS = [
@@ -64,7 +64,34 @@ function clip(s, limit) {
   if (chars(s) <= limit) return s;
   return [...s].slice(0, Math.max(0, limit - 1)).join("") + "…";
 }
-export const validId = (id) => id !== "" && chars(id) <= LIMITS.id && /^[\p{L}\p{N}_-]+$/u.test(id);
+
+// White space is the Unicode property White_Space, 25 characters, and nothing else: not what `\s` and `trim()`
+// take in this language (they add U+FEFF and leave out U+0085).
+const WS = "\\t-\\r \\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000";
+const WS_START = new RegExp(`^[${WS}]+`, "u");
+const WS_END = new RegExp(`[${WS}]+$`, "u");
+const WS_ONE = new RegExp(`[${WS}]`, "u");
+const trimStart = (s) => s.replace(WS_START, "");
+const trimEnd = (s) => s.replace(WS_END, "");
+const trim = (s) => trimEnd(trimStart(s));
+
+// An id: 1 to 24 characters, each an ASCII letter or digit, `_`, `-`, or a character above U+007F that is
+// neither white space nor a control character (U+0080 to U+009F).
+const ID_CHARS = new RegExp(`^(?:[A-Za-z0-9_-]|[^\\u0000-\\u009f${WS}])+$`, "u");
+export const validId = (id) => id !== "" && chars(id) <= LIMITS.id && ID_CHARS.test(id);
+
+/** Is this a number as a chart or a route takes one? Sign, digits, fraction, exponent; finite as a double. */
+export const isNumber = (s) => /^[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?$/.test(s) && Number.isFinite(Number(s));
+
+// Names are ordered by code point (not by UTF-16 unit, which puts U+10000 and above before U+E000).
+function byCodePoint(x, y) {
+  const [a, b] = [[...x], [...y]];
+  for (let i = 0; i < a.length && i < b.length; i++) {
+    const d = a[i].codePointAt(0) - b[i].codePointAt(0);
+    if (d !== 0) return d;
+  }
+  return a.length - b.length;
+}
 export const isExtensionKind = (name) => name.startsWith("x-") && validId(name.slice(2)) && chars(name) <= LIMITS.id;
 export const asks = (kind) => kind === "decision" || kind === "input";
 
@@ -78,21 +105,22 @@ function fieldLimit(kind, field) {
 // ---------------------------------------------------------------- the line language
 
 function split1(s) {
-  s = s.replace(/^\s+/u, "");
-  const m = /\s/u.exec(s);
-  return m ? [s.slice(0, m.index), s.slice(m.index).replace(/^\s+/u, "")] : [s, ""];
+  s = trimStart(s);
+  const m = WS_ONE.exec(s);
+  return m ? [s.slice(0, m.index), trimStart(s.slice(m.index))] : [s, ""];
 }
 function need(s, usage) {
   if (s === "") throw no("missing-argument", `expected: ${usage}`);
   return s;
 }
+// A size: <w>x<h>, both in ASCII digits only. A number too large for a size is still a size, and is clamped.
 function parseSize(s) {
-  const m = /^(\d+)[xX](\d+)$/.exec(s);
+  const m = /^([0-9]+)[xX]([0-9]+)$/.exec(s);
   if (!m) return null;
-  const [w, h] = [Number(m[1]), Number(m[2])];
-  return w <= 255 && h <= 255 ? [w, h] : null;
+  return [Math.min(Number(m[1]), 255), Math.min(Number(m[2]), 255)];
 }
-const int = (s) => (/^[+-]?\d+$/.test(s) ? Number(s) : null);
+// A column or a row: ASCII digits only, 0 to 9999.
+const int = (s) => (/^[0-9]+$/.test(s) && Number(s) <= LIMITS.gridCell ? Number(s) : null);
 
 /** Split a value into cells at `|`. Inside a cell, `\|` is a `|` that does not split. */
 export function splitCells(rest) {
@@ -104,26 +132,26 @@ export function splitCells(rest) {
       cur += "|";
       i++;
     } else if (c === "|") {
-      out.push(cur.trim());
+      out.push(trim(cur));
       cur = "";
     } else {
       cur += c;
     }
   }
-  out.push(cur.trim());
+  out.push(trim(cur));
   return out;
 }
 /** Write cells back as one value: joined by ` | `, a `|` inside a cell written as `\|`. */
 export const joinCells = (cells) => cells.map((c) => c.replaceAll("|", "\\|")).join(" | ");
 
 export const isBlank = (line) => {
-  line = line.trim();
+  line = trim(line);
   return line === "" || line.startsWith("#") || line.startsWith("```");
 };
 
 /** Parse one line into an op. Blank lines, comments, code fences and `tell` are null. Throws Reject. */
 export function parse(raw) {
-  const line = raw.trim();
+  const line = trim(raw);
   if (isBlank(line)) return null;
   const [cmd, rest] = split1(line);
   switch (cmd) {
@@ -228,7 +256,10 @@ export class Board {
     return c;
   }
 
-  /** Parse and apply one line. Returns the verdict: `skip`, `ok`, `ok clipped ...` or `err <code> <message>`. */
+  /**
+   * Parse and apply one line. Returns the verdict: `skip`, `ok`, `ok clipped ...` or `err <code> <message>`.
+   * `by` is "agent", "user" or "restore" (see `apply`).
+   */
   line(raw, by = "agent") {
     try {
       const op = parse(raw);
@@ -245,12 +276,17 @@ export class Board {
   /** Show `{name}` in a text as the named value. */
   show(s) {
     if (this.vars.size === 0 || !s.includes("{")) return s;
-    return s.replace(/\{([^{}\s]+)\}/gu, (m, name) => this.vars.get(name) ?? m);
+    return s.replace(new RegExp(`\\{([^{}${WS}]+)\\}`, "gu"), (m, name) => this.vars.get(name) ?? m);
   }
 
-  /** Check one op and apply it. Throws Reject; a rejected op changes nothing. `by` is "agent" or "user". */
+  /**
+   * Check one op and apply it. Throws Reject; a rejected op changes nothing. `by` is "agent", "user" or
+   * "restore". The restore author is a renderer loading a serialized board: it has the user's rights, but its
+   * `move` and `size` do not pin, so the board comes back as it was written. It is never on the wire.
+   */
   apply(op, by = "agent") {
-    const agent = by !== "user";
+    const agent = by !== "user" && by !== "restore";
+    const user = by === "user";
     switch (op.op) {
       case "topic": {
         if (!validId(op.id)) throw no("bad-id", `topic id '${op.id}' is not valid ${ID}`);
@@ -263,6 +299,7 @@ export class Board {
       }
       case "group": {
         if (!validId(op.id)) throw no("bad-id", `group id '${op.id}' is not valid ${ID}`);
+        if (this.shelf.some((s) => s.topic.id === op.id || s.cards.some((c) => c.id === op.id))) throw no("shelved", `'${op.id}' is the id of a topic or a card on the shelf; use another id`);
         if (this.topics.some((t) => t.id === op.id) || this.card(op.id)) throw no("id-in-use", `'${op.id}' is already the id of a topic or a card`);
         const name = clip(op.name === "" ? op.id : op.name, LIMITS.group);
         const g = this.groups.find((x) => x.id === op.id);
@@ -354,7 +391,7 @@ export class Board {
         if (agent && c.pinned) throw no("pinned", `the user pinned '${op.id}'; its size cannot be changed`);
         c.w = Math.min(Math.max(op.w, 1), LIMITS.size);
         c.h = Math.min(Math.max(op.h, 1), LIMITS.size);
-        if (!agent) c.pinned = true;
+        if (user) c.pinned = true;
         c.rev++;
         return;
       }
@@ -362,7 +399,7 @@ export class Board {
         const c = this.#card(op.id);
         if (agent && c.pinned) throw no("pinned", `the user pinned '${op.id}'; it cannot be moved`);
         c.grid = [Math.max(op.col, 0), Math.max(op.row, 0)];
-        if (!agent) c.pinned = true;
+        if (user) c.pinned = true;
         return;
       }
       case "pin": {
@@ -378,13 +415,13 @@ export class Board {
         return;
       case "let": {
         if (!validId(op.name)) throw no("bad-id", `value name '${op.name}' is not valid ${ID}`);
-        if (op.value.trim() === "") {
+        if (trim(op.value) === "") {
           this.vars.delete(op.name);
           return;
         }
         if (!this.vars.has(op.name) && this.vars.size >= LIMITS.vars) throw no("limit", `at most ${LIMITS.vars} named values`);
         if (chars(op.value) > LIMITS.cell) this.notes.push(`clipped let.${op.name} ${LIMITS.cell}`);
-        this.vars.set(op.name, clip(op.value.trim(), LIMITS.cell));
+        this.vars.set(op.name, clip(trim(op.value), LIMITS.cell));
         return;
       }
       case "archive": {
@@ -428,16 +465,14 @@ export class Board {
     if (agent && c.kind === "input" && cells.length > 2) throw no("user-only", "the third cell of an input box is the user's value; write 'box name | hint or kind' only");
     const states = c.kind === "checklist" ? ["done", "todo"] : c.kind === "progress" ? ["done", "run", "todo", "fail"] : [];
     if (states.length && !states.includes(cells[0])) throw no("bad-value", `the first cell of a ${c.kind} item is one of ${states.join("|")} (got '${cells[0]}')`);
-    const number = (s) => s.trim() !== "" && Number.isFinite(Number(s.trim()));
     if (c.kind === "route") {
       const p = (cells[1] ?? "").split(",");
       // Two numbers joined by the first comma: what follows a second comma belongs to the second number, and fails.
       const [a, b] = [p[0], p.slice(1).join(",")];
-      if (p.length < 2 || !number(a) || !number(b)) throw no("bad-value", "a route item is 'name | lat,lon | distance and time to the next stop (optional)'; the second cell must be two numbers");
+      if (p.length < 2 || !isNumber(trim(a)) || !isNumber(trim(b))) throw no("bad-value", "a route item is 'name | lat,lon | distance and time to the next stop (optional)'; the second cell must be two numbers");
     }
     if (c.kind === "draw" && !["line", "arrow", "rect", "circle", "text"].includes(cells[0])) throw no("bad-value", `the first cell of a draw item is one of line|arrow|rect|circle|text (got '${cells[0]}')`);
-    if (c.kind === "chart" && (cells[1] === undefined || !number(cells[1].replaceAll(",", "")))) throw no("bad-value", "a chart item is 'name | number'");
-    if (cells.some((x) => chars(x) > LIMITS.cell)) this.notes.push(`clipped ${id}.${item} ${LIMITS.cell}`);
+    if (c.kind === "chart" && (cells[1] === undefined || !isNumber(cells[1].replaceAll(",", "")))) throw no("bad-value", "a chart item is 'name | number'");
     const clipped = cells.map((x) => clip(x, LIMITS.cell));
     const slot = c.items.find((i) => i.id === item);
     if (slot) slot.cells = clipped; // add on an existing id overwrites
@@ -447,14 +482,16 @@ export class Board {
       if (c.items.length >= limit) throw no("limit", `card '${id}' already has ${limit} items`);
       c.items.push({ id: item, cells: clipped });
     }
+    // Noted only once the op is accepted: a rejected op must leave nothing behind for the next verdict.
+    if (cells.some((x) => chars(x) > LIMITS.cell)) this.notes.push(`clipped ${id}.${item} ${LIMITS.cell}`);
     c.rev++;
   }
 }
 
-/** Write the board as ops. Applying them to an empty board with author `user` gives the same board. */
+/** Write the board as ops. Applying them to an empty board with author `restore` gives the same board. */
 export function serialize(b, topic = null) {
   let s = "";
-  const sorted = (m) => [...m.entries()].sort((x, y) => (x[0] < y[0] ? -1 : x[0] > y[0] ? 1 : 0));
+  const sorted = (m) => [...m.entries()].sort((x, y) => byCodePoint(x[0], y[0]));
   if (topic === null) {
     for (const [name, value] of sorted(b.vars)) s += `let ${name} ${value}\n`;
     for (const g of b.groups) s += `group ${g.id} ${g.name}\n`;
@@ -479,13 +516,19 @@ export function serialize(b, topic = null) {
 export class LineStream {
   constructor() {
     this.partial = "";
+    this.started = false;
   }
   feed(delta) {
     this.partial += delta;
+    // One U+FEFF at the very start of a stream or file is a byte order mark, not text (SPEC.md 10.2).
+    if (!this.started && this.partial !== "") {
+      this.started = true;
+      if (this.partial.startsWith("\ufeff")) this.partial = this.partial.slice(1);
+    }
     const out = [];
     let i;
     while ((i = this.partial.indexOf("\n")) >= 0) {
-      out.push(this.partial.slice(0, i).trimEnd());
+      out.push(trimEnd(this.partial.slice(0, i)));
       this.partial = this.partial.slice(i + 1);
     }
     return out;
@@ -493,6 +536,6 @@ export class LineStream {
   finish() {
     const rest = this.partial;
     this.partial = "";
-    return rest.trim() === "" ? null : rest;
+    return trim(rest) === "" ? null : rest;
   }
 }

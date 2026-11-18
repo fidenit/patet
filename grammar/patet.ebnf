@@ -1,0 +1,118 @@
+/* PATET 0.4: the line syntax of every op.
+
+   Notation: W3C EBNF, as in the XML specification (https://www.w3.org/TR/xml/#sec-notation).
+   SPEC.md is the specification; this file restates its sections 3 and 5 in a form a tool can read.
+   Start at Stream for a whole stream, at Line for one line, at Op for one op.
+
+   A line this grammar derives is one a renderer can parse. Whether the renderer then applies it
+   depends on the board and on who writes, which no grammar of single lines can express.
+   NOT checked here:
+
+   - what exists: that a topic, group, card or item is there, or that an id is still free
+     (no-such-topic, no-such-group, no-such-card, no-such-item, not-found, not-empty, not-shelved,
+     exists, id-in-use, shelved);
+   - what a card type has: its fields, whether it takes items, and its checked values such as
+     `state` of a status or cell 1 of a checklist item (unknown-field, no-items, bad-value).
+     These depend on the type the card was created with, lines earlier;
+   - limits: 24 characters in an id or in the name of an extension kind, the length of a title,
+     a field or a cell (text over a limit is clipped, not rejected), 24 items in a card, 12 fields
+     in a record, 8 groups, 64 named values, and sizes outside 1 to 8, which are clamped (bad-id
+     for a long id, unknown-kind for a long kind name, limit);
+   - the author: `pin`, `unpin` and the user's answers are the user's (user-only), and an agent
+     cannot place or resize a pinned card (pinned). A renderer may also refuse some types to a
+     writer (not-allowed).
+
+   Checked here, because they are a matter of form: the verb (unknown-verb), the arguments an op
+   needs (missing-argument), the form of a size and of a grid cell (bad-syntax), the characters
+   of an id (bad-id), the names of the card types (unknown-kind), and 1 to 6 cells in an item
+   (cell-count).
+
+   Two notes:
+
+   - WS is every character with the Unicode property White_Space that can stand inside a line.
+     A renderer takes any of them as a separator; a writer sends a space.
+   - Card is ambiguous when the title starts with a token shaped like a size
+     (`card a note t 2x2 3x3 grid`): the first such token after the topic is the size. */
+
+
+/* ---- Lines (SPEC.md section 3) ---- */
+
+Stream   ::= Line ( EOL Line )*
+EOL      ::= #xD? #xA
+Line     ::= WS* ( Op | Comment | Fence )? WS*
+
+/* Skipped without a verdict, like a blank line. A `#` or a fence later in a line is ordinary text. */
+Comment  ::= '#' Char*
+Fence    ::= '```' Char*
+
+
+/* ---- Ops (SPEC.md section 5) ---- */
+
+Op       ::= Topic | Group | Put | Card | Set | Add | Upd | Del | Mv | Size | Move
+           | Pin | Unpin | Focus | Let | Archive | Restore | Say | Tell
+
+Topic    ::= 'topic' S Id ( S Text )?            /* without a name, the name is the id */
+Group    ::= 'group' S Id ( S Text )?
+Put      ::= 'put' S Id S Id                     /* topic, group */
+Card     ::= 'card' S Id S Kind S Id ( S Dim )? ( S Text )?     /* id, type, topic, size, title */
+Set      ::= 'set' S Id S Id ( S Text )?         /* card, field, value; without a value, the field is emptied */
+Add      ::= 'add' S Id S Id S Cells             /* card, item */
+Upd      ::= 'upd' S Id S Id S Cells
+Del      ::= 'del' S Id ( S Id )?                /* card and item; or a card, a topic or a group */
+Mv       ::= 'mv' S Id S Id                      /* card, topic */
+Size     ::= 'size' S Id S Dim
+Move     ::= 'move' S Id S Int S Int             /* card, column, row */
+Pin      ::= 'pin' S Id
+Unpin    ::= 'unpin' S Id
+Focus    ::= 'focus' S Id
+Let      ::= 'let' S Id ( S Text )?              /* without a value, the name is removed */
+Archive  ::= 'archive' S Id
+Restore  ::= 'restore' S Id
+Say      ::= 'say' ( S Text )?
+Tell     ::= 'tell' ( S Text )?
+
+
+/* ---- Arguments ---- */
+
+/* The 16 core types of SPEC.md section 6, or an extension kind. */
+Kind     ::= 'status' | 'metric' | 'chart' | 'route' | 'draw' | 'image' | 'table' | 'progress'
+           | 'checklist' | 'decision' | 'input' | 'timeline' | 'note' | 'web' | 'record' | 'doc'
+           | 'x-' IdChar+
+
+Dim      ::= Digit+ [xX] Digit+                  /* columns x rows; no sign */
+Int      ::= '0'* Digit Digit? Digit? Digit?     /* a column or a row: 0 to 9999; no sign */
+Digit    ::= [0-9]
+
+/* An ASCII letter or digit, `_`, `-`, or any character above U+007F that is neither white space
+   nor a control character (U+0080 to U+009F). */
+Id       ::= IdChar+
+IdChar   ::= [A-Za-z0-9_-] | NonAscii
+NonAscii ::= [#xA1-#x10FFFF] - UniSpace
+UniSpace ::= #x1680 | [#x2000-#x200A] | #x2028 | #x2029 | #x202F | #x205F | #x3000
+
+/* A value: from its first character that is not white space to the end of the line. */
+Text     ::= Visible Char*
+
+/* The cells of an item: 1 to 6, separated by `|`. A cell may be empty, but not the whole value.
+   Inside a cell `\|` is a pipe that does not separate, and a backslash before anything else is
+   itself. So a separator is a `|` with no backslash before it, and only the last cell can end
+   in a backslash. Spaces around a cell are dropped. */
+Cells    ::= ( First More? | More ) More? More? More? More? Tail?
+           | Tail
+More     ::= '|' Cell
+Cell     ::= Part*
+First    ::= ( PlainVis | Backslash+ ( '|' | Plain ) ) Part*
+Part     ::= Plain | Backslash+ ( '|' | Plain )
+Tail     ::= Backslash+
+
+
+/* ---- Characters ---- */
+
+/* WS is White_Space without the two characters that end a line. */
+S         ::= WS+
+WS        ::= #x20 | #x9 | #xB | #xC | #x85 | #xA0 | UniSpace
+Char      ::= [^#xA#xD]
+Visible   ::= Char - WS
+Plain     ::= [^|#x5C#xA#xD]                     /* not a pipe, not a backslash */
+PlainVis  ::= Plain - WS
+Backslash ::= #x5C

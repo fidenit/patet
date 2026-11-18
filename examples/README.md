@@ -17,33 +17,33 @@ The distances and times in `route.ops` are hand-written. In the app they come fr
 
 `.ops` files are in the log format (SPEC.md 10.2). The first line is the version header `# patet 0.4`; after it comes one op per line: a letter, a tab, then the op. `A` is a model op, `U` a user op, and `T` followed by a date starts a new day (skipped when seeding). `scenes-todo.txt` is plain op lines, scenes separated by a line holding `===`.
 
-## Load one in KITE
+## Load one in APERIT
 
-[KITE](https://github.com/fidenit/aperit) is an app built on PATET. The paths below are relative to a copy of this repository.
+[APERIT](https://github.com/fidenit/aperit) is an app built on PATET. The paths below are relative to a copy of this repository.
 
 Get the files from this repository; the Windows zip does not contain them. Run these from the repository root.
 
-**In the demo** (no key, or `KITE_DEMO=1`). The board is filled before the window opens:
+**In the demo** (no key, or `APERIT_DEMO=1`). The board is filled before the window opens:
 
 ```sh
-KITE_DEMO=1 KITE_DEMO_SEED=examples/todo.ops ./run.sh
+APERIT_DEMO=1 APERIT_DEMO_SEED=examples/todo.ops ./run.sh
 ```
 
 ```powershell
-$env:KITE_DEMO = "1"
-$env:KITE_DEMO_SEED = "examples\todo.ops"
+$env:APERIT_DEMO = "1"
+$env:APERIT_DEMO_SEED = "examples\todo.ops"
 .\run.ps1
 ```
 
 **Scripted turns.** Each message you send plays the next scene:
 
 ```sh
-KITE_DEMO=1 KITE_DEMO_FILE=examples/scenes-todo.txt ./run.sh
+APERIT_DEMO=1 APERIT_DEMO_FILE=examples/scenes-todo.txt ./run.sh
 ```
 
-**With a real engine.** Close KITE, back up `data/ops.log` in the program folder, copy an `.ops` file over it, and start KITE. The board is rebuilt from the log and the model edits it from there.
+**With a real engine.** Close APERIT, back up `data/ops.log` in the program folder, copy an `.ops` file over it, and start APERIT. The board is rebuilt from the log and the model edits it from there.
 
-**On a running board.** With the protocol socket on (`KITE_PROTOCOL_PORT=7878`), send the op of each line (the part after the tab):
+**On a running board.** With the protocol socket on (`APERIT_PROTOCOL_PORT=7878`), send the op of each line (the part after the tab):
 
 ```sh
 cut -f2 examples/todo.ops | grep -v '^#' | nc 127.0.0.1 7878

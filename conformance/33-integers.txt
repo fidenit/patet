@@ -1,0 +1,73 @@
+# A size is `<w>x<h>` with both numbers in ASCII digits and no sign; however large, it is a size, and is
+# clamped. A column or a row of `move` is ASCII digits too, from 0 to 9999 (SPEC.md section 5).
+agent: topic t T
+  -> ok
+# In `card`, a token that is not a size starts the title.
+agent: card a note t +4x2 Signed
+  -> ok
+agent: card b note t -4x2 Signed
+  -> ok
+agent: card c note t ４x2 A fullwidth digit
+  -> ok
+agent: card d note t 004x02 Leading zeros
+  -> ok
+agent: card e note t 300x2 Large
+  -> ok
+agent: card f note t 99999999999999999999x1 Huge
+  -> ok
+agent: card g note t 0x0 Zero
+  -> ok
+agent: size a +5x2
+  -> err bad-syntax
+agent: size a 5x+2
+  -> err bad-syntax
+agent: size a -5x2
+  -> err bad-syntax
+agent: size a ５x2
+  -> err bad-syntax
+agent: size a 5.0x2
+  -> err bad-syntax
+agent: size a 300x300
+  -> ok
+agent: size b 005X0002
+  -> ok
+agent: move a 3000000000 0
+  -> err bad-syntax
+agent: move a 10000 0
+  -> err bad-syntax
+agent: move a 0 10000
+  -> err bad-syntax
+agent: move a -1 0
+  -> err bad-syntax
+agent: move a 0 -1
+  -> err bad-syntax
+agent: move a +1 2
+  -> err bad-syntax
+agent: move a -0 0
+  -> err bad-syntax
+agent: move a 1.0 2
+  -> err bad-syntax
+agent: move a ３ 0
+  -> err bad-syntax
+agent: move a 1e2 0
+  -> err bad-syntax
+user: move a -1 -1
+  -> err bad-syntax
+agent: move a 9999 9999
+  -> ok
+agent: move b 0 0
+  -> ok
+agent: move c 007 00000000000000000000012
+  -> ok
+board:
+topic t T
+card a note t 8x8 +4x2 Signed
+move a 9999 9999
+card b note t 5x2 -4x2 Signed
+move b 0 0
+card c note t 3x2 ４x2 A fullwidth digit
+move c 7 12
+card d note t 4x2 Leading zeros
+card e note t 8x2 Large
+card f note t 8x1 Huge
+card g note t 1x1 Zero

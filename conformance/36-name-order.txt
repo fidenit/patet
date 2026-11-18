@@ -1,0 +1,81 @@
+# Named values and the fields of a card are written back in code point order (SPEC.md section 8): capitals
+# before small letters, and U+1D41A after U+FF5A although its UTF-16 form starts with a smaller unit.
+agent: let 𝐚 mathematical bold a, U+1D41A
+  -> ok
+agent: let ｚ fullwidth z, U+FF5A
+  -> ok
+agent: let 가 hangul, U+AC00
+  -> ok
+agent: let zed small
+  -> ok
+agent: let Zed capital
+  -> ok
+agent: let a-b hyphen
+  -> ok
+agent: let a_b underscore
+  -> ok
+agent: let ab letters
+  -> ok
+agent: let a1 digit
+  -> ok
+agent: let 9 nine
+  -> ok
+agent: let é e acute, U+00E9
+  -> ok
+agent: topic t T
+  -> ok
+agent: card r record t Record
+  -> ok
+agent: set r 𝐚 1
+  -> ok
+agent: set r ｚ 2
+  -> ok
+agent: set r zed 3
+  -> ok
+agent: set r Zed 4
+  -> ok
+agent: set r text 5
+  -> ok
+agent: set r cols 6
+  -> ok
+agent: set r é 7
+  -> ok
+agent: set r 9 8
+  -> ok
+agent: card m metric t Metric
+  -> ok
+agent: set m value 1
+  -> ok
+agent: set m unit 2
+  -> ok
+agent: set m text 3
+  -> ok
+agent: set m delta 4
+  -> ok
+board:
+let 9 nine
+let Zed capital
+let a-b hyphen
+let a1 digit
+let a_b underscore
+let ab letters
+let zed small
+let é e acute, U+00E9
+let 가 hangul, U+AC00
+let ｚ fullwidth z, U+FF5A
+let 𝐚 mathematical bold a, U+1D41A
+topic t T
+card r record t 3x3 Record
+set r 9 8
+set r Zed 4
+set r cols 6
+set r text 5
+set r zed 3
+set r é 7
+set r ｚ 2
+set r 𝐚 1
+card m metric t 2x2 Metric
+set m delta 4
+set m text 3
+set m unit 2
+set m value 1

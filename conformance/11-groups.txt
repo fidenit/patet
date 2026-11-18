@@ -1,0 +1,99 @@
+# Groups hold topics. `put` places a topic, `mv` moves a card, and `del <id>` looks for a card, then a topic, then a group.
+agent: group work Work
+  -> ok
+agent: group home
+  -> ok
+agent: group work Office
+  -> ok
+agent: topic launch Launch Plan
+  -> ok
+agent: topic garden
+  -> ok
+agent: put launch work
+  -> ok
+agent: put launch home
+  -> ok
+agent: put garden home
+  -> ok
+agent: put garden nowhere
+  -> err no-such-group
+agent: put nowhere home
+  -> err no-such-topic
+agent: put work home
+  -> err no-such-topic
+agent: put garden launch
+  -> err no-such-group
+# Cards move between topics, not into groups.
+agent: card n1 note launch Seeds
+  -> ok
+agent: card n2 note launch Tools
+  -> ok
+agent: mv n1 garden
+  -> ok
+agent: mv n1 garden
+  -> ok
+agent: mv n1 home
+  -> err no-such-topic
+agent: mv launch garden
+  -> err no-such-card
+agent: mv n9 garden
+  -> err no-such-card
+# A group cannot take the id of a topic or a card.
+agent: group launch Launch
+  -> err id-in-use
+agent: group n1 Seeds
+  -> err id-in-use
+# Deleting: a topic must be empty; a deleted group leaves its topics without a group.
+agent: del launch
+  -> err not-empty
+agent: mv n2 garden
+  -> ok
+agent: del launch
+  -> ok
+agent: del launch
+  -> err not-found
+agent: del home
+  -> ok
+agent: put garden home
+  -> err no-such-group
+agent: group home Home again
+  -> ok
+# Ids should differ across cards, topics and groups, but only a group is refused one that is taken.
+# `del` then finds the card first, the topic second, the group last.
+agent: topic x Shared id
+  -> ok
+agent: card x note x Shared id
+  -> ok
+agent: del x
+  -> ok
+agent: card n3 note x Proof that the topic is still there
+  -> ok
+agent: del n3
+  -> ok
+agent: del x
+  -> ok
+agent: del x
+  -> err not-found
+agent: group y Group first
+  -> ok
+agent: topic y Topic second
+  -> ok
+agent: put y y
+  -> ok
+agent: del y
+  -> ok
+agent: put garden y
+  -> ok
+agent: del y
+  -> ok
+agent: del y
+  -> err not-found
+agent: put garden work
+  -> ok
+board:
+group work Office
+group home Home again
+topic garden garden
+put garden work
+card n1 note garden 3x2 Seeds
+card n2 note garden 3x2 Tools

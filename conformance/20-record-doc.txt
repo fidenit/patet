@@ -1,0 +1,90 @@
+# `record`: one thing with fields the writer names, and optional rows. `doc`: a pointer to something outside the board.
+agent: topic t Sales
+  -> ok
+agent: card r1 record t Invoice 1042
+  -> ok
+agent: set r1 customer Acme Ltd
+  -> ok
+agent: set r1 due 2026-12-01
+  -> ok
+agent: set r1 amount-due 1,200 USD
+  -> ok
+agent: set r1 2nd_contact Lee
+  -> ok
+agent: set r1 담당자 Kim
+  -> ok
+agent: set r1 <24 f> the longest field name
+  -> ok
+agent: set r1 text Net 30. Late fee after that.
+  -> ok
+agent: set r1 due 2026-12-15
+  -> ok
+# A field name is an id.
+agent: set r1 a!b x
+  -> err unknown-field
+agent: set r1 has.dot x
+  -> err unknown-field
+agent: set r1 e-mail@ x
+  -> err unknown-field
+agent: set r1 <25 f> x
+  -> err unknown-field
+# Rows, with `cols` naming the columns.
+agent: set r1 cols Item | Hours | Amount
+  -> ok
+agent: add r1 l1 Design | 12h | 1,200
+  -> ok
+agent: add r1 l2 Review
+  -> ok
+agent: upd r1 l2 Review | 2h | 200
+  -> ok
+agent: add r1 l3 Travel | - | 80
+  -> ok
+agent: del r1 l3
+  -> ok
+agent: add r1 l4 a | b | c | d | e | f | g
+  -> err cell-count
+agent: upd r1 l9 Not there
+  -> err no-such-item
+# A record with nothing in it is still a card.
+agent: card r2 record t 2x2 Empty
+  -> ok
+# doc
+agent: card f1 doc t Q3 report
+  -> ok
+agent: set f1 src C:\Users\me\reports\q3.md
+  -> ok
+agent: set f1 text Revenue up 12%.\nTwo regions behind plan.
+  -> ok
+agent: card f2 doc t 4x2 The specification
+  -> ok
+agent: set f2 src https://example.com/spec.html
+  -> ok
+agent: set f2 src https://example.com/spec-0.4.html
+  -> ok
+agent: set f1 url https://example.com
+  -> err unknown-field
+agent: set f1 customer Acme Ltd
+  -> err unknown-field
+agent: add f1 a A doc takes no items
+  -> err no-items
+agent: upd f1 a A doc takes no items
+  -> err no-items
+board:
+topic t Sales
+card r1 record t 3x3 Invoice 1042
+set r1 2nd_contact Lee
+set r1 amount-due 1,200 USD
+set r1 cols Item | Hours | Amount
+set r1 customer Acme Ltd
+set r1 due 2026-12-15
+set r1 <24 f> the longest field name
+set r1 text Net 30. Late fee after that.
+set r1 담당자 Kim
+add r1 l1 Design | 12h | 1,200
+add r1 l2 Review | 2h | 200
+card r2 record t 2x2 Empty
+card f1 doc t 3x2 Q3 report
+set f1 src C:\Users\me\reports\q3.md
+set f1 text Revenue up 12%.\nTwo regions behind plan.
+card f2 doc t 4x2 The specification
+set f2 src https://example.com/spec-0.4.html

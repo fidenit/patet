@@ -13,7 +13,9 @@ pub fn header() -> String {
 
 /// The version a header line declares, or None when the line is not a header.
 pub fn declared_version(line: &str) -> Option<&str> {
-    let rest = line.trim().strip_prefix('#')?.trim_start().strip_prefix("patet")?;
+    // Up to 0.3 the protocol was called KITE Protocol; files written then are still read.
+    let rest = line.trim().strip_prefix('#')?.trim_start();
+    let rest = rest.strip_prefix("patet").or_else(|| rest.strip_prefix("kite-protocol"))?;
     if !rest.starts_with(char::is_whitespace) {
         return None;
     }
@@ -38,10 +40,28 @@ fn need<'a>(s: &'a str, usage: &str) -> Result<&'a str, Reject> {
     if s.is_empty() { Err(Reject::new("missing-argument", format!("expected: {usage}"))) } else { Ok(s) }
 }
 
+/// A whole number written in ASCII digits only (no sign), or None. A value over `max` is None too.
+fn digits(s: &str, max: u32) -> Option<u32> {
+    if s.is_empty() || !s.bytes().all(|b| b.is_ascii_digit()) {
+        return None;
+    }
+    let significant = s.trim_start_matches('0');
+    if significant.len() > 9 {
+        return None;
+    }
+    let n: u32 = if significant.is_empty() { 0 } else { significant.parse().ok()? };
+    (n <= max).then_some(n)
+}
+
+/// A size: `<w>x<h>`, both in ASCII digits only. A number too large for a size is still a size, and is clamped.
 fn parse_size(s: &str) -> Option<(u8, u8)> {
     let (w, h) = s.split_once(['x', 'X'])?;
-    Some((w.parse().ok()?, h.parse().ok()?))
+    let side = |t: &str| (!t.is_empty() && t.bytes().all(|b| b.is_ascii_digit())).then(|| digits(t, 255).unwrap_or(255) as u8);
+    Some((side(w)?, side(h)?))
 }
+
+/// The largest column or row `move` takes.
+pub const MAX_CELL: u32 = 9999;
 
 /// Split a value into cells at `|`. Inside a cell, `\|` is a `|` that does not split.
 pub fn split_cells(rest: &str) -> Vec<String> {
@@ -143,8 +163,8 @@ pub fn parse(line: &str) -> Result<Option<Op>, Reject> {
         "move" => {
             let (id, rest) = split1(rest);
             let (c, r) = split1(rest);
-            match (c.parse(), r.parse()) {
-                (Ok(col), Ok(row)) => Op::Move { id: id.into(), col, row },
+            match (digits(c, MAX_CELL), digits(r, MAX_CELL)) {
+                (Some(col), Some(row)) => Op::Move { id: id.into(), col: col as i32, row: row as i32 },
                 _ => return Err(Reject::new("bad-syntax", "expected: move <id> <col> <row>")),
             }
         }
@@ -164,7 +184,8 @@ pub fn parse(line: &str) -> Result<Option<Op>, Reject> {
     Ok(Some(op))
 }
 
-/// Write the whole board in the line language. Applying these lines to an empty board gives the same board.
+/// Write the whole board in the line language. Applying these lines to an empty board with
+/// [`Author::Restore`](crate::core::Author::Restore) gives the same board.
 pub fn serialize(b: &Board) -> String {
     serialize_with(b, &|_| 2)
 }
@@ -241,11 +262,19 @@ pub enum Chunk {
 #[derive(Default)]
 pub struct LineStream {
     buf: String,
+    started: bool,
 }
 
 impl LineStream {
     pub fn feed(&mut self, delta: &str) -> Vec<Chunk> {
         self.buf.push_str(delta);
+        // One U+FEFF at the very start of a stream or file is a byte order mark, not text (SPEC.md 10.2).
+        if !self.started && !self.buf.is_empty() {
+            self.started = true;
+            if self.buf.starts_with('\u{feff}') {
+                self.buf.remove(0);
+            }
+        }
         let mut out = Vec::new();
         while let Some(i) = self.buf.find('\n') {
             let line: String = self.buf.drain(..=i).collect();
@@ -313,7 +342,7 @@ mod tests {
         assert!(errs.is_empty(), "{errs:?}");
         let text = serialize(&b);
         let mut b2 = Board::default();
-        assert!(run(&mut b2, &text, Author::User).is_empty());
+        assert!(run(&mut b2, &text, Author::Restore).is_empty());
         assert_eq!(serialize(&b2), text);
         assert_eq!(b.card("k2").unwrap().w, 2); // default size
     }
@@ -323,6 +352,7 @@ mod tests {
         assert_eq!(header(), format!("# patet {VERSION}"));
         assert_eq!(declared_version("# patet 0.1"), Some("0.1"));
         assert_eq!(declared_version("  #patet 0.2  "), Some("0.2"));
+        assert_eq!(declared_version("# kite-protocol 0.3"), Some("0.3"));
         assert_eq!(declared_version("# patetX 0.1"), None);
         assert_eq!(declared_version("# note"), None);
         assert_eq!(declared_version("say # patet 0.1"), None);
@@ -375,7 +405,7 @@ mod tests {
         let text = serialize(&b);
         assert!(text.contains("add k r1 ls \\| wc -l | counts files\n"), "{text}");
         let mut again = Board::default();
-        assert!(run(&mut again, &text, Author::User).is_empty());
+        assert!(run(&mut again, &text, Author::Restore).is_empty());
         assert_eq!(serialize(&again), text);
     }
 
@@ -385,6 +415,37 @@ mod tests {
         run(&mut b, "let n 3\ngroup g G\ntopic a A\nput a g\ntopic b B\ncard k1 note a One\nset k1 text x\ncard k2 note b Two", Author::Ai);
         assert_eq!(serialize_topic(&b, "a").as_deref(), Some("topic a A\ncard k1 note a 3x2 One\nset k1 text x\n"));
         assert_eq!(serialize_topic(&b, "zz"), None);
+    }
+
+    #[test]
+    fn settled_forms() {
+        use crate::core::is_number;
+        for s in ["0", "12", "12.", "12.5", ".5", "+7", "-.5e-3", "1e3", "1E+3"] {
+            assert!(is_number(s), "{s}");
+        }
+        for s in ["", ".", "+", "e3", "1e", "1e+", "0x10", "inf", "nan", "Infinity", "1e400", "1 000", "1_000", "١٢", "12%", " 1"] {
+            assert!(!is_number(s), "{s}");
+        }
+        assert_eq!(parse_size("4x2"), Some((4, 2)));
+        assert_eq!(parse_size("004X2"), Some((4, 2)));
+        assert_eq!(parse_size("300x99999999999999999999"), Some((255, 255)));
+        for s in ["+4x2", "-4x2", "4x", "x2", "4x2x3", "4.5x2", "４x2"] {
+            assert_eq!(parse_size(s), None, "{s}");
+        }
+        assert_eq!((digits("0", MAX_CELL), digits("0009999", MAX_CELL)), (Some(0), Some(9999)));
+        for s in ["10000", "-1", "+1", "1.0", "", "３"] {
+            assert_eq!(digits(s, MAX_CELL), None, "{s}");
+        }
+        // A placed card read back with the restore author is placed, not pinned.
+        let mut b = Board::default();
+        run(&mut b, "topic t T\ncard k note t K\nmove k 2 1", Author::Ai);
+        let mut again = Board::default();
+        assert!(run(&mut again, &serialize(&b), Author::Restore).is_empty());
+        assert_eq!(serialize(&again), serialize(&b));
+        // The byte order mark of a file is dropped, once.
+        let mut s = LineStream::default();
+        let lines: Vec<String> = s.feed("\u{feff}topic t T\n\u{feff}topic u U\n").into_iter().filter_map(|c| if let Chunk::Line(l) = c { Some(l) } else { None }).collect();
+        assert_eq!(lines, ["topic t T", "\u{feff}topic u U"]);
     }
 
     #[test]

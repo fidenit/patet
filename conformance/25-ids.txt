@@ -1,0 +1,124 @@
+# Ids: 1 to 24 characters, each an ASCII letter or digit, `_`, `-`, or a character above U+007F (see
+# 34-id-characters.txt). The same rule for topics, groups, cards, items and named values. The length is counted
+# in characters, not bytes.
+agent: topic <24 t> The longest id
+  -> ok
+agent: topic <25 t> One too long
+  -> err bad-id
+agent: topic <24 가> 24 letters, 72 bytes
+  -> ok
+agent: topic <25 가> One too long
+  -> err bad-id
+agent: topic a One letter
+  -> ok
+agent: topic 7 One digit
+  -> ok
+agent: topic _ An underscore
+  -> ok
+agent: topic - A hyphen
+  -> ok
+agent: topic a_b-c-2026 Mixed
+  -> ok
+agent: topic 여행 Hangul
+  -> ok
+agent: topic café Latin with an accent
+  -> ok
+agent: topic 旅行2026 Han and digits
+  -> ok
+agent: topic Привет Cyrillic
+  -> ok
+agent: topic a.b A dot
+  -> err bad-id
+agent: topic a/b A slash
+  -> err bad-id
+agent: topic a:b A colon
+  -> err bad-id
+agent: topic a,b A comma
+  -> err bad-id
+agent: topic a+b A plus
+  -> err bad-id
+agent: topic a@b An at sign
+  -> err bad-id
+agent: topic a|b A pipe
+  -> err bad-id
+agent: topic {a} Braces
+  -> err bad-id
+agent: topic "a" Quotes
+  -> err bad-id
+agent: topic a* A star
+  -> err bad-id
+agent: topic a~b A tilde
+  -> err bad-id
+agent: topic a!b An exclamation mark
+  -> err bad-id
+# U+0080, a control character, between a and b.
+agent: topic ab A control character
+  -> err bad-id
+agent: topic 😀 An emoji is above U+007F
+  -> ok
+# Groups, cards, items and named values follow the same rule.
+agent: group <24 g> The longest id
+  -> ok
+agent: group 업무 Hangul
+  -> ok
+agent: group a.b A dot
+  -> err bad-id
+agent: card <24 k> note a The longest id
+  -> ok
+agent: card 메모 note 여행 Hangul
+  -> ok
+agent: card k.1 note a A dot
+  -> err bad-id
+agent: card k1 checklist a Items
+  -> ok
+agent: add k1 <24 i> todo | The longest id
+  -> ok
+agent: add k1 <25 i> todo | One too long
+  -> err bad-id
+agent: add k1 할일 todo | Hangul
+  -> ok
+agent: add k1 1 todo | One digit
+  -> ok
+agent: add k1 - todo | A hyphen
+  -> ok
+agent: add k1 i.1 todo | A dot
+  -> err bad-id
+agent: add k1 #1 todo | A hash
+  -> err bad-id
+agent: let <24 v> the longest name
+  -> ok
+agent: let 인원 12명
+  -> ok
+agent: let v.1 a dot
+  -> err bad-id
+# Ids are compared as written: letters of different case are different ids.
+agent: card K1 note a Not k1
+  -> ok
+agent: set K1 text A card of its own.
+  -> ok
+board:
+let <24 v> the longest name
+let 인원 12명
+group <24 g> The longest id
+group 업무 Hangul
+topic <24 t> The longest id
+topic <24 가> 24 letters, 72 bytes
+topic a One letter
+topic 7 One digit
+topic _ An underscore
+topic - A hyphen
+topic a_b-c-2026 Mixed
+topic 여행 Hangul
+topic café Latin with an accent
+topic 旅行2026 Han and digits
+topic Привет Cyrillic
+topic 😀 An emoji is above U+007F
+card <24 k> note a 3x2 The longest id
+card 메모 note 여행 3x2 Hangul
+card k1 checklist a 3x3 Items
+add k1 <24 i> todo | The longest id
+add k1 할일 todo | Hangul
+add k1 1 todo | One digit
+add k1 - todo | A hyphen
+card K1 note a 3x2 Not k1
+set K1 text A card of its own.

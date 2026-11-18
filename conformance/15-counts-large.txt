@@ -1,0 +1,461 @@
+# The two larger count limits: 80 items in a `draw` card (one per shape), 64 named values.
+agent: topic t Counts
+  -> ok
+agent: card d1 draw t Eighty shapes
+  -> ok
+agent: add d1 s01 rect | 0,0 8,10
+  -> ok
+agent: add d1 s02 rect | 10,0 8,10
+  -> ok
+agent: add d1 s03 rect | 20,0 8,10
+  -> ok
+agent: add d1 s04 rect | 30,0 8,10
+  -> ok
+agent: add d1 s05 rect | 40,0 8,10
+  -> ok
+agent: add d1 s06 rect | 50,0 8,10
+  -> ok
+agent: add d1 s07 rect | 60,0 8,10
+  -> ok
+agent: add d1 s08 rect | 70,0 8,10
+  -> ok
+agent: add d1 s09 rect | 80,0 8,10
+  -> ok
+agent: add d1 s10 rect | 90,0 8,10
+  -> ok
+agent: add d1 s11 rect | 0,12 8,10
+  -> ok
+agent: add d1 s12 rect | 10,12 8,10
+  -> ok
+agent: add d1 s13 rect | 20,12 8,10
+  -> ok
+agent: add d1 s14 rect | 30,12 8,10
+  -> ok
+agent: add d1 s15 rect | 40,12 8,10
+  -> ok
+agent: add d1 s16 rect | 50,12 8,10
+  -> ok
+agent: add d1 s17 rect | 60,12 8,10
+  -> ok
+agent: add d1 s18 rect | 70,12 8,10
+  -> ok
+agent: add d1 s19 rect | 80,12 8,10
+  -> ok
+agent: add d1 s20 rect | 90,12 8,10
+  -> ok
+agent: add d1 s21 rect | 0,24 8,10
+  -> ok
+agent: add d1 s22 rect | 10,24 8,10
+  -> ok
+agent: add d1 s23 rect | 20,24 8,10
+  -> ok
+agent: add d1 s24 rect | 30,24 8,10
+  -> ok
+agent: add d1 s25 rect | 40,24 8,10
+  -> ok
+agent: add d1 s26 rect | 50,24 8,10
+  -> ok
+agent: add d1 s27 rect | 60,24 8,10
+  -> ok
+agent: add d1 s28 rect | 70,24 8,10
+  -> ok
+agent: add d1 s29 rect | 80,24 8,10
+  -> ok
+agent: add d1 s30 rect | 90,24 8,10
+  -> ok
+agent: add d1 s31 rect | 0,36 8,10
+  -> ok
+agent: add d1 s32 rect | 10,36 8,10
+  -> ok
+agent: add d1 s33 rect | 20,36 8,10
+  -> ok
+agent: add d1 s34 rect | 30,36 8,10
+  -> ok
+agent: add d1 s35 rect | 40,36 8,10
+  -> ok
+agent: add d1 s36 rect | 50,36 8,10
+  -> ok
+agent: add d1 s37 rect | 60,36 8,10
+  -> ok
+agent: add d1 s38 rect | 70,36 8,10
+  -> ok
+agent: add d1 s39 rect | 80,36 8,10
+  -> ok
+agent: add d1 s40 rect | 90,36 8,10
+  -> ok
+agent: add d1 s41 rect | 0,48 8,10
+  -> ok
+agent: add d1 s42 rect | 10,48 8,10
+  -> ok
+agent: add d1 s43 rect | 20,48 8,10
+  -> ok
+agent: add d1 s44 rect | 30,48 8,10
+  -> ok
+agent: add d1 s45 rect | 40,48 8,10
+  -> ok
+agent: add d1 s46 rect | 50,48 8,10
+  -> ok
+agent: add d1 s47 rect | 60,48 8,10
+  -> ok
+agent: add d1 s48 rect | 70,48 8,10
+  -> ok
+agent: add d1 s49 rect | 80,48 8,10
+  -> ok
+agent: add d1 s50 rect | 90,48 8,10
+  -> ok
+agent: add d1 s51 rect | 0,60 8,10
+  -> ok
+agent: add d1 s52 rect | 10,60 8,10
+  -> ok
+agent: add d1 s53 rect | 20,60 8,10
+  -> ok
+agent: add d1 s54 rect | 30,60 8,10
+  -> ok
+agent: add d1 s55 rect | 40,60 8,10
+  -> ok
+agent: add d1 s56 rect | 50,60 8,10
+  -> ok
+agent: add d1 s57 rect | 60,60 8,10
+  -> ok
+agent: add d1 s58 rect | 70,60 8,10
+  -> ok
+agent: add d1 s59 rect | 80,60 8,10
+  -> ok
+agent: add d1 s60 rect | 90,60 8,10
+  -> ok
+agent: add d1 s61 rect | 0,72 8,10
+  -> ok
+agent: add d1 s62 rect | 10,72 8,10
+  -> ok
+agent: add d1 s63 rect | 20,72 8,10
+  -> ok
+agent: add d1 s64 rect | 30,72 8,10
+  -> ok
+agent: add d1 s65 rect | 40,72 8,10
+  -> ok
+agent: add d1 s66 rect | 50,72 8,10
+  -> ok
+agent: add d1 s67 rect | 60,72 8,10
+  -> ok
+agent: add d1 s68 rect | 70,72 8,10
+  -> ok
+agent: add d1 s69 rect | 80,72 8,10
+  -> ok
+agent: add d1 s70 rect | 90,72 8,10
+  -> ok
+agent: add d1 s71 rect | 0,84 8,10
+  -> ok
+agent: add d1 s72 rect | 10,84 8,10
+  -> ok
+agent: add d1 s73 rect | 20,84 8,10
+  -> ok
+agent: add d1 s74 rect | 30,84 8,10
+  -> ok
+agent: add d1 s75 rect | 40,84 8,10
+  -> ok
+agent: add d1 s76 rect | 50,84 8,10
+  -> ok
+agent: add d1 s77 rect | 60,84 8,10
+  -> ok
+agent: add d1 s78 rect | 70,84 8,10
+  -> ok
+agent: add d1 s79 rect | 80,84 8,10
+  -> ok
+agent: add d1 s80 rect | 90,84 8,10
+  -> ok
+agent: add d1 s81 rect | 0,96 8,4
+  -> err limit
+agent: add d1 s80 circle | 95,90 4
+  -> ok
+agent: del d1 s01
+  -> ok
+agent: add d1 s81 text | 4,5 | Room again
+  -> ok
+agent: add d1 s82 text | 4,5 | Full again
+  -> err limit
+# Named values: 64 names.
+agent: let v01 value 1
+  -> ok
+agent: let v02 value 2
+  -> ok
+agent: let v03 value 3
+  -> ok
+agent: let v04 value 4
+  -> ok
+agent: let v05 value 5
+  -> ok
+agent: let v06 value 6
+  -> ok
+agent: let v07 value 7
+  -> ok
+agent: let v08 value 8
+  -> ok
+agent: let v09 value 9
+  -> ok
+agent: let v10 value 10
+  -> ok
+agent: let v11 value 11
+  -> ok
+agent: let v12 value 12
+  -> ok
+agent: let v13 value 13
+  -> ok
+agent: let v14 value 14
+  -> ok
+agent: let v15 value 15
+  -> ok
+agent: let v16 value 16
+  -> ok
+agent: let v17 value 17
+  -> ok
+agent: let v18 value 18
+  -> ok
+agent: let v19 value 19
+  -> ok
+agent: let v20 value 20
+  -> ok
+agent: let v21 value 21
+  -> ok
+agent: let v22 value 22
+  -> ok
+agent: let v23 value 23
+  -> ok
+agent: let v24 value 24
+  -> ok
+agent: let v25 value 25
+  -> ok
+agent: let v26 value 26
+  -> ok
+agent: let v27 value 27
+  -> ok
+agent: let v28 value 28
+  -> ok
+agent: let v29 value 29
+  -> ok
+agent: let v30 value 30
+  -> ok
+agent: let v31 value 31
+  -> ok
+agent: let v32 value 32
+  -> ok
+agent: let v33 value 33
+  -> ok
+agent: let v34 value 34
+  -> ok
+agent: let v35 value 35
+  -> ok
+agent: let v36 value 36
+  -> ok
+agent: let v37 value 37
+  -> ok
+agent: let v38 value 38
+  -> ok
+agent: let v39 value 39
+  -> ok
+agent: let v40 value 40
+  -> ok
+agent: let v41 value 41
+  -> ok
+agent: let v42 value 42
+  -> ok
+agent: let v43 value 43
+  -> ok
+agent: let v44 value 44
+  -> ok
+agent: let v45 value 45
+  -> ok
+agent: let v46 value 46
+  -> ok
+agent: let v47 value 47
+  -> ok
+agent: let v48 value 48
+  -> ok
+agent: let v49 value 49
+  -> ok
+agent: let v50 value 50
+  -> ok
+agent: let v51 value 51
+  -> ok
+agent: let v52 value 52
+  -> ok
+agent: let v53 value 53
+  -> ok
+agent: let v54 value 54
+  -> ok
+agent: let v55 value 55
+  -> ok
+agent: let v56 value 56
+  -> ok
+agent: let v57 value 57
+  -> ok
+agent: let v58 value 58
+  -> ok
+agent: let v59 value 59
+  -> ok
+agent: let v60 value 60
+  -> ok
+agent: let v61 value 61
+  -> ok
+agent: let v62 value 62
+  -> ok
+agent: let v63 value 63
+  -> ok
+agent: let v64 value 64
+  -> ok
+agent: let v65 one too many
+  -> err limit
+agent: let v64 replaced at the limit
+  -> ok
+agent: let v01
+  -> ok
+agent: let v65 room again
+  -> ok
+agent: let v66 full again
+  -> err limit
+board:
+let v02 value 2
+let v03 value 3
+let v04 value 4
+let v05 value 5
+let v06 value 6
+let v07 value 7
+let v08 value 8
+let v09 value 9
+let v10 value 10
+let v11 value 11
+let v12 value 12
+let v13 value 13
+let v14 value 14
+let v15 value 15
+let v16 value 16
+let v17 value 17
+let v18 value 18
+let v19 value 19
+let v20 value 20
+let v21 value 21
+let v22 value 22
+let v23 value 23
+let v24 value 24
+let v25 value 25
+let v26 value 26
+let v27 value 27
+let v28 value 28
+let v29 value 29
+let v30 value 30
+let v31 value 31
+let v32 value 32
+let v33 value 33
+let v34 value 34
+let v35 value 35
+let v36 value 36
+let v37 value 37
+let v38 value 38
+let v39 value 39
+let v40 value 40
+let v41 value 41
+let v42 value 42
+let v43 value 43
+let v44 value 44
+let v45 value 45
+let v46 value 46
+let v47 value 47
+let v48 value 48
+let v49 value 49
+let v50 value 50
+let v51 value 51
+let v52 value 52
+let v53 value 53
+let v54 value 54
+let v55 value 55
+let v56 value 56
+let v57 value 57
+let v58 value 58
+let v59 value 59
+let v60 value 60
+let v61 value 61
+let v62 value 62
+let v63 value 63
+let v64 replaced at the limit
+let v65 room again
+topic t Counts
+card d1 draw t 5x4 Eighty shapes
+add d1 s02 rect | 10,0 8,10
+add d1 s03 rect | 20,0 8,10
+add d1 s04 rect | 30,0 8,10
+add d1 s05 rect | 40,0 8,10
+add d1 s06 rect | 50,0 8,10
+add d1 s07 rect | 60,0 8,10
+add d1 s08 rect | 70,0 8,10
+add d1 s09 rect | 80,0 8,10
+add d1 s10 rect | 90,0 8,10
+add d1 s11 rect | 0,12 8,10
+add d1 s12 rect | 10,12 8,10
+add d1 s13 rect | 20,12 8,10
+add d1 s14 rect | 30,12 8,10
+add d1 s15 rect | 40,12 8,10
+add d1 s16 rect | 50,12 8,10
+add d1 s17 rect | 60,12 8,10
+add d1 s18 rect | 70,12 8,10
+add d1 s19 rect | 80,12 8,10
+add d1 s20 rect | 90,12 8,10
+add d1 s21 rect | 0,24 8,10
+add d1 s22 rect | 10,24 8,10
+add d1 s23 rect | 20,24 8,10
+add d1 s24 rect | 30,24 8,10
+add d1 s25 rect | 40,24 8,10
+add d1 s26 rect | 50,24 8,10
+add d1 s27 rect | 60,24 8,10
+add d1 s28 rect | 70,24 8,10
+add d1 s29 rect | 80,24 8,10
+add d1 s30 rect | 90,24 8,10
+add d1 s31 rect | 0,36 8,10
+add d1 s32 rect | 10,36 8,10
+add d1 s33 rect | 20,36 8,10
+add d1 s34 rect | 30,36 8,10
+add d1 s35 rect | 40,36 8,10
+add d1 s36 rect | 50,36 8,10
+add d1 s37 rect | 60,36 8,10
+add d1 s38 rect | 70,36 8,10
+add d1 s39 rect | 80,36 8,10
+add d1 s40 rect | 90,36 8,10
+add d1 s41 rect | 0,48 8,10
+add d1 s42 rect | 10,48 8,10
+add d1 s43 rect | 20,48 8,10
+add d1 s44 rect | 30,48 8,10
+add d1 s45 rect | 40,48 8,10
+add d1 s46 rect | 50,48 8,10
+add d1 s47 rect | 60,48 8,10
+add d1 s48 rect | 70,48 8,10
+add d1 s49 rect | 80,48 8,10
+add d1 s50 rect | 90,48 8,10
+add d1 s51 rect | 0,60 8,10
+add d1 s52 rect | 10,60 8,10
+add d1 s53 rect | 20,60 8,10
+add d1 s54 rect | 30,60 8,10
+add d1 s55 rect | 40,60 8,10
+add d1 s56 rect | 50,60 8,10
+add d1 s57 rect | 60,60 8,10
+add d1 s58 rect | 70,60 8,10
+add d1 s59 rect | 80,60 8,10
+add d1 s60 rect | 90,60 8,10
+add d1 s61 rect | 0,72 8,10
+add d1 s62 rect | 10,72 8,10
+add d1 s63 rect | 20,72 8,10
+add d1 s64 rect | 30,72 8,10
+add d1 s65 rect | 40,72 8,10
+add d1 s66 rect | 50,72 8,10
+add d1 s67 rect | 60,72 8,10
+add d1 s68 rect | 70,72 8,10
+add d1 s69 rect | 80,72 8,10
+add d1 s70 rect | 90,72 8,10
+add d1 s71 rect | 0,84 8,10
+add d1 s72 rect | 10,84 8,10
+add d1 s73 rect | 20,84 8,10
+add d1 s74 rect | 30,84 8,10
+add d1 s75 rect | 40,84 8,10
+add d1 s76 rect | 50,84 8,10
+add d1 s77 rect | 60,84 8,10
+add d1 s78 rect | 70,84 8,10
+add d1 s79 rect | 80,84 8,10
+add d1 s80 circle | 95,90 4
+add d1 s81 text | 4,5 | Room again

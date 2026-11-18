@@ -1,0 +1,17 @@
+# The name of an extension kind is at most 24 characters, `x-` included (SPEC.md section 6).
+agent: topic t T
+  -> ok
+agent: card a x-<22 a> t 24 in all
+  -> ok
+agent: card b x-<23 a> t 25 in all
+  -> err unknown-kind
+agent: card c x-<24 a> t 26 in all
+  -> err unknown-kind
+agent: card d x-<22 가> t 24 characters, 68 bytes
+  -> ok
+agent: card e x-<23 가> t 25 characters
+  -> err unknown-kind
+board:
+topic t T
+card a x-<22 a> t 3x3 24 in all
+card d x-<22 가> t 3x3 24 characters, 68 bytes

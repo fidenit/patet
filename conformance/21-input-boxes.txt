@@ -1,0 +1,100 @@
+# Input boxes. Cell 1 is the box name (`*` last: must be filled), cell 2 a hint or a kind. Neither is checked:
+# a renderer shows a kind it does not know as a free text box. Sending writes each value as cell 3, then `sent`.
+agent: topic t Trip
+  -> ok
+agent: card f1 input t Booking details
+  -> ok
+agent: set f1 text Needed to book the room.
+  -> ok
+agent: add f1 name Name* | Hong Gildong
+  -> ok
+agent: add f1 day Start date* | date
+  -> ok
+agent: add f1 at Check-in | time
+  -> ok
+agent: add f1 n People | number
+  -> ok
+agent: add f1 budget Budget per person | slider 5~30 10k KRW
+  -> ok
+agent: add f1 seat Seat | choice Window / Aisle / Any
+  -> ok
+agent: add f1 phone Phone
+  -> ok
+agent: add f1 memo Memo | anything else?
+  -> ok
+# Kinds this document does not list are stored as written.
+agent: add f1 color Colour | color
+  -> ok
+agent: add f1 odd Odd | slider
+  -> ok
+agent: add f1 pick Pick | choice
+  -> ok
+agent: add f1 mail E-mail* | email
+  -> ok
+# The agent edits and removes boxes freely before the user answers.
+agent: upd f1 n People* | number
+  -> ok
+agent: del f1 odd
+  -> ok
+agent: del f1 pick
+  -> ok
+agent: del f1 color
+  -> ok
+agent: del f1 mail
+  -> ok
+agent: upd f1 gone Gone | date
+  -> err no-such-item
+# The user sends: one `upd` per filled box (`-` for a box without a hint), then `sent`.
+user: upd f1 name Name* | Hong Gildong | Lee Jieun
+  -> ok
+user: upd f1 day Start date* | date | 2026-12-05
+  -> ok
+user: upd f1 at Check-in | time | 15:00
+  -> ok
+user: upd f1 n People* | number | 4
+  -> ok
+user: upd f1 budget Budget per person | slider 5~30 10k KRW | 15
+  -> ok
+user: upd f1 seat Seat | choice Window / Aisle / Any | Aisle
+  -> ok
+user: upd f1 phone Phone | - | 010-1234-5678
+  -> ok
+user: upd f1 memo Memo | anything else? | <61 m>
+  -> ok clipped f1.memo 60
+user: set f1 sent yes
+  -> ok
+# A second form, sent with a box left empty.
+agent: card f2 input t Optional
+  -> ok
+agent: add f2 a Nickname
+  -> ok
+agent: add f2 b Birthday | date
+  -> ok
+user: upd f2 b Birthday | date | 1999-01-31
+  -> ok
+user: set f2 sent yes
+  -> ok
+# An input card has `text` and `sent`, nothing else.
+agent: set f1 hint Fill this in
+  -> err unknown-field
+agent: set f1 state ok
+  -> err unknown-field
+user: set f2 sent done
+  -> err bad-value
+board:
+topic t Trip
+card f1 input t 3x3 Booking details
+set f1 sent yes
+set f1 text Needed to book the room.
+add f1 name Name* | Hong Gildong | Lee Jieun
+add f1 day Start date* | date | 2026-12-05
+add f1 at Check-in | time | 15:00
+add f1 n People* | number | 4
+add f1 budget Budget per person | slider 5~30 10k KRW | 15
+add f1 seat Seat | choice Window / Aisle / Any | Aisle
+add f1 phone Phone | - | 010-1234-5678
+add f1 memo Memo | anything else? | <59 m>…
+card f2 input t 3x3 Optional
+set f2 sent yes
+add f2 a Nickname
+add f2 b Birthday | date | 1999-01-31

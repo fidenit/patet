@@ -1,0 +1,119 @@
+# Only the user pins and unpins, and only the user writes the user's answers:
+# `chosen` of a decision, `sent` of an input card, the third cell of an input box.
+agent: topic t Trip
+  -> ok
+agent: card d1 decision t Where to stay?
+  -> ok
+agent: add d1 o1 Aewol | Quiet
+  -> ok
+agent: add d1 o2 Seogwipo | Central
+  -> ok
+agent: card f1 input t Dates
+  -> ok
+agent: add f1 a Start date* | date
+  -> ok
+agent: card n1 note t Memo
+  -> ok
+# Pinning is the user's.
+agent: pin n1
+  -> err user-only
+agent: unpin n1
+  -> err user-only
+user: pin n1
+  -> ok
+agent: unpin n1
+  -> err user-only
+user: unpin n1
+  -> ok
+user: pin nowhere
+  -> err no-such-card
+user: unpin nowhere
+  -> err no-such-card
+# The choice is the user's, whatever the agent writes there.
+agent: set d1 chosen o1
+  -> err user-only
+agent: set d1 chosen o1,o2
+  -> err user-only
+agent: set d1 chosen <130 x>
+  -> err user-only
+user: set d1 chosen o1
+  -> ok
+agent: set d1 chosen o2
+  -> err user-only
+# The rest of an asking card stays the agent's.
+agent: set d1 text Aewol is by the sea.
+  -> ok
+agent: upd d1 o1 Aewol | Quiet, by the sea
+  -> ok
+agent: add d1 o3 Jeju City | Near the airport
+  -> ok
+# Sending is the user's, and so is the value of a box.
+agent: set f1 sent yes
+  -> err user-only
+agent: add f1 b People | number | 4
+  -> err user-only
+agent: upd f1 a Start date* | date | 12/3
+  -> err user-only
+agent: add f1 a Start date* | date | 12/3
+  -> err user-only
+agent: add f1 b People | number
+  -> ok
+user: upd f1 a Start date* | date | 12/3
+  -> ok
+user: add f1 c Budget | number | 300
+  -> ok
+user: set f1 sent yes
+  -> ok
+agent: upd f1 c Budget | number | 500
+  -> err user-only
+agent: set f1 text Got it, thanks.
+  -> ok
+# `chosen` and `sent` are answers only on those two types. Elsewhere they are ordinary field names, or no field.
+agent: card r1 record t Order 7
+  -> ok
+agent: set r1 chosen express
+  -> ok
+agent: set r1 sent yes
+  -> ok
+agent: card x1 x-poll t Lunch
+  -> ok
+agent: set x1 chosen noodles
+  -> ok
+agent: set n1 chosen o1
+  -> err unknown-field
+agent: set d1 sent yes
+  -> err unknown-field
+agent: set f1 chosen a
+  -> err unknown-field
+# Three cells are the user's only in an input box.
+agent: card l1 timeline t Plan
+  -> ok
+agent: add l1 a 09:00 | Leave | todo
+  -> ok
+# What the user writes passes the same checks as anyone's.
+user: set n1 state ok
+  -> err unknown-field
+user: set f1 sent no
+  -> err bad-value
+board:
+topic t Trip
+card d1 decision t 3x3 Where to stay?
+set d1 chosen o1
+set d1 text Aewol is by the sea.
+add d1 o1 Aewol | Quiet, by the sea
+add d1 o2 Seogwipo | Central
+add d1 o3 Jeju City | Near the airport
+card f1 input t 3x3 Dates
+set f1 sent yes
+set f1 text Got it, thanks.
+add f1 a Start date* | date | 12/3
+add f1 b People | number
+add f1 c Budget | number | 300
+card n1 note t 3x2 Memo
+card r1 record t 3x3 Order 7
+set r1 chosen express
+set r1 sent yes
+card x1 x-poll t 3x3 Lunch
+set x1 chosen noodles
+card l1 timeline t 3x3 Plan
+add l1 a 09:00 | Leave | todo

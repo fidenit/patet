@@ -1,0 +1,236 @@
+# The core types with items: chart, route, draw, table, progress, checklist, timeline (decision and input have
+# their own files). Each with its default size, its fields, the cells that are checked and those that are not.
+agent: topic t Plan
+  -> ok
+# chart: 4x3. Cell 2 is a number; commas are allowed. `form` is not checked.
+agent: card c1 chart t Spend by quarter
+  -> ok
+agent: set c1 unit k$
+  -> ok
+agent: set c1 form bar
+  -> ok
+agent: set c1 form donut
+  -> ok
+agent: set c1 form line
+  -> ok
+agent: add c1 q1 Q1 | 120
+  -> ok
+agent: add c1 q2 Q2 | 1,250.5
+  -> ok
+agent: add c1 q3 Q3 | -40
+  -> ok
+agent: add c1 q4 Q4 | 0
+  -> ok
+agent: add c1 q5 Q5 | many
+  -> err bad-value
+agent: add c1 q5 Q5 | 12 units
+  -> err bad-value
+agent: add c1 q5 Q5 | 12%
+  -> err bad-value
+agent: add c1 q5 Q5
+  -> err bad-value
+agent: add c1 q5 Q5 |
+  -> err bad-value
+agent: upd c1 q4 Q4 | none
+  -> err bad-value
+agent: upd c1 q4 Q4 | 180
+  -> ok
+agent: set c1 text A chart has no text
+  -> err unknown-field
+# route: 6x5. Cell 2 is lat,lon. Cell 3 is absent on the last stop.
+agent: card r1 route t Station to the palace
+  -> ok
+agent: set r1 total 3.3 km, about 45 min on foot
+  -> ok
+agent: set r1 text Mostly flat.
+  -> ok
+agent: add r1 a Seoul Station | 37.5547,126.9707 | 2.8 km, 38 min
+  -> ok
+agent: add r1 b Gwanghwamun | 37.5759,126.9769 | 0.5 km, 7 min
+  -> ok
+agent: add r1 c Gyeongbokgung | 37.5796,126.9770
+  -> ok
+agent: add r1 d Sydney | -33.8688,151.2093
+  -> ok
+agent: add r1 e Nowhere | 37.5547
+  -> err bad-value
+agent: add r1 e Nowhere | north,east
+  -> err bad-value
+agent: add r1 e Nowhere | 37.5547 126.9707
+  -> err bad-value
+agent: add r1 e Nowhere | 37.5547,east
+  -> err bad-value
+agent: add r1 e Nowhere | | 1 km
+  -> err bad-value
+agent: del r1 d
+  -> ok
+agent: set r1 url x
+  -> err unknown-field
+# draw: 5x4. Cell 1 is the shape. The other cells are not checked: an unknown color or size is drawn as the default.
+agent: card d1 draw t Release flow
+  -> ok
+agent: set d1 text Two-week loop
+  -> ok
+agent: add d1 a rect | 5,15 25,22 | Plan | accent
+  -> ok
+agent: add d1 b circle | 50,50 10 | Build
+  -> ok
+agent: add d1 c line | 0,0 50,50 100,0
+  -> ok
+agent: add d1 d arrow | 30,26 38,26 | 2w |
+  -> ok
+agent: add d1 e text | 50,70 | Review | dim | s
+  -> ok
+agent: add d1 f rect | 71,15 25,22 | Ship | purple | xl
+  -> ok
+agent: add d1 g rect
+  -> ok
+agent: add d1 h Rect | 1,1 2,2
+  -> err bad-value
+agent: add d1 h box | 1,1 2,2
+  -> err bad-value
+agent: add d1 h | 1,1 2,2
+  -> err bad-value
+agent: add d1 h 5,15 25,22 | rect
+  -> err bad-value
+# table: 4x3. One to six cells a row, and rows need not match `cols`.
+agent: card t1 table t Venues
+  -> ok
+agent: set t1 cols Venue | Travel | Cost per person
+  -> ok
+agent: add t1 r1 Gangneung | 2h 40m | 180,000 KRW
+  -> ok
+agent: add t1 r2 Gapyeong | 1h 10m
+  -> ok
+agent: add t1 r3 Seoul
+  -> ok
+agent: add t1 r4 a | b | c | d | e | f
+  -> ok
+agent: del t1 r4
+  -> ok
+agent: set t1 text A table has no text
+  -> err unknown-field
+# progress: 3x3. `pct` is a whole number from 0 to 100; cell 1 is the state of a step.
+agent: card p1 progress t Packing
+  -> ok
+agent: set p1 pct 0
+  -> ok
+agent: set p1 pct 100
+  -> ok
+agent: set p1 pct 40
+  -> ok
+agent: set p1 pct 40%
+  -> err bad-value
+agent: set p1 pct -1
+  -> err bad-value
+agent: set p1 pct 40.5
+  -> err bad-value
+agent: set p1 pct 1000
+  -> err bad-value
+agent: set p1 pct forty
+  -> err bad-value
+agent: set p1 text 2 of 5 rooms boxed
+  -> ok
+agent: add p1 s1 done | Bedroom
+  -> ok
+agent: add p1 s2 run | Kitchen
+  -> ok
+agent: add p1 s3 todo | Bathroom
+  -> ok
+agent: add p1 s4 fail | Garage
+  -> ok
+agent: add p1 s5 todo
+  -> ok
+agent: add p1 s6 wait | Not a step state
+  -> err bad-value
+agent: add p1 s6 Living room | todo
+  -> err bad-value
+agent: upd p1 s4 skipped | Garage
+  -> err bad-value
+# checklist: 3x3. Cell 1 is done or todo. The user ticks an item with `upd` and deletes one with `del`.
+agent: card l1 checklist t Before the truck comes
+  -> ok
+agent: add l1 a done | Book the movers
+  -> ok
+agent: add l1 b todo | Pack the kitchen
+  -> ok
+agent: add l1 c todo | Return the keys
+  -> ok
+agent: add l1 d fail | Not a checklist state
+  -> err bad-value
+agent: add l1 d Call the landlord
+  -> err bad-value
+user: upd l1 b done | Pack the kitchen
+  -> ok
+user: upd l1 a todo | Book the movers
+  -> ok
+user: del l1 c
+  -> ok
+user: upd l1 b ticked | Pack the kitchen
+  -> err bad-value
+# timeline: 3x3. Entries in the order given; no cell is checked.
+agent: card e1 timeline t Day plan
+  -> ok
+agent: add e1 a 09:00 | Leave the station | done
+  -> ok
+agent: add e1 b 10:00 | Gwanghwamun Square | run
+  -> ok
+agent: add e1 c 10:30 | Palace tour | todo
+  -> ok
+agent: add e1 d 12:00 | Lunch
+  -> ok
+agent: add e1 e Later
+  -> ok
+agent: add e1 f 18:00 | Dinner | maybe
+  -> ok
+agent: upd e1 a 08:30 | Leave the station | done
+  -> ok
+agent: set e1 text A timeline has no fields
+  -> err unknown-field
+board:
+topic t Plan
+card c1 chart t 4x3 Spend by quarter
+set c1 form line
+set c1 unit k$
+add c1 q1 Q1 | 120
+add c1 q2 Q2 | 1,250.5
+add c1 q3 Q3 | -40
+add c1 q4 Q4 | 180
+card r1 route t 6x5 Station to the palace
+set r1 text Mostly flat.
+set r1 total 3.3 km, about 45 min on foot
+add r1 a Seoul Station | 37.5547,126.9707 | 2.8 km, 38 min
+add r1 b Gwanghwamun | 37.5759,126.9769 | 0.5 km, 7 min
+add r1 c Gyeongbokgung | 37.5796,126.9770
+card d1 draw t 5x4 Release flow
+set d1 text Two-week loop
+add d1 a rect | 5,15 25,22 | Plan | accent
+add d1 b circle | 50,50 10 | Build
+add d1 c line | 0,0 50,50 100,0
+add d1 d arrow | 30,26 38,26 | 2w |
+add d1 e text | 50,70 | Review | dim | s
+add d1 f rect | 71,15 25,22 | Ship | purple | xl
+add d1 g rect
+card t1 table t 4x3 Venues
+set t1 cols Venue | Travel | Cost per person
+add t1 r1 Gangneung | 2h 40m | 180,000 KRW
+add t1 r2 Gapyeong | 1h 10m
+add t1 r3 Seoul
+card p1 progress t 3x3 Packing
+set p1 pct 40
+set p1 text 2 of 5 rooms boxed
+add p1 s1 done | Bedroom
+add p1 s2 run | Kitchen
+add p1 s3 todo | Bathroom
+add p1 s4 fail | Garage
+add p1 s5 todo
+card l1 checklist t 3x3 Before the truck comes
+add l1 a todo | Book the movers
+add l1 b done | Pack the kitchen
+card e1 timeline t 3x3 Day plan
+add e1 a 08:30 | Leave the station | done
+add e1 b 10:00 | Gwanghwamun Square | run
+add e1 c 10:30 | Palace tour | todo
+add e1 d 12:00 | Lunch
+add e1 e Later
+add e1 f 18:00 | Dinner | maybe

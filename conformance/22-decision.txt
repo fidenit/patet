@@ -1,0 +1,106 @@
+# Decisions: `multi` is yes or no, `tone` is normal or danger, and the user's pick arrives in `chosen`.
+agent: topic t Workshop
+  -> ok
+agent: card d1 decision t Which venue?
+  -> ok
+agent: set d1 text Where should the workshop be?
+  -> ok
+agent: add d1 o1 Gangneung | Far, but better facilities
+  -> ok
+agent: add d1 o2 Gapyeong | Close and cheaper
+  -> ok
+agent: add d1 o3 Seoul
+  -> ok
+# Both checked fields take their plain value too.
+agent: set d1 multi no
+  -> ok
+agent: set d1 tone normal
+  -> ok
+agent: set d1 multi YES
+  -> err bad-value
+agent: set d1 multi true
+  -> err bad-value
+agent: set d1 multi 2
+  -> err bad-value
+agent: set d1 multi yes, please
+  -> err bad-value
+agent: set d1 tone Danger
+  -> err bad-value
+agent: set d1 tone warning
+  -> err bad-value
+agent: set d1 tone danger!
+  -> err bad-value
+# One pick. The user may change it.
+user: set d1 chosen o2
+  -> ok
+user: set d1 chosen o1
+  -> ok
+# Several picks: the ids joined by commas, in one op.
+agent: card d2 decision t Which days?
+  -> ok
+agent: set d2 multi yes
+  -> ok
+agent: add d2 fri Friday | 12/5
+  -> ok
+agent: add d2 sat Saturday | 12/6
+  -> ok
+agent: add d2 sun Sunday | 12/7
+  -> ok
+user: set d2 chosen fri,sun
+  -> ok
+# A choice that cannot be undone.
+agent: card d3 decision t Delete the old photos?
+  -> ok
+agent: set d3 tone danger
+  -> ok
+agent: set d3 text This cannot be undone.
+  -> ok
+agent: add d3 yes Delete | 240 photos are removed for good
+  -> ok
+agent: add d3 no Keep
+  -> ok
+user: set d3 chosen no
+  -> ok
+# Both can be set back.
+agent: card d4 decision t Toggled
+  -> ok
+agent: set d4 multi yes
+  -> ok
+agent: set d4 multi no
+  -> ok
+agent: set d4 tone danger
+  -> ok
+agent: set d4 tone normal
+  -> ok
+# The user's ops pass the same checks.
+user: set d4 multi maybe
+  -> err bad-value
+user: set d4 tone red
+  -> err bad-value
+# Once answered, the agent acts on it and removes the card.
+agent: del d2
+  -> ok
+# A decision has these four fields only.
+agent: set d1 state ok
+  -> err unknown-field
+agent: set d1 options 3
+  -> err unknown-field
+board:
+topic t Workshop
+card d1 decision t 3x3 Which venue?
+set d1 chosen o1
+set d1 multi no
+set d1 text Where should the workshop be?
+set d1 tone normal
+add d1 o1 Gangneung | Far, but better facilities
+add d1 o2 Gapyeong | Close and cheaper
+add d1 o3 Seoul
+card d3 decision t 3x3 Delete the old photos?
+set d3 chosen no
+set d3 text This cannot be undone.
+set d3 tone danger
+add d3 yes Delete | 240 photos are removed for good
+add d3 no Keep
+card d4 decision t 3x3 Toggled
+set d4 multi no
+set d4 tone normal

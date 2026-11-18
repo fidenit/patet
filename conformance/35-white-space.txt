@@ -1,0 +1,62 @@
+# White space is the Unicode property White_Space (SPEC.md section 3): it separates tokens and is trimmed
+# around a line, a value and a cell. U+FEFF and U+200B are not white space: they are part of a token.
+# (One U+FEFF at the very start of a file or stream is dropped by whoever cuts it into lines, before any
+# line exists; a case cannot show that.) The characters below are named in the name of each topic.
+agent: topica U+0085 around the verb
+  -> ok
+agent: topic b U+00A0
+  -> ok
+agent: topic　c U+3000
+  -> ok
+agent: topic d U+2003
+  -> ok
+agent: topic e U+2028
+  -> ok
+agent: topic f U+1680 U+205F
+  -> ok
+agent: 　 topic g Trimmed at both ends  
+  -> ok
+agent: ﻿topic h U+FEFF before the verb
+  -> err unknown-verb
+agent: topic﻿h U+FEFF after the verb
+  -> err unknown-verb
+agent: topic​h U+200B after the verb
+  -> err unknown-verb
+agent: ​# U+200B before a comment mark
+  -> err unknown-verb
+agent: 　# a comment after U+3000
+  -> skip
+agent: 
+  -> skip
+# Values and cells.
+agent: card k table a Cells
+  -> ok
+agent: add k r1　one　| two | three
+  -> ok
+agent: add k r2 inner　space stays | x
+  -> ok
+agent: set k cols　A | B　
+  -> ok
+agent: let n　 value　
+  -> ok
+agent: let n　
+  -> ok
+agent: let m kept
+  -> ok
+# U+FEFF and U+200B inside an id are ordinary characters above U+007F.
+agent: topic x﻿y U+FEFF inside the id
+  -> ok
+board:
+let m kept
+topic a U+0085 around the verb
+topic b U+00A0
+topic c U+3000
+topic d U+2003
+topic e U+2028
+topic f U+1680 U+205F
+topic g Trimmed at both ends
+topic x﻿y U+FEFF inside the id
+card k table a 4x3 Cells
+set k cols A | B
+add k r1 one | two | three
+add k r2 inner　space stays | x

@@ -3,7 +3,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { Board, LineStream, joinCells, partsTable, serialize, splitCells } from "./patet.js";
+import { Board, LineStream, isNumber, joinCells, partsTable, serialize, splitCells } from "./patet.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const expand = (s) => s.replace(/<(\d+) (.)>/gu, (_, n, c) => c.repeat(Number(n)));
@@ -18,7 +18,7 @@ const check = (ok, what) => {
 
 const dir = join(here, "..", "conformance");
 const files = readdirSync(dir).filter((f) => f.endsWith(".txt")).sort();
-check(files.length >= 8, `expected the conformance cases, found ${files.length}`);
+check(files.length >= 36, `expected the conformance cases, found ${files.length}`);
 let lines = 0;
 for (const file of files) {
   const text = readFileSync(join(dir, file), "utf8").replaceAll("\r\n", "\n");
@@ -40,9 +40,9 @@ for (const file of files) {
   }
   const got = serialize(board);
   check(tidy(got) === tidy(want), `${file}: the board at the end\n--- expected\n${tidy(want)}\n--- got\n${tidy(got)}`);
-  // What was written back rebuilds the same board when the user replays it.
+  // What was written back rebuilds the same board when it is replayed with the restore author.
   const again = new Board();
-  for (const l of got.split("\n")) if (l) check(again.line(l, "user") === "ok", `${file}: replay of '${l}'`);
+  for (const l of got.split("\n")) if (l) check(again.line(l, "restore") === "ok", `${file}: replay of '${l}'`);
   check(serialize(again) === got, `${file}: replaying the board`);
 }
 
@@ -68,6 +68,12 @@ check(joinCells(["a|b", "c"]) === "a\\|b | c", "joinCells");
 const s = new LineStream();
 const got = [...s.feed("topic t A\nset k te"), ...s.feed("xt hi\nsay en"), ...s.feed("d")];
 check(JSON.stringify(got) === '["topic t A","set k text hi"]' && s.partial === "say end" && s.finish() === "say end", "LineStream");
+
+// Numbers, and the byte order mark of a file (dropped once, by whoever cuts the stream into lines).
+for (const n of ["0", "12", "12.", "12.5", ".5", "+7", "-.5e-3", "1e3", "1E+3"]) check(isNumber(n), `isNumber ${n}`);
+for (const n of ["", ".", "+", "e3", "1e", "1e+", "0x10", "inf", "nan", "Infinity", "1e400", "1 000", "1_000", "١٢", "12%", " 1"]) check(!isNumber(n), `not isNumber ${n}`);
+const bom = new LineStream();
+check(JSON.stringify(bom.feed("\ufefftopic t T\n\ufefftopic u U\n")) === JSON.stringify(["topic t T", "\ufefftopic u U"]), "LineStream and U+FEFF");
 
 console.log(failed ? `${failed} failed` : `ok: ${files.length} conformance cases (${lines} lines), examples, guide table`);
 process.exit(failed ? 1 : 0);

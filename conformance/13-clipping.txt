@@ -1,0 +1,193 @@
+# Every text with a limit, one character over it: cut to the limit with … last, applied, and noted.
+# A topic or group name is cut the same way but has no note form (SPEC.md section 9), so its verdict is a plain ok.
+agent: topic t <25 n>
+  -> ok
+agent: topic u <24 n>
+  -> ok
+agent: group g <17 G>
+  -> ok
+agent: group h <16 G>
+  -> ok
+agent: say <80 s>
+  -> ok
+agent: say <81 s>
+  -> ok clipped say 80
+# The title, set either way.
+agent: card n1 note t <41 T>
+  -> ok clipped n1.title 40
+agent: card n2 note t 4x2 <41 T>
+  -> ok clipped n2.title 40
+agent: card n3 note t <40 T>
+  -> ok
+agent: set n3 title <41 U>
+  -> ok clipped n3.title 40
+# Lengths are counted in Unicode scalar values, not bytes or UTF-16 units.
+agent: card n4 note t <40 가>
+  -> ok
+agent: card n5 note t <40 😀>
+  -> ok
+agent: card n6 note t <41 😀>
+  -> ok clipped n6.title 40
+# Each field of each type.
+agent: set n1 text <241 a>
+  -> ok clipped n1.text 240
+agent: card s1 status t Status
+  -> ok
+agent: set s1 text <81 a>
+  -> ok clipped s1.text 80
+agent: card m1 metric t Metric
+  -> ok
+agent: set m1 value <15 9>
+  -> ok clipped m1.value 14
+agent: set m1 unit <9 u>
+  -> ok clipped m1.unit 8
+agent: set m1 delta +<14 9>
+  -> ok clipped m1.delta 14
+agent: set m1 text <61 a>
+  -> ok clipped m1.text 60
+agent: card c1 chart t Chart
+  -> ok
+agent: set c1 unit <9 u>
+  -> ok clipped c1.unit 8
+agent: set c1 form <9 f>
+  -> ok clipped c1.form 8
+agent: card r1 route t Route
+  -> ok
+agent: set r1 total <41 a>
+  -> ok clipped r1.total 40
+agent: set r1 text <81 a>
+  -> ok clipped r1.text 80
+agent: card d1 draw t Drawing
+  -> ok
+agent: set d1 text <81 a>
+  -> ok clipped d1.text 80
+agent: card i1 image t Image
+  -> ok
+agent: set i1 src <601 a>
+  -> ok clipped i1.src 600
+agent: set i1 text <81 a>
+  -> ok clipped i1.text 80
+agent: card t1 table t Table
+  -> ok
+agent: set t1 cols <201 a>
+  -> ok clipped t1.cols 200
+agent: card p1 progress t Progress
+  -> ok
+agent: set p1 text <61 a>
+  -> ok clipped p1.text 60
+agent: card q1 decision t Decision
+  -> ok
+agent: set q1 text <121 a>
+  -> ok clipped q1.text 120
+user: set q1 chosen <121 a>
+  -> ok clipped q1.chosen 120
+agent: card f1 input t Input
+  -> ok
+agent: set f1 text <121 a>
+  -> ok clipped f1.text 120
+agent: card w1 web t Web
+  -> ok
+agent: set w1 url <601 a>
+  -> ok clipped w1.url 600
+agent: card e1 record t Record
+  -> ok
+agent: set e1 text <241 a>
+  -> ok clipped e1.text 240
+agent: set e1 cols <201 a>
+  -> ok clipped e1.cols 200
+agent: set e1 owner <81 a>
+  -> ok clipped e1.owner 80
+agent: set e1 exact <80 a>
+  -> ok
+agent: card x1 x-kanban t Extension
+  -> ok
+agent: set x1 lane <81 a>
+  -> ok clipped x1.lane 80
+agent: card o1 doc t Doc
+  -> ok
+agent: set o1 src <601 a>
+  -> ok clipped o1.src 600
+agent: set o1 text <241 a>
+  -> ok clipped o1.text 240
+# Cells: one note for the item, however many of its cells were cut.
+agent: add t1 r1 <60 c> | exact
+  -> ok
+agent: add t1 r2 short | <61 c>
+  -> ok clipped t1.r2 60
+agent: add t1 r3 <61 c> | <70 d> | short
+  -> ok clipped t1.r3 60
+agent: upd t1 r1 <61 e>
+  -> ok clipped t1.r1 60
+agent: card l1 checklist t List
+  -> ok
+agent: add l1 i1 todo | <61 c>
+  -> ok clipped l1.i1 60
+user: upd l1 i1 done | <61 c>
+  -> ok clipped l1.i1 60
+# A rejected op is not applied, so nothing was cut: it leaves no note, not for itself and not for the next line.
+agent: upd t1 r9 <61 z> | not added yet
+  -> err no-such-item
+agent: upd l1 i9 todo | <61 z>
+  -> err no-such-item
+agent: add l1 i2 todo | short
+  -> ok
+# A cut text set again within the limit has no note.
+agent: set s1 text short again
+  -> ok
+board:
+group g <15 G>…
+group h <16 G>
+topic t <23 n>…
+topic u <24 n>
+card n1 note t 3x2 <39 T>…
+set n1 text <239 a>…
+card n2 note t 4x2 <39 T>…
+card n3 note t 3x2 <39 U>…
+card n4 note t 3x2 <40 가>
+card n5 note t 3x2 <40 😀>
+card n6 note t 3x2 <39 😀>…
+card s1 status t 2x1 Status
+set s1 text short again
+card m1 metric t 2x2 Metric
+set m1 delta +<12 9>…
+set m1 text <59 a>…
+set m1 unit uuuuuuu…
+set m1 value <13 9>…
+card c1 chart t 4x3 Chart
+set c1 form fffffff…
+set c1 unit uuuuuuu…
+card r1 route t 6x5 Route
+set r1 text <79 a>…
+set r1 total <39 a>…
+card d1 draw t 5x4 Drawing
+set d1 text <79 a>…
+card i1 image t 4x3 Image
+set i1 src <599 a>…
+set i1 text <79 a>…
+card t1 table t 4x3 Table
+set t1 cols <199 a>…
+add t1 r1 <59 e>…
+add t1 r2 short | <59 c>…
+add t1 r3 <59 c>… | <59 d>… | short
+card p1 progress t 3x3 Progress
+set p1 text <59 a>…
+card q1 decision t 3x3 Decision
+set q1 chosen <119 a>…
+set q1 text <119 a>…
+card f1 input t 3x3 Input
+set f1 text <119 a>…
+card w1 web t 6x5 Web
+set w1 url <599 a>…
+card e1 record t 3x3 Record
+set e1 cols <199 a>…
+set e1 exact <80 a>
+set e1 owner <79 a>…
+set e1 text <239 a>…
+card x1 x-kanban t 3x3 Extension
+set x1 lane <79 a>…
+card o1 doc t 3x2 Doc
+set o1 src <599 a>…
+set o1 text <239 a>…
+card l1 checklist t 3x3 List
+add l1 i1 done | <59 c>…
+add l1 i2 todo | short

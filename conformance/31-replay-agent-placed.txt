@@ -1,0 +1,53 @@
+# A card an agent placed or sized is written back as `move` and a size, without `pin`. Read back with the
+# restore author (SPEC.md section 8) it is placed and not pinned, so the board is the same board. Runners
+# replay the board they wrote with that author; read back as the user, card k would come back pinned.
+agent: topic t T
+  -> ok
+agent: card k note t Placed by the agent
+  -> ok
+agent: move k 2 1
+  -> ok
+agent: size k 4x2
+  -> ok
+agent: card j note t Placed by the user
+  -> ok
+user: move j 0 3
+  -> ok
+agent: card i note t Resized by the user
+  -> ok
+user: size i 2x2
+  -> ok
+agent: card h decision t Answered
+  -> ok
+agent: add h o1 Yes
+  -> ok
+user: set h chosen o1
+  -> ok
+agent: card f input t Sent
+  -> ok
+agent: add f a Name
+  -> ok
+user: upd f a Name | - | Lee
+  -> ok
+user: set f sent yes
+  -> ok
+# The agent's placement is still a hint it can change; the user's is not.
+agent: move k 5 0
+  -> ok
+agent: move j 5 1
+  -> err pinned
+board:
+topic t T
+card k note t 4x2 Placed by the agent
+move k 5 0
+card j note t 3x2 Placed by the user
+move j 0 3
+pin j
+card i note t 2x2 Resized by the user
+pin i
+card h decision t 3x3 Answered
+set h chosen o1
+add h o1 Yes
+card f input t 3x3 Sent
+set f sent yes
+add f a Name | - | Lee

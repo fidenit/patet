@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "PATET 0.4: a batch of board ops",
-  "description": "JSON form of the ops of PATET (SPEC.md). The wire format is plain text lines; this schema describes the same ops as JSON objects so tools can validate and generate them. Convert each op to its line with the 'x-line' template. Text over a limit is clipped by a renderer rather than rejected, so 'maxLength' is what a writer should stay within. Ids are restricted here to ASCII, which is what writers are asked to use; a renderer also accepts other Unicode letters and digits.",
+  "description": "JSON form of the ops of PATET (SPEC.md). The wire format is plain text lines; this schema describes the same ops as JSON objects so tools can validate and generate them. Convert each op to its line with the 'x-line' template. Text over a limit is clipped by a renderer rather than rejected, so 'maxLength' is what a writer should stay within. Lengths ('maxLength') count Unicode characters, as JSON Schema defines them.",
   "type": "object",
   "required": [
     "patet",
@@ -29,8 +29,10 @@
   "$defs": {
     "id": {
       "type": "string",
-      "pattern": "^[0-9A-Za-z_-]{1,24}$",
-      "description": "Topic, group, card, item and variable names. At most 24 characters."
+      "minLength": 1,
+      "maxLength": 24,
+      "pattern": "^(?:[0-9A-Za-z_-]|[^\\u0000-\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000])+$",
+      "description": "Topic, group, card, item and variable names. 1 to 24 characters, each an ASCII letter or digit, '_', '-', or any character above U+007F that is neither white space nor a control character (SPEC.md section 4)."
     },
     "line": {
       "type": "string",
@@ -67,8 +69,9 @@
         },
         {
           "type": "string",
-          "pattern": "^x-[0-9A-Za-z_-]{1,22}$",
-          "description": "An extension kind. Every renderer accepts it; one that does not draw it shows a record."
+          "pattern": "^x-(?:[0-9A-Za-z_-]|[^\\u0000-\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000])+$",
+          "description": "An extension kind: 'x-' and an id, at most 24 characters in all. Every renderer accepts it; one that does not draw it shows a record.",
+          "maxLength": 24
         }
       ],
       "description": "The 16 core card types (SPEC.md section 6), or an extension kind."
@@ -113,7 +116,7 @@
         {
           "title": "group",
           "x-line": "group <id> <name>",
-          "description": "Create a group of topics, or rename it. Name clipped to 16 characters. At most 8 groups. The id must not already be a topic or card id.",
+          "description": "Create a group of topics, or rename it. Name clipped to 16 characters. At most 8 groups. The id must not already be a topic or card id, on the board or on the shelf.",
           "type": "object",
           "required": [
             "op",
@@ -227,14 +230,13 @@
         },
         {
           "title": "set",
-          "x-line": "set <id> <field> <value>",
-          "description": "Set one field of a card; the value runs to the end of the line. 'title' is valid on every card type. Other fields and their limits depend on the type: see x-patet-card-kinds.",
+          "x-line": "set <id> <field> [<value>]",
+          "description": "Set one field of a card; the value runs to the end of the line. Without a value, or with an empty one, the field is set to the empty text. 'title' is valid on every card type. Other fields and their limits depend on the type: see x-patet-card-kinds.",
           "type": "object",
           "required": [
             "op",
             "id",
-            "field",
-            "value"
+            "field"
           ],
           "additionalProperties": false,
           "properties": {
@@ -245,8 +247,7 @@
               "$ref": "#/$defs/id"
             },
             "field": {
-              "type": "string",
-              "pattern": "^[^\\s]+$"
+              "$ref": "#/$defs/id"
             },
             "value": {
               "$ref": "#/$defs/line"
@@ -378,7 +379,7 @@
         {
           "title": "move",
           "x-line": "move <id> <col> <row>",
-          "description": "Put a card at a grid cell (0-based). Negative values are clamped to 0. Rejected for 'ai' when pinned; a 'user' move pins it.",
+          "description": "Put a card at a grid cell (0-based), 0 to 9999. Rejected for ai when pinned; a user move pins it.",
           "type": "object",
           "required": [
             "op",
@@ -396,11 +397,13 @@
             },
             "col": {
               "type": "integer",
-              "minimum": 0
+              "minimum": 0,
+              "maximum": 9999
             },
             "row": {
               "type": "integer",
-              "minimum": 0
+              "minimum": 0,
+              "maximum": 9999
             },
             "by": {
               "$ref": "#/$defs/by"
@@ -665,7 +668,7 @@
           "note": "length is checked, the value is not"
         }
       },
-      "items": "name | number (checked: cell 2 must parse as a number, commas allowed)"
+      "items": "name | number (checked: cell 2, after its commas are dropped, must be a number: sign, digits, fraction, exponent, finite; SPEC.md section 6)"
     },
     "route": {
       "size": [
@@ -680,7 +683,7 @@
           "max": 80
         }
       },
-      "items": "name | lat,lon | distance/time to next stop (optional). Cell 2 must be two numbers split by a comma."
+      "items": "name | lat,lon | distance/time to next stop (optional). Cell 2 must be two numbers (SPEC.md section 6) split by a comma."
     },
     "draw": {
       "size": [

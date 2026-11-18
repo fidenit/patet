@@ -1,0 +1,37 @@
+# Ids of topics and cards on the shelf stay reserved for groups too: `group` with such an id is `shelved`
+# (SPEC.md sections 4 and 5). Otherwise a group and the restored topic or card would share an id.
+agent: topic old Old
+  -> ok
+agent: card o1 note old O
+  -> ok
+agent: archive old
+  -> ok
+agent: group old Topic on shelf
+  -> err shelved
+agent: group o1 Card on shelf
+  -> err shelved
+user: group old By the user
+  -> err shelved
+agent: group g Free id
+  -> ok
+agent: restore old
+  -> ok
+# Back on the board, the ids are in use like any other.
+agent: group old Topic on board
+  -> err id-in-use
+agent: group o1 Card on board
+  -> err id-in-use
+agent: put old g
+  -> ok
+# A group that exists does not stop a topic from being shelved, and can be renamed meanwhile.
+agent: archive old
+  -> ok
+agent: group g Renamed
+  -> ok
+agent: restore old
+  -> ok
+board:
+group g Renamed
+topic old Old
+put old g
+card o1 note old 3x2 O

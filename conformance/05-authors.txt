@@ -24,6 +24,8 @@ user: set k2 sent yes
 user: upd k3 i1 done | Book the bus
   -> ok
 user: move k3 4 -2
+  -> err bad-syntax
+user: move k3 4 0
   -> ok
 user: size k1 5x4
   -> ok

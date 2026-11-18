@@ -11,7 +11,21 @@ Names on the wire changed with it, so a 0.3 peer has to be updated:
 - AG-UI: the state key `patet`, the custom event `patet.ops`
 - packages: `patet` (Rust, JavaScript)
 
-The language itself (verbs, card types, verdicts, events) is as in 0.3, with two additions from the last days of 0.3: a host should run one more turn at once when lines were rejected, and the guide says that a card needs a topic that exists.
+The verbs, the card types, the verdicts and the events are those of 0.3. Writing 36 conformance cases (there were 8) and a fourth implementation showed where the specification and the implementations disagreed; those points are settled below. Two additions from the last days of 0.3 are also in: a host should run one more turn at once when lines were rejected, and the guide says that a card needs a topic that exists.
+
+Settled in 0.4: points the specification left open or said two ways, found by running two implementations against cases written to its letter. Each is now stated in SPEC.md and pinned by a conformance case.
+
+- `size` and `move` answer `bad-syntax`, not `missing-argument`, when a size, a column or a row is absent (section 5; case 27).
+- `set <id> <field>` with no value sets the field to the empty text (section 5; case 28).
+- `group` cannot take the id of a topic or card on the shelf: `shelved` (sections 4 and 5; case 29). Implementations accepted it.
+- The name of an extension kind is at most 24 characters, `x-` included (section 6; case 30).
+- A third author, `restore`, loads a serialized board: the user's rights, but its `move` and `size` do not pin. Read back as the user, a card an agent had placed came back pinned (section 8; case 31).
+- A number in a chart or a route has one written form and must be finite: no `inf`, `nan`, `0x10`, `1e400` (section 6; case 32). Implementations took whatever their language's parser took.
+- A size is ASCII digits without a sign, however large; a column or row of `move` is 0 to 9999 in ASCII digits. A negative one is now `bad-syntax` and no longer becomes 0 (section 5; case 33).
+- An id character is an ASCII letter or digit, `_`, `-`, or any character above U+007F that is neither white space nor a control character, so every implementation can test it without Unicode tables. Words with combining marks are ids; so are symbols such as an emoji (section 4; case 34).
+- White space is the Unicode property White_Space, 25 characters. U+FEFF is not white space; one at the very start of a file or stream is dropped (sections 3 and 10.2; case 35).
+- "By name" is code point order, not UTF-16 unit order (section 8; case 36).
+- A clipped topic or group name has no note; every other clipped text has one (sections 4 and 9; case 13).
 
 ## 0.3 (2026-11-18)
 

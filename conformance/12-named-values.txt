@@ -1,0 +1,67 @@
+# Named values. `let` sets, replaces and removes one. `{name}` stays in the stored text: the renderer
+# substitutes when it draws. The board lists the values by name.
+agent: let team 12 people
+  -> ok
+agent: let budget 1,200 USD
+  -> ok
+agent: let alpha spaces   inside   stay
+  -> ok
+agent: let team 14 people
+  -> ok
+agent: let gone soon
+  -> ok
+agent: let gone
+  -> ok
+agent: let never
+  -> ok
+agent: let 예산 30만원
+  -> ok
+agent: let due_2026-12 Friday
+  -> ok
+agent: let <24 n> longest name
+  -> ok
+agent: let <25 n> too long a name
+  -> err bad-id
+agent: let a!b 1
+  -> err bad-id
+agent: let {team} 1
+  -> err bad-id
+agent: let
+  -> err missing-argument
+agent: let exact <60 v>
+  -> ok
+agent: let long <61 v>
+  -> ok clipped let.long 60
+# A name is not a topic, group or card id: it may match one.
+agent: topic team The Team
+  -> ok
+agent: card m1 metric team Head count
+  -> ok
+agent: set m1 value {team}
+  -> ok
+agent: set m1 text {budget} for {team}; {nobody} is not set
+  -> ok
+agent: set m1 title Head count: {team}
+  -> ok
+agent: card c1 checklist team Tasks
+  -> ok
+agent: add c1 i1 todo | Book a room for {team}
+  -> ok
+agent: let team 15 people
+  -> ok
+agent: let budget
+  -> ok
+board:
+let alpha spaces   inside   stay
+let due_2026-12 Friday
+let exact <60 v>
+let long <59 v>…
+let <24 n> longest name
+let team 15 people
+let 예산 30만원
+topic team The Team
+card m1 metric team 2x2 Head count: {team}
+set m1 text {budget} for {team}; {nobody} is not set
+set m1 value {team}
+card c1 checklist team 3x3 Tasks
+add c1 i1 todo | Book a room for {team}

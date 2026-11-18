@@ -1,0 +1,85 @@
+# Escapes. In an item, `\|` is a pipe inside a cell and is written back as `\|`; a backslash anywhere else is itself.
+# A field value is not cut into cells, so it keeps `|` and `\|` as written. `\n` in a text is two stored characters.
+agent: topic t Escapes
+  -> ok
+agent: card k table t Shell
+  -> ok
+agent: add k r1 ls \| wc -l | counts the files
+  -> ok
+agent: add k r2 \| | a cell that is one pipe
+  -> ok
+agent: add k r3 a\|b\|c
+  -> ok
+agent: add k r4 C:\dir\ | a path that ends in a backslash
+  -> ok
+agent: add k r5 a\nb\tc | no other escape: these stay as written
+  -> ok
+agent: add k r6 last cell ends in a backslash | C:\
+  -> ok
+agent: add k r7 \\| one cell: a backslash, then a pipe
+  -> ok
+agent: add k r8 # | a # inside a line starts no comment
+  -> ok
+agent: add k r9 a \| b \| c | d \| e | f
+  -> ok
+agent: upd k r1 ls \| sort \| uniq | sorts and dedupes
+  -> ok
+# Seven pipes, one of them escaped: six cells.
+agent: add k r10 a | b | c | d \| d | e | f
+  -> ok
+# Field values and names are taken whole.
+agent: set k cols Command | What it does
+  -> ok
+agent: set k title Pipes | and \| escapes
+  -> ok
+agent: card n note t Text
+  -> ok
+agent: set n text First line\nSecond line\n\nFourth, after an empty one
+  -> ok
+agent: card m note t More
+  -> ok
+agent: set m text a | b \| c \\ d # e ``` f {g} "h" 'i'
+  -> ok
+agent: let pipe a | b \| c
+  -> ok
+agent: topic u Name | with \| pipes
+  -> ok
+agent: say 100% | done \| ok
+  -> ok
+# The same in what the user sends.
+agent: card c checklist t List
+  -> ok
+agent: add c i1 todo | grep a \| sort
+  -> ok
+user: upd c i1 done | grep a \| sort
+  -> ok
+agent: card f input t Form
+  -> ok
+agent: add f a Filter | a \| b
+  -> ok
+user: upd f a Filter | a \| b | x \| y
+  -> ok
+board:
+let pipe a | b \| c
+topic t Escapes
+topic u Name | with \| pipes
+card k table t 4x3 Pipes | and \| escapes
+set k cols Command | What it does
+add k r1 ls \| sort \| uniq | sorts and dedupes
+add k r2 \| | a cell that is one pipe
+add k r3 a\|b\|c
+add k r4 C:\dir\ | a path that ends in a backslash
+add k r5 a\nb\tc | no other escape: these stay as written
+add k r6 last cell ends in a backslash | C:\
+add k r7 \\| one cell: a backslash, then a pipe
+add k r8 # | a # inside a line starts no comment
+add k r9 a \| b \| c | d \| e | f
+add k r10 a | b | c | d \| d | e | f
+card n note t 3x2 Text
+set n text First line\nSecond line\n\nFourth, after an empty one
+card m note t 3x2 More
+set m text a | b \| c \\ d # e ``` f {g} "h" 'i'
+card c checklist t 3x3 List
+add c i1 done | grep a \| sort
+card f input t 3x3 Form
+add f a Filter | a \| b | x \| y

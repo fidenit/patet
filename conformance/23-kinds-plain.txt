@@ -1,0 +1,117 @@
+# The core types without items: status, metric, image, note, web (doc is in 20-record-doc.txt).
+# Each with its default size, each of its fields, a field it lacks, and an item it does not take.
+agent: topic t Build
+  -> ok
+# status: 2x1
+agent: card s1 status t Build
+  -> ok
+agent: set s1 state ok
+  -> ok
+agent: set s1 state run
+  -> ok
+agent: set s1 state wait
+  -> ok
+agent: set s1 state fail
+  -> ok
+agent: set s1 state idle
+  -> ok
+agent: set s1 state OK
+  -> err bad-value
+agent: set s1 state done
+  -> err bad-value
+agent: set s1 state running
+  -> err bad-value
+agent: set s1 state ok run
+  -> err bad-value
+agent: set s1 text Compiling 12 of 40
+  -> ok
+agent: set s1 state run
+  -> ok
+agent: set s1 value 12
+  -> err unknown-field
+agent: add s1 a A status takes no items
+  -> err no-items
+# metric: 2x2
+agent: card m1 metric t Revenue
+  -> ok
+agent: set m1 value 1,240
+  -> ok
+agent: set m1 unit k$
+  -> ok
+agent: set m1 delta +12%
+  -> ok
+agent: set m1 text against last month
+  -> ok
+agent: set m1 state ok
+  -> err unknown-field
+agent: add m1 a A metric takes no items
+  -> err no-items
+# A metric's value is text: nothing checks that it is a number.
+agent: card m2 metric t Mood
+  -> ok
+agent: set m2 value good
+  -> ok
+agent: set m2 delta -
+  -> ok
+# image: 4x3
+agent: card i1 image t Site photo
+  -> ok
+agent: set i1 src https://example.com/site.png
+  -> ok
+agent: set i1 text Taken on Monday
+  -> ok
+agent: set i1 url https://example.com/site.png
+  -> err unknown-field
+agent: add i1 a An image takes no items
+  -> err no-items
+agent: card i2 image t Local file
+  -> ok
+agent: set i2 src C:\Users\me\Pictures\plan.png
+  -> ok
+# note: 3x2
+agent: card n1 note t Memo
+  -> ok
+agent: set n1 text Tomatoes every morning, herbs every second day.
+  -> ok
+agent: set n1 src x
+  -> err unknown-field
+agent: upd n1 a A note takes no items
+  -> err no-items
+# web: 6x5
+agent: card w1 web t Docs
+  -> ok
+agent: set w1 url https://example.com/docs
+  -> ok
+agent: set w1 src https://example.com/docs
+  -> err unknown-field
+agent: set w1 text A web card has no text
+  -> err unknown-field
+agent: add w1 a A web card takes no items
+  -> err no-items
+# Every card has a title, and only the title is common.
+agent: set w1 title Documentation
+  -> ok
+agent: set s1 title Build status
+  -> ok
+board:
+topic t Build
+card s1 status t 2x1 Build status
+set s1 state run
+set s1 text Compiling 12 of 40
+card m1 metric t 2x2 Revenue
+set m1 delta +12%
+set m1 text against last month
+set m1 unit k$
+set m1 value 1,240
+card m2 metric t 2x2 Mood
+set m2 delta -
+set m2 value good
+card i1 image t 4x3 Site photo
+set i1 src https://example.com/site.png
+set i1 text Taken on Monday
+card i2 image t 4x3 Local file
+set i2 src C:\Users\me\Pictures\plan.png
+card n1 note t 3x2 Memo
+set n1 text Tomatoes every morning, herbs every second day.
+card w1 web t 6x5 Documentation
+set w1 url https://example.com/docs

@@ -226,12 +226,16 @@ pub const RECORD_FIELD_LIMIT: usize = 80;
 /// Fields of a record, not counting the title.
 pub const MAX_RECORD_FIELDS: usize = 12;
 
-/// Who made a change. The protocol calls these "agent" and "user".
+/// Who made a change. The protocol calls these "agent", "user" and "restore".
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Author {
     /// A model, or a program writing on its behalf.
     Ai,
     User,
+    /// A renderer loading a serialized board (SPEC.md section 8). It is never on the wire. It has the user's
+    /// rights, so the answers and the `pin` lines of the board apply, but its `move` and `size` do not pin:
+    /// the board comes back as it was written.
+    Restore,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -349,8 +353,51 @@ fn clip(s: &str, limit: usize) -> String {
     }
 }
 
+/// An id: 1 to 24 characters, each an ASCII letter or digit, `_`, `-`, or a character above U+007F that is
+/// neither white space nor a control character. No Unicode tables are needed to test it, so every
+/// implementation can test it alike.
 fn valid_id(id: &str) -> bool {
-    !id.is_empty() && chars(id) <= ID_LIMIT && id.chars().all(|c| c.is_alphanumeric() || c == '_' || c == '-')
+    let ok = |c: char| c.is_ascii_alphanumeric() || c == '_' || c == '-' || (!c.is_ascii() && !c.is_whitespace() && !c.is_control());
+    !id.is_empty() && chars(id) <= ID_LIMIT && id.chars().all(ok)
+}
+
+/// Is this a number as a chart or a route takes one? An optional sign, digits with an optional fraction
+/// (`12`, `12.`, `12.5`, `.5`), an optional exponent, and a value a double can hold. Nothing else:
+/// no `inf`, no `nan`, no `0x10`.
+pub fn is_number(s: &str) -> bool {
+    let b = s.as_bytes();
+    let digits = |mut i: usize| {
+        while i < b.len() && b[i].is_ascii_digit() {
+            i += 1;
+        }
+        i
+    };
+    let mut i = 0;
+    if i < b.len() && (b[i] == b'+' || b[i] == b'-') {
+        i += 1;
+    }
+    let whole = digits(i) - i;
+    i += whole;
+    let mut fraction = 0;
+    if i < b.len() && b[i] == b'.' {
+        fraction = digits(i + 1) - (i + 1);
+        i += 1 + fraction;
+    }
+    if whole == 0 && fraction == 0 {
+        return false;
+    }
+    if i < b.len() && (b[i] == b'e' || b[i] == b'E') {
+        i += 1;
+        if i < b.len() && (b[i] == b'+' || b[i] == b'-') {
+            i += 1;
+        }
+        let exponent = digits(i) - i;
+        if exponent == 0 {
+            return false;
+        }
+        i += exponent;
+    }
+    i == b.len() && s.parse::<f64>().map(|v| v.is_finite()).unwrap_or(false)
 }
 
 impl Board {
@@ -380,6 +427,10 @@ impl Board {
             Op::Group { id, name } => {
                 if !valid_id(&id) {
                     return Err(no("bad-id", format!("group id '{id}' is not valid (1 to {ID_LIMIT} letters, digits, _ or -)")));
+                }
+                // Ids on the shelf stay reserved, for a group too: the topic or card comes back with its id.
+                if self.shelf.iter().any(|s| s.topic.id == id || s.cards.iter().any(|c| c.id == id)) {
+                    return Err(no("shelved", format!("'{id}' is the id of a topic or a card on the shelf; use another id")));
                 }
                 if self.topics.iter().any(|t| t.id == id) || self.card(&id).is_some() {
                     return Err(no("id-in-use", format!("'{id}' is already the id of a topic or a card")));
@@ -636,13 +687,13 @@ impl Board {
         if !states.is_empty() && !states.contains(&cells[0].as_str()) {
             return Err(no("bad-value", format!("the first cell of a {} item is one of {} (got '{}')", c.kind.name(), states.join("|"), cells[0])));
         }
-        if c.kind == Kind::Route && cells.get(1).and_then(|v| v.split_once(',')).and_then(|(a, b)| Some((a.trim().parse::<f64>().ok()?, b.trim().parse::<f64>().ok()?))).is_none() {
+        if c.kind == Kind::Route && !cells.get(1).and_then(|v| v.split_once(',')).map(|(a, b)| is_number(a.trim()) && is_number(b.trim())).unwrap_or(false) {
             return Err(no("bad-value", "a route item is 'name | lat,lon | distance and time to the next stop (optional)'; the second cell must be two numbers"));
         }
         if c.kind == Kind::Draw && !["line", "arrow", "rect", "circle", "text"].contains(&cells[0].as_str()) {
             return Err(no("bad-value", format!("the first cell of a draw item is one of line|arrow|rect|circle|text (got '{}')", cells[0])));
         }
-        if c.kind == Kind::Chart && cells.get(1).and_then(|v| v.replace(',', "").parse::<f64>().ok()).is_none() {
+        if c.kind == Kind::Chart && !cells.get(1).map(|v| is_number(&v.replace(',', ""))).unwrap_or(false) {
             return Err(no("bad-value", "a chart item is 'name | number'"));
         }
         if cells.iter().any(|x| chars(x) > CELL_LIMIT) {

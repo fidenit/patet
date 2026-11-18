@@ -57,10 +57,10 @@ fn run_case(name: &str, text: &str) {
     // Trailing spaces are not compared (an empty title leaves one, and editors strip them from case files).
     let tidy = |s: &str| s.lines().map(str::trim_end).collect::<Vec<_>>().join("\n").trim_end().to_string();
     assert_eq!(tidy(&got_board), tidy(&want_board), "{name}: the board at the end");
-    // What was written back rebuilds the same board when the user replays it.
+    // What was written back rebuilds the same board when it is replayed with the restore author.
     let mut again = Board::default();
     for l in got_board.lines() {
-        again.apply(lang::parse(l).unwrap().unwrap(), Author::User).unwrap_or_else(|e| panic!("{name}: replay of '{l}': {e}"));
+        again.apply(lang::parse(l).unwrap().unwrap(), Author::Restore).unwrap_or_else(|e| panic!("{name}: replay of '{l}': {e}"));
     }
     assert_eq!(lang::serialize(&again), got_board, "{name}: replaying the board");
 }
@@ -76,7 +76,7 @@ fn conformance_cases() {
         run_case(&name, &std::fs::read_to_string(&path).unwrap());
         ran += 1;
     }
-    assert!(ran >= 8, "expected the conformance cases, found {ran}");
+    assert!(ran >= 36, "expected the conformance cases, found {ran}");
 }
 
 #[test]

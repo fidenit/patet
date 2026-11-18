@@ -1,0 +1,91 @@
+# More on lines (see 02-lines.txt): what is skipped, what separates tokens, where a size is read, and that
+# a value runs to the end of its line with its inner spaces kept.
+agent:      # a comment may be indented
+  -> skip
+agent: #topic t Not an op
+  -> skip
+agent: ```patet
+  -> skip
+agent: ````
+  -> skip
+agent: tell
+  -> skip
+agent: tell topic t Still only read aloud | not an op
+  -> skip
+# `say` is applied even when empty; it is not part of the board.
+agent: say
+  -> ok
+agent: say # this is the caption, not a comment
+  -> ok
+# Tabs separate tokens as spaces do.
+agent: topic	t	Tabs
+  -> ok
+agent: card		a  note	t  2x1	Mixed separators
+  -> ok
+agent: set a text spaces   inside   a value   stay
+  -> ok
+agent: add	k1	i1	x
+  -> err no-such-card
+# In `card`, the token after the topic is the size when it is two whole numbers joined by x or X.
+agent: card b note t 2x2 3x3 grid
+  -> ok
+agent: card c note t Plan 4x2
+  -> ok
+agent: card d note t 4x2
+  -> ok
+agent: card e note t 0x0 Clamped up
+  -> ok
+agent: card f note t 9x9 Clamped down
+  -> ok
+agent: card g note t 4×2 A multiplication sign is not x
+  -> ok
+agent: card h note t x Just the letter
+  -> ok
+agent: card i note t 4x2.5 Not whole numbers
+  -> ok
+agent: card j note t 2x3x4 Three numbers
+  -> ok
+agent: card k note t 4 x 2 Spaced out
+  -> ok
+# A card may have no title, with or without a size; the title can be set later.
+agent: card l status t
+  -> ok
+agent: card m status t 3x1
+  -> ok
+agent: set l title Named later
+  -> ok
+# `#` and a code fence are skipped only at the start of a line.
+agent: card n note t # not a comment
+  -> ok
+agent: set n text ``` not a fence
+  -> ok
+# A line that is not an op is rejected by itself; the lines around it still run.
+agent: Here is the board you asked for:
+  -> err unknown-verb
+agent: topic u After the prose
+  -> ok
+agent: **topic** v Bold
+  -> err unknown-verb
+agent: `topic v Quoted`
+  -> err unknown-verb
+agent: > topic v Quoted
+  -> err unknown-verb
+board:
+topic t Tabs
+topic u After the prose
+card a note t 2x1 Mixed separators
+set a text spaces   inside   a value   stay
+card b note t 2x2 3x3 grid
+card c note t 3x2 Plan 4x2
+card d note t 4x2
+card e note t 1x1 Clamped up
+card f note t 8x8 Clamped down
+card g note t 3x2 4×2 A multiplication sign is not x
+card h note t 3x2 x Just the letter
+card i note t 3x2 4x2.5 Not whole numbers
+card j note t 3x2 2x3x4 Three numbers
+card k note t 3x2 4 x 2 Spaced out
+card l status t 2x1 Named later
+card m status t 3x1
+card n note t 3x2 # not a comment
+set n text ``` not a fence

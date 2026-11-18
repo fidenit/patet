@@ -1,0 +1,110 @@
+# Pinned cards. The user's move or resize pins a card; so does `pin`. An agent can no longer place or resize it,
+# but still changes what it says, moves it to another topic, or deletes it.
+agent: topic a Alpha
+  -> ok
+agent: topic b Beta
+  -> ok
+agent: card k1 note a One
+  -> ok
+agent: card k2 note a Two
+  -> ok
+agent: card k3 note a Three
+  -> ok
+agent: card k4 note a Four
+  -> ok
+agent: card k5 note a Five
+  -> ok
+agent: card k6 note a Six
+  -> ok
+# An agent's placement is a hint: it pins nothing, and the agent may change it.
+agent: move k1 2 3
+  -> ok
+agent: move k1 0 1
+  -> ok
+agent: size k1 4x4
+  -> ok
+agent: size k1 12x0
+  -> ok
+# The user moves a card: pinned.
+user: move k2 1 0
+  -> ok
+agent: move k2 5 5
+  -> err pinned
+agent: size k2 2x2
+  -> err pinned
+agent: set k2 text What it says still changes.
+  -> ok
+agent: set k2 title Two, renamed
+  -> ok
+user: move k2 3 0
+  -> ok
+user: size k2 4x2
+  -> ok
+# The user resizes a card: pinned, without a position. Sizes outside 1 to 8 are clamped.
+user: size k3 9x0
+  -> ok
+agent: size k3 2x2
+  -> err pinned
+agent: move k3 1 1
+  -> err pinned
+# `pin` alone.
+user: pin k4
+  -> ok
+agent: move k4 0 0
+  -> err pinned
+agent: size k4 2x2
+  -> err pinned
+# `unpin` unlocks and clears the position.
+user: unpin k4
+  -> ok
+agent: move k4 6 2
+  -> ok
+agent: size k4 2x2
+  -> ok
+user: pin k4
+  -> ok
+user: unpin k2
+  -> ok
+agent: size k2 2x1
+  -> ok
+user: unpin k6
+  -> ok
+# A grid cell is 0 to 9999; a negative one is not a cell.
+user: move k5 -3 -1
+  -> err bad-syntax
+user: move k5 9999 0
+  -> ok
+agent: move k5 2 2
+  -> err pinned
+# `mv` to another topic clears the position and the pin, also when an agent does it.
+agent: mv k5 b
+  -> ok
+agent: move k5 -4 7
+  -> err bad-syntax
+agent: move k5 0 7
+  -> ok
+user: pin k5
+  -> ok
+# The user pins a card where the agent placed it.
+user: pin k1
+  -> ok
+agent: move k1 5 5
+  -> err pinned
+# An agent can delete a pinned card.
+agent: del k3
+  -> ok
+board:
+topic a Alpha
+topic b Beta
+card k1 note a 8x1 One
+move k1 0 1
+pin k1
+card k2 note a 2x1 Two, renamed
+set k2 text What it says still changes.
+card k4 note a 2x2 Four
+move k4 6 2
+pin k4
+card k5 note b 3x2 Five
+move k5 0 7
+pin k5
+card k6 note a 3x2 Six

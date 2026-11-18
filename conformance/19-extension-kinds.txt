@@ -1,0 +1,94 @@
+# Extension kinds: `x-` and an id. Every renderer accepts one, checks it as a record (any field name that is an id,
+# rows of up to 6 cells) and writes it back under its own name. Any other unknown name is rejected.
+agent: topic t Sprint
+  -> ok
+agent: card k1 x-kanban t Sprint 12
+  -> ok
+agent: set k1 lane Doing
+  -> ok
+agent: set k1 text Free text, as in a record.
+  -> ok
+agent: set k1 cols Task | Owner
+  -> ok
+agent: add k1 a Write the spec | me
+  -> ok
+agent: add k1 b one cell
+  -> ok
+agent: add k1 c a | b | c | d | e | f
+  -> ok
+agent: upd k1 a Write the spec | you
+  -> ok
+agent: del k1 b
+  -> ok
+agent: set k1 a!b x
+  -> err unknown-field
+agent: add k1 d a | b | c | d | e | f | g
+  -> err cell-count
+agent: upd k1 z not there
+  -> err no-such-item
+agent: set k1 title Sprint 13
+  -> ok
+# Sized, placed, moved and focused like any card.
+agent: card k2 x-seat-map t 5x4 Seats
+  -> ok
+agent: size k2 6x4
+  -> ok
+agent: move k2 1 0
+  -> ok
+agent: focus k2
+  -> ok
+agent: topic u Other
+  -> ok
+agent: mv k2 u
+  -> ok
+# Names.
+agent: card k3 x-a t Shortest
+  -> ok
+agent: card k4 x-2 t A digit
+  -> ok
+agent: card k5 x-한글 t Letters of any script
+  -> ok
+agent: card k6 x-my_kind-2 t Underscore and hyphen
+  -> ok
+agent: card k7 x- t No name
+  -> err unknown-kind
+agent: card k7 x t No hyphen
+  -> err unknown-kind
+agent: card k7 x-a!b t Not an id
+  -> err unknown-kind
+agent: card k7 x-a.b t Not an id
+  -> err unknown-kind
+agent: card k7 X-kanban t Capital X
+  -> err unknown-kind
+agent: card k7 xkanban t No hyphen
+  -> err unknown-kind
+agent: card k7 x_kanban t Underscore
+  -> err unknown-kind
+agent: card k7 y-kanban t Another letter
+  -> err unknown-kind
+agent: card k7 kanban t Not registered
+  -> err unknown-kind
+# A core type's name with x- in front is an extension kind, not that type.
+agent: card k8 x-note t Not a note
+  -> ok
+agent: set k8 anything goes
+  -> ok
+agent: add k8 r1 and | rows | too
+  -> ok
+board:
+topic t Sprint
+topic u Other
+card k1 x-kanban t 3x3 Sprint 13
+set k1 cols Task | Owner
+set k1 lane Doing
+set k1 text Free text, as in a record.
+add k1 a Write the spec | you
+add k1 c a | b | c | d | e | f
+card k2 x-seat-map u 6x4 Seats
+card k3 x-a t 3x3 Shortest
+card k4 x-2 t 3x3 A digit
+card k5 x-한글 t 3x3 Letters of any script
+card k6 x-my_kind-2 t 3x3 Underscore and hyphen
+card k8 x-note t 3x3 Not a note
+set k8 anything goes
+add k8 r1 and | rows | too

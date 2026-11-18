@@ -1,0 +1,35 @@
+# `size` and `move` read their numbers as one form: a size or a grid cell that is absent or malformed is
+# `bad-syntax`, not `missing-argument` (SPEC.md section 5).
+agent: topic t T
+  -> ok
+agent: card k note t K
+  -> ok
+agent: size
+  -> err bad-syntax
+agent: size k
+  -> err bad-syntax
+agent: size k 4
+  -> err bad-syntax
+agent: size k 4x
+  -> err bad-syntax
+agent: move
+  -> err bad-syntax
+agent: move k
+  -> err bad-syntax
+agent: move k 1
+  -> err bad-syntax
+agent: move k 1 x
+  -> err bad-syntax
+user: size
+  -> err bad-syntax
+user: move k
+  -> err bad-syntax
+# With everything there, both apply.
+agent: size k 4x2
+  -> ok
+agent: move k 1 0
+  -> ok
+board:
+topic t T
+card k note t 4x2 K
+move k 1 0

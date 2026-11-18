@@ -1,0 +1,189 @@
+# The rejections of SPEC.md section 5 that 03-rejections.txt does not reach, verb by verb.
+# Each rejected line breaks one rule only, so the code does not depend on the order a renderer checks in.
+agent: topic t Topic
+  -> ok
+agent: group g Group
+  -> ok
+agent: card k1 note t Note
+  -> ok
+agent: card c1 checklist t List
+  -> ok
+agent: add c1 i1 todo | One
+  -> ok
+# group
+agent: group a!b Bad id
+  -> err bad-id
+agent: group <25 g> Long id
+  -> err bad-id
+agent: group c1 Taken by a card
+  -> err id-in-use
+# put
+agent: put nowhere g
+  -> err no-such-topic
+agent: put t nowhere
+  -> err no-such-group
+agent: put k1 g
+  -> err no-such-topic
+# card
+agent: card a!b note t Bad id
+  -> err bad-id
+agent: card <25 k> note t Long id
+  -> err bad-id
+agent: card k1 status t Same id, another type
+  -> err exists
+agent: card k2 Note t Type names are lower case
+  -> err unknown-kind
+agent: card k2 notes t No such type
+  -> err unknown-kind
+agent: card k2 note g A group is not a topic
+  -> err no-such-topic
+# set
+agent: set t text A topic is not a card
+  -> err no-such-card
+agent: set c1 text A checklist has no fields
+  -> err unknown-field
+agent: set k1 Text Field names are lower case
+  -> err unknown-field
+agent: set k1 body No such field
+  -> err unknown-field
+# add
+agent: add t i1 A topic is not a card
+  -> err no-such-card
+agent: add c1 a.b todo | Bad item id
+  -> err bad-id
+agent: add c1 <25 i> todo | Long item id
+  -> err bad-id
+agent: add c1 i2 Todo | States are lower case
+  -> err bad-value
+# upd: as add, and the item must exist
+agent: upd nowhere i1 todo | x
+  -> err no-such-card
+agent: upd k1 i1 A note takes no items
+  -> err no-items
+agent: upd c1 i1 todo | a | b | c | d | e | f
+  -> err cell-count
+agent: upd c1 i1 later | Not a state
+  -> err bad-value
+agent: upd c1 i2 todo | Not added yet
+  -> err no-such-item
+# del
+agent: del c1 i2
+  -> err no-such-item
+agent: del nowhere
+  -> err not-found
+agent: del t
+  -> err not-empty
+# mv
+agent: mv k1 nowhere
+  -> err no-such-topic
+agent: mv nowhere t
+  -> err no-such-card
+agent: mv k1 g
+  -> err no-such-topic
+# size and move
+agent: size nowhere 2x2
+  -> err no-such-card
+agent: move nowhere 1 1
+  -> err no-such-card
+agent: size t 2x2
+  -> err no-such-card
+agent: size k1 2by2
+  -> err bad-syntax
+agent: size k1 2*2
+  -> err bad-syntax
+agent: size k1 2.5x2
+  -> err bad-syntax
+agent: size k1 wide
+  -> err bad-syntax
+agent: size k1 -2x2
+  -> err bad-syntax
+agent: move k1 one two
+  -> err bad-syntax
+agent: move k1 1.5 2
+  -> err bad-syntax
+agent: move k1 1,2 3
+  -> err bad-syntax
+agent: move k1 a1 b2
+  -> err bad-syntax
+# focus, archive, restore
+agent: focus t
+  -> err no-such-card
+agent: focus nowhere
+  -> err no-such-card
+agent: archive k1
+  -> err no-such-topic
+agent: archive g
+  -> err no-such-topic
+agent: restore t
+  -> err not-shelved
+agent: restore nowhere
+  -> err not-shelved
+# A required argument is absent.
+agent: group
+  -> err missing-argument
+agent: put
+  -> err missing-argument
+agent: put t
+  -> err missing-argument
+agent: card
+  -> err missing-argument
+agent: card k9
+  -> err missing-argument
+agent: set
+  -> err missing-argument
+agent: set k1
+  -> err missing-argument
+agent: add
+  -> err missing-argument
+agent: add c1
+  -> err missing-argument
+agent: add c1 i9
+  -> err missing-argument
+agent: upd
+  -> err missing-argument
+agent: upd c1
+  -> err missing-argument
+agent: upd c1 i1
+  -> err missing-argument
+agent: mv
+  -> err missing-argument
+agent: mv k1
+  -> err missing-argument
+agent: focus
+  -> err missing-argument
+agent: let
+  -> err missing-argument
+agent: archive
+  -> err missing-argument
+agent: restore
+  -> err missing-argument
+user: pin
+  -> err missing-argument
+user: unpin
+  -> err missing-argument
+# The first token is not a verb. Verbs are lower case; the words of a session (SPEC.md 10.3) are not verbs.
+agent: Topic t2 Capital
+  -> err unknown-verb
+agent: SET k1 text x
+  -> err unknown-verb
+agent: delete k1
+  -> err unknown-verb
+agent: remove k1
+  -> err unknown-verb
+agent: title k1 New title
+  -> err unknown-verb
+agent: - topic t2 A list bullet
+  -> err unknown-verb
+agent: 1. topic t2 A numbered line
+  -> err unknown-verb
+agent: topic: t2 A colon
+  -> err unknown-verb
+agent: {"op":"topic","id":"t2"}
+  -> err unknown-verb
+# Nothing above changed the board.
+board:
+group g Group
+topic t Topic
+card k1 note t 3x2 Note
+card c1 checklist t 3x3 List
+add c1 i1 todo | One

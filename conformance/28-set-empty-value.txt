@@ -1,0 +1,61 @@
+# `set <id> <field>` without a value is not a missing argument: the value is empty, and the field is set to
+# the empty text (SPEC.md section 5). A checked field still has to hold one of its values.
+agent: topic t T
+  -> ok
+agent: card k note t Memo
+  -> ok
+agent: set k text Something
+  -> ok
+agent: set k text
+  -> ok
+agent: card j note t Titled
+  -> ok
+agent: set j title
+  -> ok
+agent: card r record t Contact
+  -> ok
+agent: set r owner Kim
+  -> ok
+agent: set r phone 010-1234
+  -> ok
+agent: set r owner
+  -> ok
+# Not a field of the type: the same rejection, with or without a value.
+agent: set k state
+  -> err unknown-field
+# Checked values: empty is none of them.
+agent: card s status t Build
+  -> ok
+agent: set s state
+  -> err bad-value
+agent: card p progress t Packing
+  -> ok
+agent: set p pct
+  -> err bad-value
+agent: card d decision t Pick
+  -> ok
+agent: set d multi
+  -> err bad-value
+agent: set d tone
+  -> err bad-value
+# The field itself is still required, and the user's answer stays the user's, empty or not.
+agent: set k
+  -> err missing-argument
+agent: set d chosen
+  -> err user-only
+user: set d chosen o1
+  -> ok
+user: set d chosen
+  -> ok
+board:
+topic t T
+card k note t 3x2 Memo
+set k text
+card j note t 3x2
+card r record t 3x3 Contact
+set r owner
+set r phone 010-1234
+card s status t 2x1 Build
+card p progress t 3x3 Packing
+card d decision t 3x3 Pick
+set d chosen

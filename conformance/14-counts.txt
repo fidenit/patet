@@ -1,0 +1,247 @@
+# Count limits: 6 cells in an item, 24 items in a card, 12 fields in a record, 8 groups.
+# One more is rejected with `limit` (`cell-count` for cells). Replacing or removing what is there still works at the limit.
+agent: topic t Counts
+  -> ok
+# Cells: 1 to 6.
+agent: card t1 table t Cells
+  -> ok
+agent: add t1 r1 a
+  -> ok
+agent: add t1 r6 a | b | c | d | e | f
+  -> ok
+agent: add t1 r7 a | b | c | d | e | f | g
+  -> err cell-count
+agent: upd t1 r1 a | b | c | d | e | f | g
+  -> err cell-count
+agent: add t1 r0 | | | | |
+  -> ok
+agent: add t1 r8 | | | | | |
+  -> err cell-count
+# Items: 24 in a card.
+agent: card c1 checklist t Items
+  -> ok
+agent: add c1 i01 todo | Item 1
+  -> ok
+agent: add c1 i02 todo | Item 2
+  -> ok
+agent: add c1 i03 todo | Item 3
+  -> ok
+agent: add c1 i04 todo | Item 4
+  -> ok
+agent: add c1 i05 todo | Item 5
+  -> ok
+agent: add c1 i06 todo | Item 6
+  -> ok
+agent: add c1 i07 todo | Item 7
+  -> ok
+agent: add c1 i08 todo | Item 8
+  -> ok
+agent: add c1 i09 todo | Item 9
+  -> ok
+agent: add c1 i10 todo | Item 10
+  -> ok
+agent: add c1 i11 todo | Item 11
+  -> ok
+agent: add c1 i12 todo | Item 12
+  -> ok
+agent: add c1 i13 todo | Item 13
+  -> ok
+agent: add c1 i14 todo | Item 14
+  -> ok
+agent: add c1 i15 todo | Item 15
+  -> ok
+agent: add c1 i16 todo | Item 16
+  -> ok
+agent: add c1 i17 todo | Item 17
+  -> ok
+agent: add c1 i18 todo | Item 18
+  -> ok
+agent: add c1 i19 todo | Item 19
+  -> ok
+agent: add c1 i20 todo | Item 20
+  -> ok
+agent: add c1 i21 todo | Item 21
+  -> ok
+agent: add c1 i22 todo | Item 22
+  -> ok
+agent: add c1 i23 todo | Item 23
+  -> ok
+agent: add c1 i24 todo | Item 24
+  -> ok
+agent: add c1 i25 todo | One too many
+  -> err limit
+agent: add c1 i01 done | An existing id is replaced, not added
+  -> ok
+agent: upd c1 i24 done | Item 24
+  -> ok
+user: upd c1 i02 done | Item 2
+  -> ok
+user: add c1 i25 todo | The limit holds for the user too
+  -> err limit
+agent: del c1 i03
+  -> ok
+agent: add c1 i25 todo | Room again
+  -> ok
+agent: add c1 i26 todo | Full again
+  -> err limit
+# Fields: 12 in a record, `text` and `cols` among them, the title not.
+agent: card r1 record t Fields
+  -> ok
+agent: set r1 text One of the twelve
+  -> ok
+agent: set r1 cols A | B
+  -> ok
+agent: set r1 f01 v1
+  -> ok
+agent: set r1 f02 v2
+  -> ok
+agent: set r1 f03 v3
+  -> ok
+agent: set r1 f04 v4
+  -> ok
+agent: set r1 f05 v5
+  -> ok
+agent: set r1 f06 v6
+  -> ok
+agent: set r1 f07 v7
+  -> ok
+agent: set r1 f08 v8
+  -> ok
+agent: set r1 f09 v9
+  -> ok
+agent: set r1 f10 v10
+  -> ok
+agent: set r1 f11 one too many
+  -> err limit
+agent: set r1 f01 changed
+  -> ok
+agent: set r1 title The title is not one of the twelve
+  -> ok
+agent: add r1 a Rows are not fields | 1
+  -> ok
+# The same for an extension kind, which is checked as a record.
+agent: card x1 x-kanban t Fields
+  -> ok
+agent: set x1 f01 v1
+  -> ok
+agent: set x1 f02 v2
+  -> ok
+agent: set x1 f03 v3
+  -> ok
+agent: set x1 f04 v4
+  -> ok
+agent: set x1 f05 v5
+  -> ok
+agent: set x1 f06 v6
+  -> ok
+agent: set x1 f07 v7
+  -> ok
+agent: set x1 f08 v8
+  -> ok
+agent: set x1 f09 v9
+  -> ok
+agent: set x1 f10 v10
+  -> ok
+agent: set x1 f11 v11
+  -> ok
+agent: set x1 f12 v12
+  -> ok
+agent: set x1 f13 one too many
+  -> err limit
+agent: set x1 text one too many
+  -> err limit
+# Groups: 8.
+agent: group g1 Group 1
+  -> ok
+agent: group g2 Group 2
+  -> ok
+agent: group g3 Group 3
+  -> ok
+agent: group g4 Group 4
+  -> ok
+agent: group g5 Group 5
+  -> ok
+agent: group g6 Group 6
+  -> ok
+agent: group g7 Group 7
+  -> ok
+agent: group g8 Group 8
+  -> ok
+agent: group g9 One too many
+  -> err limit
+user: group g9 The limit holds for the user too
+  -> err limit
+agent: group g8 Renamed
+  -> ok
+agent: del g3
+  -> ok
+agent: group g9 Room again
+  -> ok
+agent: group g3 Full again
+  -> err limit
+board:
+group g1 Group 1
+group g2 Group 2
+group g4 Group 4
+group g5 Group 5
+group g6 Group 6
+group g7 Group 7
+group g8 Renamed
+group g9 Room again
+topic t Counts
+card t1 table t 4x3 Cells
+add t1 r1 a
+add t1 r6 a | b | c | d | e | f
+add t1 r0  |  |  |  |  |
+card c1 checklist t 3x3 Items
+add c1 i01 done | An existing id is replaced, not added
+add c1 i02 done | Item 2
+add c1 i04 todo | Item 4
+add c1 i05 todo | Item 5
+add c1 i06 todo | Item 6
+add c1 i07 todo | Item 7
+add c1 i08 todo | Item 8
+add c1 i09 todo | Item 9
+add c1 i10 todo | Item 10
+add c1 i11 todo | Item 11
+add c1 i12 todo | Item 12
+add c1 i13 todo | Item 13
+add c1 i14 todo | Item 14
+add c1 i15 todo | Item 15
+add c1 i16 todo | Item 16
+add c1 i17 todo | Item 17
+add c1 i18 todo | Item 18
+add c1 i19 todo | Item 19
+add c1 i20 todo | Item 20
+add c1 i21 todo | Item 21
+add c1 i22 todo | Item 22
+add c1 i23 todo | Item 23
+add c1 i24 done | Item 24
+add c1 i25 todo | Room again
+card r1 record t 3x3 The title is not one of the twelve
+set r1 cols A | B
+set r1 f01 changed
+set r1 f02 v2
+set r1 f03 v3
+set r1 f04 v4
+set r1 f05 v5
+set r1 f06 v6
+set r1 f07 v7
+set r1 f08 v8
+set r1 f09 v9
+set r1 f10 v10
+set r1 text One of the twelve
+add r1 a Rows are not fields | 1
+card x1 x-kanban t 3x3 Fields
+set x1 f01 v1
+set x1 f02 v2
+set x1 f03 v3
+set x1 f04 v4
+set x1 f05 v5
+set x1 f06 v6
+set x1 f07 v7
+set x1 f08 v8
+set x1 f09 v9
+set x1 f10 v10
+set x1 f11 v11
+set x1 f12 v12
