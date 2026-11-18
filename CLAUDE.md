@@ -38,6 +38,7 @@ The web element has a self-test: serve the repository (`python -m http.server 80
 
 - Version 0.4, pushed. The online demo is on.
 - **Packages are not published yet.** `npm publish` (from the repository root) needs the owner's passkey in a real terminal. `cargo publish` (in `rust/`) passed its dry run and waits for the owner's word. PyPI: no account or token yet; until then `pip install "git+https://github.com/fidenit/patet#subdirectory=python"` works and is documented. Once npm is published, replace "There is no npm package yet" in `web/README.md` with `npm install patet` (`import "patet/board"`).
+- The fuller list of what is next, for both repositories, is at the top of `docs/NEXT.md` in the APERIT repository (Korean).
 - Not checked anywhere: the GBNF on a real llama.cpp; Python 3.9 (only 3.13 was run); the example against a model that is not Claude; trademarks in KIPRIS (USPTO has PATET only in class 35, retail).
 - Not built: dragging and resizing cards in `<patet-board>`; renderers for anything but the web.
 - Open decisions for the owner: the license stays Apache-2.0 unless they say otherwise; when to call it 1.0; whether to add `code` and `diff` card types (recommended earlier, not started).
