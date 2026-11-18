@@ -42,6 +42,8 @@ It sits beside AG-UI, A2UI and MCP rather than against them: an agent can reach 
 | [examples/](examples) | Boards you can load |
 | [conformance/](conformance) | Cases a renderer runs to check itself |
 | [rust/](rust) | Reference implementation: board, parser, serializer. No dependencies |
+| [js/](js) | The same in JavaScript, one file, no dependencies. Runs in a browser, in Node, in a worker |
+| [web/](web) | `<kite-board>`: a renderer for the web, as one custom element you can put in your own app |
 | [CHANGELOG.md](CHANGELOG.md) | What changed between versions |
 
 ## Use it
@@ -59,6 +61,17 @@ for line in ["topic demo Demo", "card k1 metric demo 2x2 Users", "set k1 value 4
 ```
 
 **Drive a board from an AG-UI agent.** Point a renderer at the agent's endpoint. The renderer sends the board, the guide and a `screen` tool with every run ([SPEC.md, section 10.5](SPEC.md#105-ag-ui)).
+
+**Put a board in your web app.** [`<kite-board>`](web) is one custom element with no dependencies:
+
+```html
+<script type="module" src="kite-board.js"></script>
+<kite-board id="board"></kite-board>
+<script type="module">
+  board.apply("card k2 decision ws 3x3 Which venue?");               // what your agent writes goes in
+  board.addEventListener("kite-event", (e) => send(e.detail.entry));  // "user set k2 chosen o1" comes out
+</script>
+```
 
 **Write a renderer.** Keep a board, apply lines, draw cards. The parser is about a hundred lines and the checker about three hundred; port [rust/](rust) or use it:
 
@@ -78,4 +91,4 @@ Then run the [conformance cases](conformance).
 
 ## Status
 
-0.x: the language may still change between minor versions where the spec says so (section 12). One renderer exists (KITE for Windows and macOS, and the KITE Android app). Feedback, renderers and bindings for other transports are welcome.
+0.x: the language may still change between minor versions where the spec says so (section 12). Three implementations pass the conformance cases: Rust (used by KITE for Windows and macOS), Kotlin (the KITE Android app) and JavaScript (`<kite-board>`). Feedback, renderers and bindings for other transports are welcome.

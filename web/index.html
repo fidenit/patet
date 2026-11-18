@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KITE Protocol: web renderer</title>
+<style>
+  :root { color-scheme: dark light; }
+  body { margin: 0; background: #0f1012; color: #ececee; font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  body.light { background: #f3f3f1; color: #1b1c1e; }
+  .page { display: grid; grid-template-columns: 380px 1fr; min-height: 100vh; }
+  @media (max-width: 1000px) { .page { grid-template-columns: 1fr; } }
+  .side { padding: 18px; border-right: 1px solid #8884; }
+  h1 { font-size: 17px; margin: 0 0 4px; } .sub { opacity: .65; margin: 0 0 14px; }
+  textarea { width: 100%; height: 250px; box-sizing: border-box; background: #8881; color: inherit; border: 1px solid #8885; border-radius: 12px; padding: 10px; font: 12.5px/1.5 ui-monospace, Consolas, monospace; resize: vertical; }
+  button, select { background: #8882; color: inherit; border: 1px solid #8885; border-radius: 10px; padding: 6px 12px; font: inherit; cursor: pointer; margin: 8px 6px 0 0; }
+  button.main { background: #f0932b; border-color: #f0932b; color: #16171a; font-weight: 700; }
+  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; opacity: .6; margin: 18px 0 6px; }
+  pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: 12px/1.5 ui-monospace, Consolas, monospace; max-height: 190px; overflow: auto; background: #8881; border-radius: 10px; padding: 8px 10px; min-height: 22px; }
+  label { display: inline-flex; gap: 6px; align-items: center; margin: 8px 10px 0 0; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="side">
+    <h1>KITE Protocol in the browser</h1>
+    <p class="sub">Write ops on the left. The board on the right is <code>&lt;kite-board&gt;</code>, one file with no dependencies. What you do on the board comes back as events.</p>
+    <select id="example" aria-label="Example">
+      <option value="">Load an example…</option>
+      <option value="workshop">A decision that comes to you</option>
+      <option value="todo">To-do list</option>
+      <option value="my-turn">Decision and input</option>
+      <option value="route">Route</option>
+      <option value="workspace">Groups, a chart, a drawing</option>
+      <option value="growing">Records, several answers (0.3)</option>
+    </select>
+    <textarea id="ops" spellcheck="false" aria-label="Ops"></textarea>
+    <div>
+      <button class="main" id="stream">Stream it</button>
+      <button id="apply">Apply at once</button>
+      <button id="clear">Clear the board</button>
+    </div>
+    <div>
+      <label><input type="checkbox" id="media"> allow web, image and doc cards</label>
+      <label><input type="checkbox" id="light"> light</label>
+    </div>
+    <h2>Verdicts that were not "ok"</h2>
+    <pre id="verdicts"></pre>
+    <h2>Events from the board (send these to your agent)</h2>
+    <pre id="events"></pre>
+    <h2>What this renderer supports</h2>
+    <pre id="hello"></pre>
+  </div>
+  <kite-board id="board"></kite-board>
+</div>
+
+<script type="module">
+import "./kite-board.js";
+
+const $ = (id) => document.getElementById(id);
+const board = $("board");
+board.setAttribute("theme", "dark");
+const log = (el, line) => { el.textContent += line + "\n"; el.scrollTop = el.scrollHeight; };
+const report = (problems) => problems.forEach((p) => log($("verdicts"), `${p.line}\n   ${p.verdict}`));
+
+const WORKSHOP = `say Two venues compared. Pick one.
+topic ws Team Workshop
+card k1 table ws 6x2 Venue comparison
+set k1 cols Venue | Travel | Cost per person | Notes
+add k1 r1 Gangneung | 2h 40m | 180,000 KRW | Sea, large meeting room
+add k1 r2 Gapyeong | 1h 10m | 120,000 KRW | Close, small lodging
+card c1 chart ws 3x2 Cost per person
+set c1 unit k KRW
+add c1 a Gangneung | 180
+add c1 b Gapyeong | 120
+card k2 decision ws 3x3 Which venue?
+set k2 text Where should the workshop be?
+add k2 o1 Gangneung | Far, but better facilities
+add k2 o2 Gapyeong | Close and cheaper
+focus k2`;
+
+const GROWING = `say A sales board, written in protocol 0.3.
+topic sales Sales
+card r1 record sales 4x3 Invoice 1042
+set r1 customer Acme Ltd
+set r1 due 2026-12-01
+set r1 total 1,200 USD
+set r1 cols Item | Hours | Amount
+add r1 l1 Design | 12h | 800
+add r1 l2 Review | 6h | 400
+card k1 x-kanban sales 4x2 Sprint 12
+set k1 lane Doing
+set k1 owner Mina
+card n1 note sales 4x2 Two lines
+set n1 text Revenue up 12%.\\nTwo regions behind plan.
+card t1 table sales 4x2 Commands
+set t1 cols Command | What it does
+add t1 a ls \\| wc -l | counts the files
+card d1 decision sales 3x3 Which days suit you?
+set d1 multi yes
+add d1 o1 Friday | 12/5
+add d1 o2 Saturday | 12/6
+add d1 o3 Sunday | 12/7
+card i1 input sales 4x3 Your seat
+set i1 text Needed to book.
+add i1 a Seat* | choice Window / Aisle / Any
+add i1 b Departure | time
+add i1 c Budget | slider 5~30 10k KRW`;
+
+// A stand-in for your agent: it hears what the user did and answers by editing the board.
+function agent(entry) {
+  const m = /^user set k2 chosen (o\d)$/.exec(entry);
+  if (!m || !board.board.card("k2") || !board.board.card("k1")) return;
+  const venue = m[1] === "o1" ? "Gangneung" : "Gapyeong";
+  setTimeout(() => report(board.write(`say ${venue} it is.\ndel k2\ncard s1 status ws 3x1 Venue\nset s1 state ok\nset s1 text ${venue} chosen\ncard l1 checklist ws 3x2 Next\nadd l1 a todo | Book ${venue}\nadd l1 b todo | Tell the team`)), 350);
+}
+board.addEventListener("kite-event", (e) => { log($("events"), e.detail.entry); agent(e.detail.entry); });
+
+async function load(name) {
+  if (name === "workshop") return WORKSHOP;
+  if (name === "growing") return GROWING;
+  // The examples are logs (a letter, a tab, the op): keep the op.
+  const text = await (await fetch(`../examples/${name}.ops`)).text();
+  return text.split("\n").filter((l) => /^[AU]\t/.test(l)).map((l) => l.slice(2)).join("\n");
+}
+$("example").onchange = async (e) => { if (e.target.value) $("ops").value = await load(e.target.value); };
+$("apply").onclick = () => report(board.write($("ops").value));
+$("clear").onclick = () => { board.clear(); $("verdicts").textContent = $("events").textContent = ""; };
+$("stream").onclick = async () => {
+  // As a model would send it: a few characters at a time. Cards fill in while the text is still arriving.
+  const text = $("ops").value + "\n";
+  for (let i = 0; i < text.length; i += 4) { report(board.feed(text.slice(i, i + 4))); await new Promise((r) => setTimeout(r, 12)); }
+  report(board.end());
+};
+const hello = () => { $("hello").textContent = board.describe().join("\n"); };
+$("media").onchange = (e) => { board.toggleAttribute("media", e.target.checked); hello(); };
+$("light").onchange = (e) => { board.setAttribute("theme", e.target.checked ? "light" : "dark"); document.body.classList.toggle("light", e.target.checked); };
+
+// ?example=workshop&instant=1&light=1&media=1 opens with an example already on the board.
+const q = new URLSearchParams(location.search);
+if (q.has("media")) { $("media").checked = true; board.toggleAttribute("media", true); }
+if (q.has("light")) { $("light").checked = true; $("light").onchange({ target: $("light") }); }
+hello();
+$("ops").value = await load(q.get("example") || "workshop");
+if (q.has("instant")) report(board.write($("ops").value));
+
+// ?selftest=1: use the board as a person would, and leave what happened in the page for a headless check.
+if (q.has("selftest")) {
+  const root = board.shadowRoot;
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const out = [];
+  board.clear();
+  out.push(JSON.stringify(board.write(WORKSHOP)));
+  await wait(50);
+  out.push("turn:" + (root.querySelector("aside h3")?.firstChild?.textContent ?? "none"));
+  [...root.querySelectorAll("aside button.opt")].find((x) => x.textContent.includes("Gapyeong"))?.click();
+  await wait(600);
+  out.push("events:" + $("events").textContent.trim());
+  out.push("board:" + board.read("ws").split("\n").filter((l) => /^card |^set s1/.test(l)).join(" / "));
+  root.querySelector("button.check")?.click();
+  await wait(50);
+  out.push("tick:" + $("events").textContent.trim().split("\n").pop());
+  board.clear();
+  out.push(JSON.stringify(board.write(GROWING + "\ncard w1 web sales Site\ncard z1 nokind sales X\n<b>not an op</b>")));
+  await wait(50);
+  const btn = (text) => [...root.querySelectorAll("button")].find((x) => x.textContent.startsWith(text));
+  btn("Friday").click(); await wait(30); btn("Sunday").click(); await wait(30); btn("Done").click(); await wait(50);
+  const seat = [...root.querySelectorAll("button.pill")].find((x) => x.textContent === "Aisle");
+  out.push("send-before-required:" + btn("Send").disabled);
+  seat.click(); await wait(50);
+  btn("Send").click(); await wait(50);
+  out.push("events2:" + $("events").textContent.trim().split("\n").slice(-4).join(" / "));
+  out.push("html-injected:" + (root.querySelector("b")?.textContent === "not an op" || root.innerHTML.includes("<b>not an op</b>")));
+  out.push("note-lines:" + root.querySelector('article[data-id="n1"] p').textContent.split("\n").length);
+  document.body.append(Object.assign(document.createElement("pre"), { id: "selftest", textContent: out.join("\n") }));
+}
+</script>
+</body>
+</html>

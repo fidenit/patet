@@ -55,7 +55,7 @@ Stated plainly, because the trade above has a price.
 - **A small vocabulary.** 16 card types. A renderer can add kinds of its own (`x-...`), which fall back to a generic `record` card elsewhere, and a writer can use `record` for any entity with named fields. That is still far from the open component catalogs of the others: an extension kind has no declared schema or look in the protocol.
 - **No data binding.** There is no data model with paths, no computed values, no conditional visibility. KITE has only named values (`let`), which substitute text. A2UI and json-render have real binding.
 - **Short text only.** Cells hold 60 characters. That is the point of the design. Long content is pointed at with a `doc` card and opened outside the board; it is never on it.
-- **One renderer family.** KITE for desktop and Android, from one author. A2UI has official renderers for Lit, Angular, React, Flutter and SwiftUI; json-render for React, Vue, Svelte, Solid, React Native and more.
+- **Few renderers.** KITE for desktop and Android, and a web element (`<kite-board>`), all from one author. A2UI has official renderers for Lit, Angular, React, Flutter and SwiftUI; json-render for React, Vue, Svelte, Solid, React Native and more.
 - **Young.** Version 0.3, one production user, no measurements published. A2UI and AG-UI are at 1.0 with many integrations.
 
 If you need an agent to draw arbitrary interfaces inside your own product, use A2UI or json-render. If you want an agent's work to live on a board a person can keep, KITE is built for that.
