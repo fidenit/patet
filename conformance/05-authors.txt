@@ -1,0 +1,59 @@
+# What the user does comes as ops. A card the user placed is pinned: the agent may change what it says, not where it is.
+agent: topic ws Team Workshop
+  -> ok
+agent: card k1 decision ws Which venue?
+  -> ok
+agent: add k1 o1 Gangneung | Far, but better facilities
+  -> ok
+agent: add k1 o2 Gapyeong | Close and cheaper
+  -> ok
+agent: card k2 input ws Dates
+  -> ok
+agent: add k2 a Start date | date
+  -> ok
+agent: card k3 checklist ws To do
+  -> ok
+agent: add k3 i1 todo | Book the bus
+  -> ok
+user: set k1 chosen o2
+  -> ok
+user: upd k2 a Start date | date | 12/3
+  -> ok
+user: set k2 sent yes
+  -> ok
+user: upd k3 i1 done | Book the bus
+  -> ok
+user: move k3 4 -2
+  -> ok
+user: size k1 5x4
+  -> ok
+agent: move k3 0 0
+  -> err pinned
+agent: size k1 2x2
+  -> err pinned
+agent: set k1 text Still editable
+  -> ok
+agent: move k2 1 1
+  -> ok
+user: unpin k1
+  -> ok
+agent: size k1 3x3
+  -> ok
+user: pin k2
+  -> ok
+board:
+topic ws Team Workshop
+card k1 decision ws 3x3 Which venue?
+set k1 chosen o2
+set k1 text Still editable
+add k1 o1 Gangneung | Far, but better facilities
+add k1 o2 Gapyeong | Close and cheaper
+card k2 input ws 3x3 Dates
+set k2 sent yes
+add k2 a Start date | date | 12/3
+move k2 1 1
+pin k2
+card k3 checklist ws 3x3 To do
+add k3 i1 done | Book the bus
+move k3 4 0
+pin k3

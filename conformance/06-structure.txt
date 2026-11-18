@@ -1,0 +1,59 @@
+# Groups, moving cards, deleting, the shelf, named values.
+agent: let team 12 people
+  -> ok
+agent: let gone soon
+  -> ok
+agent: let gone
+  -> ok
+agent: group work Work
+  -> ok
+agent: group home Home
+  -> ok
+agent: topic launch Launch Plan
+  -> ok
+agent: put launch work
+  -> ok
+agent: topic garden Garden
+  -> ok
+agent: put garden home
+  -> ok
+agent: topic old Old Trip
+  -> ok
+agent: card m1 metric launch Team size
+  -> ok
+agent: set m1 value {team}
+  -> ok
+agent: card n1 note garden Seeds
+  -> ok
+agent: card n2 note old Photos
+  -> ok
+agent: set n2 text 240 pictures
+  -> ok
+agent: archive old
+  -> ok
+agent: topic old New Trip
+  -> err shelved
+agent: card n2 note launch Reuse
+  -> err shelved
+agent: mv n1 launch
+  -> ok
+agent: del garden
+  -> ok
+agent: del home
+  -> ok
+agent: topic launch Launch
+  -> ok
+agent: restore old
+  -> ok
+agent: del n2
+  -> ok
+agent: del old
+  -> ok
+board:
+let team 12 people
+group work Work
+topic launch Launch
+put launch work
+card m1 metric launch 2x2 Team size
+set m1 value {team}
+card n1 note launch 3x2 Seeds

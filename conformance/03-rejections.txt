@@ -1,0 +1,97 @@
+# Every op code, once. A rejected line changes nothing.
+agent: topic a!b Bad
+  -> err bad-id
+agent: topic this-id-is-longer-than-24-chars Long
+  -> err bad-id
+agent: card k1 note nowhere Orphan
+  -> err no-such-topic
+agent: topic t Topic
+  -> ok
+agent: card k1 gauge t Unknown
+  -> err unknown-kind
+agent: card k1 note t Note
+  -> ok
+agent: card k1 note t Again
+  -> err exists
+agent: set k1 state ok
+  -> err unknown-field
+agent: set k9 text x
+  -> err no-such-card
+agent: add k1 i1 x
+  -> err no-items
+agent: card s1 status t Status
+  -> ok
+agent: set s1 state maybe
+  -> err bad-value
+agent: card p1 progress t Progress
+  -> ok
+agent: set p1 pct 101
+  -> err bad-value
+agent: set p1 pct half
+  -> err bad-value
+agent: add p1 a later | Step
+  -> err bad-value
+agent: card c1 checklist t List
+  -> ok
+agent: add c1 i1 run | Not a checklist state
+  -> err bad-value
+agent: add c1 i1 todo | a | b | c | d | e | f
+  -> err cell-count
+agent: add c1 i!1 todo | Bad item id
+  -> err bad-id
+agent: upd c1 i9 todo | Missing
+  -> err no-such-item
+agent: del c1 i9
+  -> err no-such-item
+agent: card h1 chart t Chart
+  -> ok
+agent: add h1 a Sales | lots
+  -> err bad-value
+agent: add h1 a Sales | 1,200
+  -> ok
+agent: card r1 route t Route
+  -> ok
+agent: add r1 a Station | somewhere
+  -> err bad-value
+agent: add r1 a Station
+  -> err bad-value
+agent: card d1 draw t Drawing
+  -> ok
+agent: add d1 a triangle | 1,1 2,2
+  -> err bad-value
+agent: del zzz
+  -> err not-found
+agent: del t
+  -> err not-empty
+agent: put t g
+  -> err no-such-group
+agent: group t Group
+  -> err id-in-use
+agent: group k1 Group
+  -> err id-in-use
+agent: mv k1 nowhere
+  -> err no-such-topic
+agent: mv k9 t
+  -> err no-such-card
+agent: focus k9
+  -> err no-such-card
+agent: pin k1
+  -> err user-only
+agent: unpin k1
+  -> err user-only
+agent: restore t
+  -> err not-shelved
+agent: archive nowhere
+  -> err no-such-topic
+agent: let a!b 1
+  -> err bad-id
+board:
+topic t Topic
+card k1 note t 3x2 Note
+card s1 status t 2x1 Status
+card p1 progress t 3x3 Progress
+card c1 checklist t 3x3 List
+card h1 chart t 4x3 Chart
+add h1 a Sales | 1,200
+card r1 route t 6x5 Route
+card d1 draw t 5x4 Drawing

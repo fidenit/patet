@@ -1,0 +1,45 @@
+# A topic, three kinds of cards, and the order the board is written back in.
+agent: say Moving checklist ready.
+  -> ok
+agent: topic move Moving Day
+  -> ok
+agent: card k1 checklist move 3x3 Before the truck comes
+  -> ok
+agent: add k1 i1 done | Book the movers
+  -> ok
+agent: add k1 i2 todo | Pack the kitchen
+  -> ok
+agent: card k3 metric move Days left
+  -> ok
+agent: set k3 value 9
+  -> ok
+agent: set k3 unit days
+  -> ok
+agent: card k2 progress move 3x3 Packing
+  -> ok
+agent: set k2 pct 40
+  -> ok
+agent: add k2 s1 done | Bedroom
+  -> ok
+agent: add k2 s2 run | Kitchen
+  -> ok
+agent: upd k2 s2 done | Kitchen
+  -> ok
+agent: add k1 i1 done | Book the movers and the lift
+  -> ok
+agent: set k1 title Before the truck
+  -> ok
+agent: focus k2
+  -> ok
+board:
+topic move Moving Day
+card k1 checklist move 3x3 Before the truck
+add k1 i1 done | Book the movers and the lift
+add k1 i2 todo | Pack the kitchen
+card k3 metric move 2x2 Days left
+set k3 unit days
+set k3 value 9
+card k2 progress move 3x3 Packing
+set k2 pct 40
+add k2 s1 done | Bedroom
+add k2 s2 done | Kitchen

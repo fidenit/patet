@@ -1,0 +1,54 @@
+# Text over a limit is cut with … as its last character, and the writer is told. Counts are rejected.
+agent: topic t <30 n>
+  -> ok
+agent: card k1 note t <50 T>
+  -> ok clipped k1.title 40
+agent: set k1 text <300 x>
+  -> ok clipped k1.text 240
+agent: set k1 title <41 y>
+  -> ok clipped k1.title 40
+agent: card k2 table t Table
+  -> ok
+agent: add k2 r1 <61 c> | short
+  -> ok clipped k2.r1 60
+agent: let name <70 v>
+  -> ok clipped let.name 60
+agent: say <81 s>
+  -> ok clipped say 80
+agent: set k1 text <240 가>
+  -> ok
+agent: group g1 <20 G>
+  -> ok
+agent: group g2 B
+  -> ok
+agent: group g3 C
+  -> ok
+agent: group g4 D
+  -> ok
+agent: group g5 E
+  -> ok
+agent: group g6 F
+  -> ok
+agent: group g7 G
+  -> ok
+agent: group g8 H
+  -> ok
+agent: group g9 I
+  -> err limit
+agent: group g1 Renamed
+  -> ok
+board:
+let name <59 v>…
+group g1 Renamed
+group g2 B
+group g3 C
+group g4 D
+group g5 E
+group g6 F
+group g7 G
+group g8 H
+topic t <23 n>…
+card k1 note t 3x2 <39 y>…
+set k1 text <240 가>
+card k2 table t 4x3 Table
+add k2 r1 <59 c>… | short

@@ -1,0 +1,57 @@
+# What counts as a line, a comment, a size and a title.
+agent:
+  -> skip
+agent: # a comment
+  -> skip
+agent: ```
+  -> skip
+agent: tell This is only read aloud.
+  -> skip
+agent:    topic   t    Two   words
+  -> ok
+agent: card a note t 4X2 Sized
+  -> ok
+agent: card b note t 4x Not a size
+  -> ok
+agent: card c note t
+  -> ok
+agent: card d note t 20x0 Clamped
+  -> ok
+agent: add zz i1 x
+  -> err no-such-card
+agent: card e table t Cells
+  -> ok
+agent: add e r1   a  |  b |c
+  -> ok
+agent: add e r2 only
+  -> ok
+agent: add e r3 a | | c
+  -> ok
+agent: frobnicate the board
+  -> err unknown-verb
+agent: Here is your plan:
+  -> err unknown-verb
+agent: topic
+  -> err missing-argument
+agent: card x note
+  -> err missing-argument
+agent: set a
+  -> err missing-argument
+agent: add e r9
+  -> err missing-argument
+agent: del
+  -> err missing-argument
+agent: size a big
+  -> err bad-syntax
+agent: move a 1
+  -> err bad-syntax
+board:
+topic t Two   words
+card a note t 4x2 Sized
+card b note t 3x2 4x Not a size
+card c note t 3x2
+card d note t 8x1 Clamped
+card e table t 4x3 Cells
+add e r1 a | b | c
+add e r2 only
+add e r3 a |  | c
