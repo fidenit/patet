@@ -294,6 +294,8 @@ you: Two venues compared. Pick one.
 | `<earlier>` | the last few things the user said and the `say` each got | on a turn started by a gesture the model has no idea what the user wanted, and does nothing useful |
 | `<input>` | what the user said now; empty when a gesture started the turn | |
 
+When lines of a turn were rejected, the user is looking at a board that lacks what the model meant to show. A host SHOULD then run one more turn at once, with an empty `<input>` and those lines in `<rejected>`, without waiting for the user; one such turn, not a loop.
+
 The instructions for the model are [GUIDE.md](GUIDE.md); its section "How a turn reaches you" describes this layout, so the guide can be used as the system prompt as it is. Add the renderer's description (section 6) after it.
 
 ### 10.2 Log

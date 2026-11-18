@@ -11,7 +11,7 @@ One op per line. No prose, no Markdown, no code fences: a line that is not an op
 ```
 say <one line>                               the only sentence on screen: what you changed (80 chars)
 topic <id> <name>                            create a topic, or rename it
-card <id> <kind> <topic> [<w>x<h>] <title>   create a card
+card <id> <kind> <topic> [<w>x<h>] <title>   create a card, in a topic that exists (on an empty board: `topic` first)
 set <id> <field> <value>                     set one field of a card (the value runs to the end of the line)
 add <id> <item> <cell> | <cell> ...          add an item to a list-like card
 upd <id> <item> <cell> | <cell> ...          replace an existing item

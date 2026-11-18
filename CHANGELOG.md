@@ -17,6 +17,7 @@ The vocabulary can grow without breaking readers, and a writer can find out what
 - `card` takes an optional title, as implementations always did.
 - Versioning: from 0.3 on, a new core card type is a minor change, because writers read the renderer's description.
 - A board of 0.2 is read unchanged. A cell that ended in a backslash directly before a `|` now reads differently (`a\|b` is one cell); write a space before the separator.
+- A host should run one more turn at once when lines of a turn were rejected (SPEC 10.1), and the guide says that a card needs a topic that exists. Found with an app built from the protocol alone: a greeting was answered with a card in a topic that did not exist, and the user saw an empty board.
 
 ## 0.2 (2026-11-18)
 
