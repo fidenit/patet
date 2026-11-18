@@ -45,7 +45,7 @@ For anything you ship, replace `@main` with a commit id so the file cannot chang
 
 ## Try it
 
-From the root of this repository:
+Online: [fidenit.github.io/patet/web](https://fidenit.github.io/patet/web/). Or from the root of this repository:
 
 ```sh
 python -m http.server 8000        # any static server; module scripts do not load from file://

@@ -24,6 +24,7 @@ Version **0.4**. Apache-2.0. The protocol is separate from any app: [APERIT](htt
 
 ## Start here
 
+- **Try it in your browser, nothing to install:** [fidenit.github.io/patet/web](https://fidenit.github.io/patet/web/). Write ops on the left, watch the board, press things and see what comes back.
 - **See it work in a minute:** `node examples/assistant/server.mjs`, then open `http://127.0.0.1:8787/`. Two files, no dependencies, a canned answer until you give it a model ([examples/assistant](examples/assistant)).
 - **Build it into your product:** [QUICKSTART.md](QUICKSTART.md). The system prompt is a file ([GUIDE.md](GUIDE.md)), a turn has five parts, and each line of the answer gets a verdict.
 - **Make it look like yours:** colours, corners and font are CSS variables on [`<patet-board>`](web/README.md#theming).
