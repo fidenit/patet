@@ -1,0 +1,21 @@
+{
+  "name": "patet",
+  "version": "0.4.0",
+  "description": "PATET: the line language an AI writes to build and edit a screen. The board, the parser and the serializer, and <patet-board>, a renderer for the web. No dependencies.",
+  "type": "module",
+  "main": "./js/patet.js",
+  "exports": {
+    ".": "./js/patet.js",
+    "./board": "./web/patet-board.js",
+    "./GUIDE.md": "./GUIDE.md",
+    "./package.json": "./package.json"
+  },
+  "files": ["js/patet.js", "web/patet-board.js", "web/README.md", "GUIDE.md", "SPEC.md", "QUICKSTART.md", "CHANGELOG.md", "NOTICE"],
+  "sideEffects": ["./web/patet-board.js"],
+  "license": "Apache-2.0",
+  "repository": { "type": "git", "url": "git+https://github.com/fidenit/patet.git" },
+  "homepage": "https://github.com/fidenit/patet#readme",
+  "bugs": "https://github.com/fidenit/patet/issues",
+  "keywords": ["ai", "agent", "llm", "generative-ui", "protocol", "web-component", "streaming"],
+  "scripts": { "test": "node js/test.mjs" }
+}
