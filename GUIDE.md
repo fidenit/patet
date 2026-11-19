@@ -55,7 +55,7 @@ A value cannot contain a line break. To put a `|` inside a cell, write `\|`. In 
 | doc | a document, file or link that is too long for the board: shown by name with a summary, opened by the user | src: absolute path of the file, or a web address, text(what it is and what it says, 240) | none | 3x2 |
 <!-- parts:end -->
 
-Every card has a `title` (40). A cell holds 60 characters and a card 24 items (a `draw` card 80). Text over a limit is cut, and you are told (`clipped <what> <limit>`): write shorter, or pick a type that fits.
+Every card has a `title` (40). When other agents write on the same board, also set `by` (24) on each card you create to the name you go by. A cell holds 60 characters and a card 24 items (a `draw` card 80). Text over a limit is cut, and you are told (`clipped <what> <limit>`): write shorter, or pick a type that fits.
 
 A grid cell is roughly 120 by 95 pixels and a screen is usually 9 to 12 cells wide. Give a card with many items more rows and a table with many columns more width. Make the important card large and the minor ones small.
 
@@ -151,7 +151,7 @@ add k2 i3 todo | Book a table for {people}
 Renderers differ: a phone may have no web cards, another may add kinds. A renderer describes itself (the `hello` command of a line session, the end of this guide over MCP, `state.patet.renderer` over AG-UI) in lines like these:
 
 ```
-patet 0.4
+patet 0.5
 renderer APERIT 0.4.0
 kinds status metric chart route draw image table progress checklist decision input timeline note record doc
 features tell

@@ -1,4 +1,4 @@
-// PATET 0.4 in JavaScript: the board, the parser and the serializer. No dependencies.
+// PATET 0.5 in JavaScript: the board, the parser and the serializer. No dependencies.
 // A port of the reference implementation (protocol/rust); it runs the same conformance cases (test.mjs).
 //
 //   import { Board, parse, serialize } from "./patet.js";
@@ -6,7 +6,7 @@
 //   const verdict = board.line("card k1 metric trip 2x2 Days left");   // "ok" | "ok clipped ..." | "err <code> <message>" | "skip"
 //   serialize(board);                                                  // the board as ops
 
-export const VERSION = "0.4";
+export const VERSION = "0.5";
 
 /** Why an op was not applied: a stable code for programs, an English message for whoever wrote the line. */
 export class Reject extends Error {
@@ -22,7 +22,7 @@ export class Reject extends Error {
 const no = (code, message) => new Reject(code, message);
 
 const ID = "(1 to 24 letters, digits, _ or -)";
-export const LIMITS = { id: 24, title: 40, topic: 24, group: 16, cell: 60, cells: 6, items: 24, drawItems: 80, groups: 8, vars: 64, say: 80, size: 8, recordField: 80, recordFields: 12, gridCell: 9999 };
+export const LIMITS = { id: 24, title: 40, by: 24, topic: 24, group: 16, cell: 60, cells: 6, items: 24, drawItems: 80, groups: 8, vars: 64, say: 80, size: 8, recordField: 80, recordFields: 12, gridCell: 9999 };
 
 /** The card types: name, default size, fields with limits (an empty description marks a field the renderer sets), item shape. */
 export const PARTS = [
@@ -51,7 +51,7 @@ export const kindNames = () => PARTS.map((p) => p.name);
 export const MEDIA_KINDS = ["web", "image", "doc"];
 
 /** What a renderer supports, one line per entry (SPEC.md section 6): give it to the model after GUIDE.md. */
-export function describe({ renderer = "patet-js 0.4", media = false, extraKinds = [], features = [] } = {}) {
+export function describe({ renderer = "patet-js 0.5", media = false, extraKinds = [], features = [] } = {}) {
   const kinds = [...kindNames().filter((k) => media || !MEDIA_KINDS.includes(k)), ...extraKinds];
   const out = [`patet ${VERSION}`, `renderer ${renderer}`, `kinds ${kinds.join(" ")}`];
   if (features.length) out.push(`features ${features.join(" ")}`);
@@ -108,6 +108,7 @@ export const asks = (kind) => kind === "decision" || kind === "input";
 
 function fieldLimit(kind, field) {
   if (field === "title") return LIMITS.title;
+  if (field === "by") return LIMITS.by; // every card says who wrote it (SPEC.md section 6)
   const f = PART.get(kind).fields.find((x) => x[0] === field);
   if (f) return f[1];
   return kind === "record" && validId(field) ? LIMITS.recordField : null;
@@ -355,7 +356,7 @@ export class Board {
         const c = this.#card(op.id);
         const limit = fieldLimit(c.kind, op.field);
         if (limit === null) throw no("unknown-field", `${c.ext ?? c.kind} has no field '${op.field}'`);
-        if (c.kind === "record" && op.field !== "title" && !c.fields.has(op.field) && c.fields.size >= LIMITS.recordFields) throw no("limit", `card '${op.id}' already has ${LIMITS.recordFields} fields`);
+        if (c.kind === "record" && op.field !== "title" && op.field !== "by" && !c.fields.has(op.field) && c.fields.size - (c.fields.has("by") ? 1 : 0) >= LIMITS.recordFields) throw no("limit", `card '${op.id}' already has ${LIMITS.recordFields} fields`);
         // The user's answers are the user's: an agent does not write them.
         if (agent && ((c.kind === "decision" && op.field === "chosen") || (c.kind === "input" && op.field === "sent"))) throw no("user-only", `'${op.field}' is the user's answer; it is set when the user picks or sends, never by an agent`);
         if (c.kind === "input" && op.field === "sent" && op.value !== "yes") throw no("bad-value", `input.sent is yes (got '${op.value}')`);

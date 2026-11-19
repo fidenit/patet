@@ -1,4 +1,4 @@
-# PATET 0.4: one turn of a model, for constrained decoding (GBNF, the grammar format of llama.cpp).
+# PATET 0.5: one turn of a model, for constrained decoding (GBNF, the grammar format of llama.cpp).
 #
 # A turn is lines of ops, each ended by a line break, and the first line is `say`.
 # The op syntax is that of patet.ebnf, narrowed to what a model should write:

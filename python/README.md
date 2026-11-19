@@ -1,6 +1,6 @@
 # patet (Python)
 
-[PATET](https://github.com/fidenit/patet) 0.4 in Python: the board, the parser and the serializer. PATET is a line language an AI writes to build and edit a board of cards, and reads back to see what is on it. No dependencies; Python 3.9 or later.
+[PATET](https://github.com/fidenit/patet) 0.5 in Python: the board, the parser and the serializer. PATET is a line language an AI writes to build and edit a board of cards, and reads back to see what is on it. No dependencies; Python 3.9 or later.
 
 It is not on PyPI yet. Use it from a copy of the repository, or install it from there:
 
@@ -48,7 +48,7 @@ print(serialize(board))                     # the board as ops: the <board> part
 | `LineStream` | cuts a token stream into lines: `feed(delta)`, `partial`, `finish()` |
 | `split_cells`, `join_cells` | item cells and the `\|` escape |
 | `PARTS`, `parts_table()`, `kind_names()`, `LIMITS` | the 16 card types and the limits |
-| `VERSION`, `header()`, `declared_version(line)`, `can_read(version)` | the protocol version and the `# patet 0.4` header (the older `# kite-protocol 0.3` is read too) |
+| `VERSION`, `header()`, `declared_version(line)`, `can_read(version)` | the protocol version and the `# patet 0.5` header (the older `# kite-protocol 0.3` is read too) |
 | `strip_bom(text)` | drops one leading U+FEFF; call it on a file or stream you read yourself, before the first line |
 
 A rejected op changes nothing, and the line after it still runs. Limits count Unicode characters, not bytes.
@@ -61,7 +61,7 @@ python -m patet check -             # the same, from standard input
 python -m patet show board.ops      # the board the file builds, as ops
 ```
 
-The file is plain op lines, or a log (`# patet 0.4`, then `A<tab>op`, `U<tab>op`, `T<tab>date`).
+The file is plain op lines, or a log (`# patet 0.5`, then `A<tab>op`, `U<tab>op`, `T<tab>date`).
 
 ## Tests
 

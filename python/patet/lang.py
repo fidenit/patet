@@ -6,7 +6,7 @@ import re
 from typing import Any, Dict, List, Optional, Tuple
 
 #: The protocol version this implementation writes and reads (SPEC.md, Versioning).
-VERSION = "0.4"
+VERSION = "0.5"
 
 # What counts as white space: the Unicode White_Space property, as in the reference implementation.
 # (str.strip() and \s in Python also take U+001C..U+001F, which the protocol does not.)

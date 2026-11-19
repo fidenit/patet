@@ -18,6 +18,8 @@ enum class Kind {
     /** 필드별 글자 수 한도. 이 종류에 없는 필드면 null. */
     fun fieldLimit(field: String): Int? {
         if (field == "title") return 40
+        // Every card says who wrote it (SPEC.md section 6).
+        if (field == "by") return BY_LIMIT
         part.fields.firstOrNull { it.name == field }?.let { return it.limit }
         // A record takes any field name that is a valid id.
         return if (this == Record && validId(field)) RECORD_FIELD_LIMIT else null
@@ -74,6 +76,8 @@ const val MAX_W = 8
 const val MAX_H = 8
 const val RECORD_FIELD_LIMIT = 80
 const val MAX_RECORD_FIELDS = 12
+/** `by`, the writer of a card: a field of every kind. */
+const val BY_LIMIT = 24
 
 /** Restore loads a board written back as ops: it has the user's rights, but its `move` and `size` do not pin. */
 enum class Author { Ai, User, Restore }
@@ -247,7 +251,9 @@ class Board {
             is Op.Set -> {
                 val c = cardMut(op.id)
                 val limit = c.kind.fieldLimit(op.field) ?: throw Rejected("unknown-field", "${c.kindName} has no field '${op.field}'")
-                if (c.kind == Kind.Record && op.field != "title" && !c.fields.containsKey(op.field) && c.fields.size >= MAX_RECORD_FIELDS) {
+                // `title` and `by` belong to every card and do not count toward a record's fields.
+                val own = c.fields.keys.count { it != "by" }
+                if (c.kind == Kind.Record && op.field != "title" && op.field != "by" && !c.fields.containsKey(op.field) && own >= MAX_RECORD_FIELDS) {
                     throw Rejected("limit", "card '${op.id}' already has $MAX_RECORD_FIELDS fields")
                 }
                 // The user's answers are the user's: an agent does not write them.

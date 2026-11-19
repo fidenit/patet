@@ -4,7 +4,7 @@
 use crate::core::{Board, Op, Reject};
 
 /// The protocol version this implementation writes and reads (SPEC.md, Versioning).
-pub const VERSION: &str = "0.4";
+pub const VERSION: &str = "0.5";
 
 /// First line of a saved log or a stream. It starts with `#`, so a parser that predates it reads a comment.
 pub fn header() -> String {

@@ -1,4 +1,4 @@
-/* PATET 0.4: the line syntax of every op.
+/* PATET 0.5: the line syntax of every op.
 
    Notation: W3C EBNF, as in the XML specification (https://www.w3.org/TR/xml/#sec-notation).
    SPEC.md is the specification; this file restates its sections 3 and 5 in a form a tool can read.

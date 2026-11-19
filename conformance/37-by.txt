@@ -1,0 +1,74 @@
+# Every card has `by`: who wrote it, 24 characters, clipped with a note (SPEC.md sections 4 and 6). It is a field
+# of every kind, core or extension, like `title`, and is serialized with the other fields. On a record it does not
+# count toward the 12 fields.
+agent: topic t T
+  -> ok
+agent: card k note t Memo
+  -> ok
+agent: set k by planner
+  -> ok
+agent: card s status t Build
+  -> ok
+agent: set s by gpu worker 2
+  -> ok
+agent: card x x-kanban t Board
+  -> ok
+agent: set x by reviewer
+  -> ok
+agent: set k by <30 a>
+  -> ok clipped k.by 24
+# Without a value it is emptied, as any field.
+agent: set s by
+  -> ok
+agent: card r record t Contact
+  -> ok
+agent: set r by planner
+  -> ok
+agent: set r f1 1
+  -> ok
+agent: set r f2 2
+  -> ok
+agent: set r f3 3
+  -> ok
+agent: set r f4 4
+  -> ok
+agent: set r f5 5
+  -> ok
+agent: set r f6 6
+  -> ok
+agent: set r f7 7
+  -> ok
+agent: set r f8 8
+  -> ok
+agent: set r f9 9
+  -> ok
+agent: set r f10 10
+  -> ok
+agent: set r f11 11
+  -> ok
+agent: set r f12 12
+  -> ok
+agent: set r f13 13
+  -> err limit
+board:
+topic t T
+card k note t 3x2 Memo
+set k by aaaaaaaaaaaaaaaaaaaaaaa…
+card s status t 2x1 Build
+set s by
+card x x-kanban t 3x3 Board
+set x by reviewer
+card r record t 3x3 Contact
+set r by planner
+set r f1 1
+set r f10 10
+set r f11 11
+set r f12 12
+set r f2 2
+set r f3 3
+set r f4 4
+set r f5 5
+set r f6 6
+set r f7 7
+set r f8 8
+set r f9 9

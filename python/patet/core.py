@@ -14,7 +14,7 @@ _ID = "(1 to 24 letters, digits, _ or -)"
 _ID_ASCII = frozenset("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-")
 
 LIMITS: Dict[str, int] = {
-    "id": 24, "title": 40, "topic": 24, "group": 16, "cell": 60, "cells": 6, "items": 24, "draw_items": 80,
+    "id": 24, "title": 40, "by": 24, "topic": 24, "group": 16, "cell": 60, "cells": 6, "items": 24, "draw_items": 80,
     "groups": 8, "vars": 64, "say": 80, "size": 8, "record_field": 80, "record_fields": 12,
 }
 
@@ -62,7 +62,7 @@ def kind_names() -> List[str]:
 MEDIA_KINDS = ("web", "image", "doc")
 
 
-def describe(renderer: str = "patet-python 0.4", media: bool = False, extra_kinds: Iterable[str] = (), features: Iterable[str] = ()) -> List[str]:
+def describe(renderer: str = "patet-python 0.5", media: bool = False, extra_kinds: Iterable[str] = (), features: Iterable[str] = ()) -> List[str]:
     """What a renderer supports, one line per entry (SPEC.md section 6): give it to the model after GUIDE.md.
 
     `extra_kinds` are the extension kinds (`x-...`) you draw yourself; `features` is `tell` when you can read aloud.
@@ -118,6 +118,8 @@ def asks(kind: str) -> bool:
 def _field_limit(kind: str, name: str) -> Optional[int]:
     if name == "title":
         return LIMITS["title"]
+    if name == "by":  # every card says who wrote it (SPEC.md section 6)
+        return LIMITS["by"]
     for f in _PART[kind].fields:
         if f[0] == name:
             return f[1]
@@ -383,7 +385,7 @@ class Board:
         limit = _field_limit(c.kind, name)
         if limit is None:
             raise Reject("unknown-field", f"{c.kind_name} has no field '{name}'")
-        if c.kind == "record" and name != "title" and name not in c.fields and len(c.fields) >= LIMITS["record_fields"]:
+        if c.kind == "record" and name not in ("title", "by") and name not in c.fields and len([k for k in c.fields if k != "by"]) >= LIMITS["record_fields"]:
             raise Reject("limit", f"card '{id}' already has {LIMITS['record_fields']} fields")
         # The user's answers are the user's: an agent does not write them.
         if agent and ((c.kind == "decision" and name == "chosen") or (c.kind == "input" and name == "sent")):

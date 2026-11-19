@@ -22,7 +22,7 @@ PATET is a UI description. It travels over a transport: its own line session, MC
 
 | | What the model writes | Vocabulary | Who lays it out | What lives between turns | How the user answers |
 |---|---|---|---|---|---|
-| **PATET** 0.4 | One edit per text line (`set k1 text ...`) | 16 card types that each mean something (`decision`, `timeline`, `route`), plus kinds a renderer adds | The renderer | One board, which the model reads back in the same language before each edit | `decision` and `input` cards; the answer returns as an op |
+| **PATET** 0.5 | One edit per text line (`set k1 text ...`) | 16 card types that each mean something (`decision`, `timeline`, `route`), plus kinds a renderer adds | The renderer | One board, which the model reads back in the same language before each edit | `decision` and `input` cards; the answer returns as an op |
 | **A2UI** v1.0 | JSON messages (`createSurface`, `updateComponents`, `updateDataModel`, `deleteSurface`) | A catalog the app chooses; the basic one has 18 layout and input components | The writer (rows, columns, cards) | Surfaces and their data models | `action` messages from the renderer |
 | **json-render** | A JSON tree (`root`, `elements`), streamed | A catalog the developer defines; a shadcn/ui set of 36 is provided | The writer | The spec that was generated; state inside it | Actions the catalog declares |
 | **OpenUI Lang** | A compact DSL for a component tree | Component libraries for React, Vue, Svelte, Angular | The writer | The generated tree | Component callbacks |
@@ -56,7 +56,7 @@ Stated plainly, because the trade above has a price.
 - **No data binding.** There is no data model with paths, no computed values, no conditional visibility. PATET has only named values (`let`), which substitute text. A2UI and json-render have real binding.
 - **Short text only.** Cells hold 60 characters. That is the point of the design. Long content is pointed at with a `doc` card and opened outside the board; it is never on it.
 - **Few renderers.** APERIT for desktop and Android, and a web element (`<patet-board>`), all from one author. A2UI has official renderers for Lit, Angular, React, Flutter and SwiftUI; json-render for React, Vue, Svelte, Solid, React Native and more.
-- **Young.** Version 0.4, one production user, no measurements published. A2UI and AG-UI are at 1.0 with many integrations.
+- **Young.** Version 0.5, one production user, no measurements published. A2UI and AG-UI are at 1.0 with many integrations.
 
 If you need an agent to draw arbitrary interfaces inside your own product, use A2UI or json-render. If you want an agent's work to live on a board a person can keep, PATET is built for that.
 

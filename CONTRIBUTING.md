@@ -25,7 +25,7 @@ Things that are deliberately not in the language, so that proposals for them nee
 
 An implementation in another language is welcome here if it has no dependencies and passes every conformance case with a runner of its own. A renderer (something that draws) can live in its own repository; tell us and we will list it.
 
-To say that something "supports PATET 0.4", it has to pass the conformance cases of 0.4. Nothing else is required, and nothing less is enough.
+To say that something "supports PATET 0.5", it has to pass the conformance cases of 0.5. Nothing else is required, and nothing less is enough.
 
 ## Checks before a pull request
 

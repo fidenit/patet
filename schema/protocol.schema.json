@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "PATET 0.4: a batch of board ops",
+  "title": "PATET 0.5: a batch of board ops",
   "description": "JSON form of the ops of PATET (SPEC.md). The wire format is plain text lines; this schema describes the same ops as JSON objects so tools can validate and generate them. Convert each op to its line with the 'x-line' template. Text over a limit is clipped by a renderer rather than rejected, so 'maxLength' is what a writer should stay within. Lengths ('maxLength') count Unicode characters, as JSON Schema defines them.",
   "type": "object",
   "required": [
@@ -14,7 +14,8 @@
         "0.1",
         "0.2",
         "0.3",
-        "0.4"
+        "0.4",
+        "0.5"
       ],
       "description": "Protocol version of this document."
     },

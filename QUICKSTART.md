@@ -11,7 +11,7 @@ Give your model [GUIDE.md](GUIDE.md) as it is, followed by what your renderer ca
 
 ## Your renderer
 
-patet 0.4
+patet 0.5
 renderer my-app 1.0
 kinds status metric chart table progress checklist decision input timeline note record
 ```

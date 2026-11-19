@@ -62,6 +62,7 @@ The numbers are the case files (`03` is `03-rejections.txt`).
 | 34-id-characters | ids above U+007F |
 | 35-white-space | the White_Space characters, and two that are not |
 | 36-name-order | code point order of names and fields |
+| 37-by | `by`, who wrote a card: every kind, clipping, emptying, not one of a record's 12 fields |
 
 ### Verbs
 
@@ -71,7 +72,7 @@ The numbers are the case files (`03` is `03-rejections.txt`).
 | `group` | 04 06 10 11 13 14 16 25 29 34 | `bad-id`: 16 25; `id-in-use`: 03 11 16 29; `shelved`: 29; `limit`: 04 14; `missing-argument`: 16 |
 | `put` | 06 10 11 29 34 | `no-such-group`: 03 11 16; `no-such-topic`: 10 11 16; `missing-argument`: 16 |
 | `card` | every file | `exists`: 03 16; `bad-id`: 16 25; `shelved`: 06 10; `unknown-kind`: 03 07 16 19 30 34; `no-such-topic`: 03 10 16; `missing-argument`: 02 16; `not-allowed`: none (below) |
-| `set` | 01 04 to 10, 12 to 14, 17 to 26, 28 31 34 35 36 | `no-such-card`: 03 10 16; `unknown-field`: 03 07 09 16 19 to 24, 28 34; `bad-value`: 03 07 08 09 21 to 24, 28; `user-only`: 08 09 28; `limit` (13th field of a record): 14; `missing-argument`: 02 16 28 |
+| `set` | 01 04 to 10, 12 to 14, 17 to 26, 28 31 34 35 36 37 | `no-such-card`: 03 10 16; `unknown-field`: 03 07 09 16 19 to 24, 28 34; `bad-value`: 03 07 08 09 21 to 24, 28; `user-only`: 08 09 28; `limit` (13th field of a record): 14 37; `missing-argument`: 02 16 28 |
 | `add` | 01 to 05, 07 to 10, 12 to 16, 18 to 22, 24 25 31 32 34 35 | `no-such-card`: 02 10 16 26; `no-items`: 03 07 20 23; `bad-id`: 03 16 25; `cell-count`: 03 14 19 20; `bad-value`: 03 16 24 32; `limit`: 14 15; `user-only`: 08 09; `missing-argument`: 02 16 |
 | `upd` | 01 05 08 09 13 14 18 to 21, 24 31 | `no-such-item`: 03 13 16 19 20 21; `no-such-card`: 16; `no-items`: 16 20 23; `cell-count`: 14 16; `bad-value`: 16 24; `user-only`: 08 09; `missing-argument`: 16; `bad-id`: none (below) |
 | `del` | 06 10 11 14 15 17 19 to 22, 24 | `no-such-item`: 03 16; `not-found`: 03 10 11 16; `not-empty`: 03 11 16; `missing-argument`: 02 |
@@ -107,7 +108,7 @@ The user's gestures of SPEC.md section 9: ticking (05 08 13 24), deleting an ite
 | `timeline` | 24; also 09 |
 | `note` | 23; and most files |
 | `web` | 23; also 13 |
-| `record` | 20 14; also 07 09 13 28 34 36 |
+| `record` | 20 14; also 07 09 13 28 34 36 37 |
 | `doc` | 20; also 07 13 |
 | extension kinds (`x-*`) | 19 30; also 07 09 13 14 34 |
 

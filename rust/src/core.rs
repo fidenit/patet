@@ -199,6 +199,10 @@ impl Kind {
         if field == "title" {
             return Some(TITLE_LIMIT);
         }
+        // Every card says who wrote it (SPEC.md section 6).
+        if field == "by" {
+            return Some(BY_LIMIT);
+        }
         if let Some(f) = self.part().fields.iter().find(|f| f.0 == field) {
             return Some(f.1);
         }
@@ -216,6 +220,8 @@ pub const MAX_W: u8 = 8;
 pub const MAX_H: u8 = 8;
 pub const ID_LIMIT: usize = 24;
 pub const TITLE_LIMIT: usize = 40;
+/// `by`, the writer of a card: a field of every kind.
+pub const BY_LIMIT: usize = 24;
 pub const TOPIC_NAME_LIMIT: usize = 24;
 pub const GROUP_NAME_LIMIT: usize = 16;
 pub const MAX_GROUPS: usize = 8;
@@ -505,7 +511,9 @@ impl Board {
                 let mut note = None;
                 let c = self.card_mut(&id)?;
                 let limit = c.kind.field_limit(&field).ok_or_else(|| no("unknown-field", format!("{} has no field '{field}'", c.kind_name())))?;
-                if c.kind == Kind::Record && field != "title" && !c.fields.contains_key(&field) && c.fields.len() >= MAX_RECORD_FIELDS {
+                // `title` and `by` belong to every card and do not count toward a record's fields.
+                let own = c.fields.keys().filter(|k| *k != "by").count();
+                if c.kind == Kind::Record && field != "title" && field != "by" && !c.fields.contains_key(&field) && own >= MAX_RECORD_FIELDS {
                     return Err(no("limit", format!("card '{id}' already has {MAX_RECORD_FIELDS} fields")));
                 }
                 // The user's answers are the user's: an agent does not write them.

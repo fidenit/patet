@@ -1,5 +1,9 @@
 # PATET changes
 
+## 0.5
+
+One addition: **`by`, who wrote a card.** Every card has the field `by` (24 characters), like `title`: the name its writer goes by. When several writers share a board (an assistant and the workers it sends out, two agents in one renderer), the user can tell their cards apart. A writer sharing a board sets it; a renderer shows it when a board names more than one writer, never as a record's own field, and may set it itself for a writer it can tell apart. It does not count toward a record's 12 fields. Case 37. A 0.4 renderer rejects `set <id> by ...` with `unknown-field` and keeps the rest.
+
 ## 0.4
 
 The protocol has a name and a home of its own: **PATET** (Latin *patet*: it lies open, it is plain to see), in its own repository. It was "KITE Protocol", a folder inside the KITE app. KITE is now one app built on PATET.

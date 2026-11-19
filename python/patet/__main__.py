@@ -3,7 +3,7 @@
     python -m patet check <file|->     each line that was clipped or rejected, with its line number; exit 1 on a rejection
     python -m patet show <file|->      the resulting board, as ops
 
-The input is plain op lines (author: agent), or a log (SPEC.md 10.2): a `# patet 0.4` header (or the older
+The input is plain op lines (author: agent), or a log (SPEC.md 10.2): a `# patet 0.5` header (or the older
 `# kite-protocol 0.3`), then `A<tab>op`,
 `U<tab>op` and `T<tab>date` lines.
 """

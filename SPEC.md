@@ -1,4 +1,4 @@
-# PATET 0.4
+# PATET 0.5
 
 A line language an AI writes to build and edit a screen, and reads back to see what is on it.
 
@@ -55,6 +55,7 @@ Every change has an **author**: `agent` (a model, or a program writing for one) 
 | topic name | 24 characters; empty means the id |
 | group name | 16 characters; empty means the id; at most 8 groups |
 | card title | 40 characters |
+| `by` of a card | 24 characters |
 | field value | the limit of that field (section 6) |
 | item cell | 60 characters |
 | cells per item | 1 to 6 |
@@ -113,7 +114,7 @@ Details that are easy to miss:
 
 ## 6. Card types
 
-16 core types, and extension kinds (below). Every card also has `title` (40). "Default" is columns x rows. "Checked" is what a renderer MUST reject with `bad-value`; anything else is only clipped.
+16 core types, and extension kinds (below). Every card also has `title` (40) and `by` (24, below). "Default" is columns x rows. "Checked" is what a renderer MUST reject with `bad-value`; anything else is only clipped.
 
 | Type | Default | Fields (limit) | Item cells | Checked |
 |---|---|---|---|---|
@@ -131,7 +132,7 @@ Details that are easy to miss:
 | `timeline` | 3x3 | none | `when \| text \| done\|run\|todo` (cell 3 optional) | |
 | `note` | 3x2 | `text` (240) | none | |
 | `web` | 6x5 | `url` (600) | none | |
-| `record` | 3x3 | `text` (240), `cols` (200), and any other field name that is a valid id (80 each); at most 12 fields | up to 6 cells | |
+| `record` | 3x3 | `text` (240), `cols` (200), and any other field name that is a valid id (80 each); at most 12 fields besides `title` and `by` | up to 6 cells | |
 | `doc` | 3x2 | `src` (600), `text` (240) | none | |
 
 A **number**, where one is checked, is written `[+-]? ( digits [ "." [digits] ] | "." digits ) [ ("e" | "E") [+-]? digits ]` in ASCII digits, and its value must be finite as an IEEE 754 double. So `12`, `12.`, `.5`, `-0.5e-3` and `1E+3` are numbers; `1e400` (too large), `0x10`, `inf`, `nan` and `١٢` are not. A chart drops every comma of the cell before the check (`1,250.5`). A route cuts the cell at its first comma, trims white space around the two parts and checks each.
@@ -157,6 +158,12 @@ Meaning per type:
 
 `decision` and `input` are the **asking types**: they wait for the user. A renderer SHOULD bring asking cards to the user's attention one at a time.
 
+**Who wrote a card.** `by` names the writer of a card as the writer calls itself: an agent, a worker, a program (`planner`, `gpu worker`). Several writers can share one board, such as an assistant and the workers it sends out, or two agents in one renderer; `by` lets the user tell their cards apart. It is a label, not a proof, and nothing checks it.
+
+- A writer that shares a board with others SHOULD set `by` on the cards it creates.
+- A renderer SHOULD show `by` when the cards of a board name more than one writer. It MUST NOT show it as one of a record's own fields.
+- A renderer that knows which writer a line came from (one of several sessions or MCP clients) MAY set `by` itself when that writer creates a card without one.
+
 ### Extension kinds
 
 A kind named `x-` followed by an id (`x-kanban`) is an extension kind, whose meaning is agreed between a writer and a renderer outside this document. The whole name, `x-` included, is at most 24 characters.
@@ -170,7 +177,7 @@ A kind named `x-` followed by an id (`x-kanban`) is an extension kind, whose mea
 A renderer need not support every core type (a phone may have no `web`), and may forbid some to writers outside its own process (section 11). It says what a writer may use in a **description**, a few lines of the form `<key> <values>`:
 
 ```
-patet 0.4
+patet 0.5
 renderer APERIT 0.4.0
 kinds status metric chart route draw image table progress checklist decision input timeline note record doc
 features tell
@@ -313,7 +320,7 @@ The instructions for the model are [GUIDE.md](GUIDE.md); its section "How a turn
 A board saved as a file is its accepted ops, in order. The first line is the header `# patet <major>.<minor>` (a comment, so a reader that predates it skips it). Each other line is a letter, a tab and a payload:
 
 ```
-# patet 0.4
+# patet 0.5
 T	2026-11-18
 A	topic ws Team Workshop
 A	card k2 decision ws 3x3 Which venue?
@@ -379,7 +386,7 @@ A renderer is an [AG-UI](https://docs.ag-ui.com) client and the agent is an AG-U
 For each run the renderer POSTs a `RunAgentInput`:
 
 - `messages` ends with a user message whose text is the turn in the layout of section 10.1, without `<earlier>`: the earlier messages of the conversation are in `messages` themselves.
-- `state.patet` is the same as data: `{ "version": "0.4", "board": "<ops>", "events": ["user set k2 chosen o2", ...], "renderer": ["kinds status metric ...", "features tell"] }`. `renderer` is the description of section 6, one line per entry.
+- `state.patet` is the same as data: `{ "version": "0.5", "board": "<ops>", "events": ["user set k2 chosen o2", ...], "renderer": ["kinds status metric ...", "features tell"] }`. `renderer` is the description of section 6, one line per entry.
 - `context` has one entry whose `value` is the text of GUIDE.md.
 - `tools` has one frontend tool, `screen`, with the input of section 10.4.
 

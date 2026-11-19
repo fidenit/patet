@@ -59,6 +59,7 @@ section > h2 small { color:var(--faint); font-weight:400; margin-left:6px; }
 aside .card { border:1px solid var(--edge); }
 .card > h3 { font-size:16px; margin:0 0 10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .card > h3 small { float:right; color:var(--accent); font-size:11px; font-weight:400; margin-top:4px; }
+.card > h3 small.by { color:var(--dim); margin-left:8px; }
 p { margin:0 0 8px; color:var(--soft); white-space:pre-wrap; overflow-wrap:anywhere; }
 .dim { color:var(--dim); } .faint { color:var(--faint); font-size:12px; }
 .row { display:flex; align-items:center; gap:10px; padding:5px 0; min-width:0; }
@@ -352,7 +353,7 @@ export class PatetBoard extends HTMLElement {
         break;
       case "record": {
         para(text(), "dim");
-        const kv = [...c.fields.entries()].filter(([k]) => k !== "text" && k !== "cols").sort((x, y) => (x[0] < y[0] ? -1 : 1));
+        const kv = [...c.fields.entries()].filter(([k]) => k !== "text" && k !== "cols" && k !== "by").sort((x, y) => (x[0] < y[0] ? -1 : 1));
         if (kv.length) body.push(h("div", { class: "kv" }, kv.flatMap(([k, v]) => [h("span", { text: k.replace(/[-_]/g, " ") }), h("span", { text: b.show(v) })])));
         rows();
         break;
@@ -379,7 +380,15 @@ export class PatetBoard extends HTMLElement {
       }
     }
     return h("article", { class: `card ${c.kind}${c.id === b.focus ? " focus" : ""}${c.fields.get("tone") === "danger" ? " danger" : ""}`, style: `--w:${this.#span(c.w)};--h:${this.cols <= 5 ? 1 : c.h}`, "data-id": c.id, part: `card ${c.kind}` },
-      h("h3", { text: b.show(c.title) }, topicName && h("small", { text: topicName })), body);
+      h("h3", { text: b.show(c.title) }, topicName && h("small", { text: topicName }), this.#byOf(c) && h("small", { class: "by", part: "by", text: this.#byOf(c) })), body);
+  }
+
+  // Who wrote the card (SPEC.md section 6), shown when the board's cards name more than one writer.
+  #byOf(c) {
+    const by = c.fields.get("by") ?? "";
+    if (!by) return "";
+    const writers = new Set(this.board.cards.map((k) => k.fields.get("by") ?? "").filter(Boolean));
+    return writers.size > 1 ? by : "";
   }
 
   #decision(c, body, question) {
