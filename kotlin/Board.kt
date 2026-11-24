@@ -20,6 +20,9 @@ enum class Kind {
         if (field == "title") return 40
         // Every card says who wrote it (SPEC.md section 6).
         if (field == "by") return BY_LIMIT
+        // Every card can be fixed on the screen and say how it is kept fresh (SPEC.md section 6).
+        if (field == "fixed") return FIXED_LIMIT
+        if (field == "watch") return WATCH_LIMIT
         part.fields.firstOrNull { it.name == field }?.let { return it.limit }
         // A record takes any field name that is a valid id.
         return if (this == Record && validId(field)) RECORD_FIELD_LIMIT else null
@@ -78,6 +81,16 @@ const val RECORD_FIELD_LIMIT = 80
 const val MAX_RECORD_FIELDS = 12
 /** `by`, the writer of a card: a field of every kind. */
 const val BY_LIMIT = 24
+/** `fixed`, where a card stays on the screen (`x,y`, each a whole number from 0 to 100): a field of every kind. */
+const val FIXED_LIMIT = 16
+/** `watch`, how a card is kept fresh, in the host's own words: a field of every kind. */
+const val WATCH_LIMIT = 200
+/** The fields every card has besides `title`: they do not count toward a record's fields. */
+val COMMON_FIELDS = listOf("by", "fixed", "watch")
+private val FIXED_RE = Regex("[0-9]{1,3},[0-9]{1,3}")
+
+/** Is this a place on the screen as `fixed` writes it: `x,y`, two whole numbers from 0 to 100 in ASCII digits. */
+fun validFixed(value: String): Boolean = FIXED_RE.matches(value) && value.split(",").all { it.toInt() <= 100 }
 
 /** Restore loads a board written back as ops: it has the user's rights, but its `move` and `size` do not pin. */
 enum class Author { Ai, User, Restore }
@@ -251,9 +264,9 @@ class Board {
             is Op.Set -> {
                 val c = cardMut(op.id)
                 val limit = c.kind.fieldLimit(op.field) ?: throw Rejected("unknown-field", "${c.kindName} has no field '${op.field}'")
-                // `title` and `by` belong to every card and do not count toward a record's fields.
-                val own = c.fields.keys.count { it != "by" }
-                if (c.kind == Kind.Record && op.field != "title" && op.field != "by" && !c.fields.containsKey(op.field) && own >= MAX_RECORD_FIELDS) {
+                // `title`, `by`, `fixed` and `watch` belong to every card and do not count toward a record's fields.
+                val own = c.fields.keys.count { it !in COMMON_FIELDS }
+                if (c.kind == Kind.Record && op.field != "title" && op.field !in COMMON_FIELDS && !c.fields.containsKey(op.field) && own >= MAX_RECORD_FIELDS) {
                     throw Rejected("limit", "card '${op.id}' already has $MAX_RECORD_FIELDS fields")
                 }
                 // The user's answers are the user's: an agent does not write them.
@@ -261,6 +274,9 @@ class Board {
                     throw Rejected("user-only", "'${op.field}' is the user's answer; it is set when the user picks or sends, never by an agent")
                 }
                 if (c.kind == Kind.Input && op.field == "sent" && op.value != "yes") throw Rejected("bad-value", "input.sent is yes (got '${op.value}')")
+                if (op.field == "fixed" && op.value.isNotEmpty() && !validFixed(op.value)) {
+                    throw Rejected("bad-value", "fixed is x,y, two whole numbers from 0 to 100 (got '${op.value}')")
+                }
                 if (c.kind == Kind.Decision && op.field == "multi" && op.value !in listOf("yes", "no")) {
                     throw Rejected("bad-value", "decision.multi is yes or no (got '${op.value}')")
                 }

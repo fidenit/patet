@@ -1,0 +1,99 @@
+# Every card has `fixed` and `watch` (SPEC.md sections 4 and 6), fields of every kind like `by`.
+# `fixed` is where a card stays on the screen whatever the user looks at: `x,y`, two whole numbers from 0 to 100,
+# checked. `watch` (200) says how the card is kept fresh, in the host's own words. On a record neither counts toward
+# the 12 fields.
+agent: topic t T
+  -> ok
+agent: card k status t Disk
+  -> ok
+agent: set k fixed 72,6
+  -> ok
+agent: set k watch on gpu, every 10 min: df -h / | tail -1
+  -> ok
+agent: card m metric t Load
+  -> ok
+agent: set m fixed 0,100
+  -> ok
+agent: set m fixed top right
+  -> err bad-value
+agent: set m fixed 50
+  -> err bad-value
+agent: set m fixed 101,5
+  -> err bad-value
+agent: set m fixed 5,-1
+  -> err bad-value
+agent: set m fixed 1.5,2
+  -> err bad-value
+agent: set m fixed 5, 6
+  -> err bad-value
+# The user moves a fixed card by setting the same field.
+user: set m fixed 10,20
+  -> ok
+# Without a value the card is an ordinary card again.
+user: set k fixed
+  -> ok
+agent: set k watch <210 w>
+  -> ok clipped k.watch 200
+agent: card x x-kanban t Board
+  -> ok
+agent: set x fixed 40,40
+  -> ok
+agent: card r record t Contact
+  -> ok
+agent: set r by planner
+  -> ok
+agent: set r fixed 1,1
+  -> ok
+agent: set r watch when the address book changes
+  -> ok
+agent: set r f1 1
+  -> ok
+agent: set r f2 2
+  -> ok
+agent: set r f3 3
+  -> ok
+agent: set r f4 4
+  -> ok
+agent: set r f5 5
+  -> ok
+agent: set r f6 6
+  -> ok
+agent: set r f7 7
+  -> ok
+agent: set r f8 8
+  -> ok
+agent: set r f9 9
+  -> ok
+agent: set r f10 10
+  -> ok
+agent: set r f11 11
+  -> ok
+agent: set r f12 12
+  -> ok
+agent: set r f13 13
+  -> err limit
+board:
+topic t T
+card k status t 2x1 Disk
+set k fixed
+set k watch wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww…
+card m metric t 2x2 Load
+set m fixed 10,20
+card x x-kanban t 3x3 Board
+set x fixed 40,40
+card r record t 3x3 Contact
+set r by planner
+set r f1 1
+set r f10 10
+set r f11 11
+set r f12 12
+set r f2 2
+set r f3 3
+set r f4 4
+set r f5 5
+set r f6 6
+set r f7 7
+set r f8 8
+set r f9 9
+set r fixed 1,1
+set r watch when the address book changes

@@ -1,5 +1,14 @@
 # PATET changes
 
+## 0.6
+
+Two additions, both fields of every card like `title` and `by`.
+
+- **`fixed`, a card that stays on the screen.** `set <id> fixed x,y` keeps a card in front of the user whatever they are looking at; the value is the place of its top left corner in percent of the screen, two whole numbers from 0 to 100 (checked, `bad-value` otherwise). It floats over the board: no part of the screen is set aside for fixed cards. Either author may set it; a renderer that does not show fixed cards draws the card in its topic.
+- **`watch`, how a card is kept fresh** (200 characters). Words for the host: what makes the card change when nobody is talking. A renderer never shows it as content, and a host does not act on a `watch` from a writer it would not let run commands.
+
+Neither counts toward a record's 12 fields. SPEC section 6, GUIDE one passage, case 38. Rust, JavaScript, Python, Kotlin. `<patet-board>` keeps both out of a record's fields and draws a fixed card in its topic for now.
+
 ## 0.5
 
 One addition: **`by`, who wrote a card.** Every card has the field `by` (24 characters), like `title`: the name its writer goes by. When several writers share a board (an assistant and the workers it sends out, two agents in one renderer), the user can tell their cards apart. A writer sharing a board sets it; a renderer shows it when a board names more than one writer, never as a record's own field, and may set it itself for a writer it can tell apart. It does not count toward a record's 12 fields. Case 37. A 0.4 renderer rejects `set <id> by ...` with `unknown-field` and keeps the rest.

@@ -1,4 +1,4 @@
-# PATET 0.5
+# PATET 0.6
 
 A line language an AI writes to build and edit a screen, and reads back to see what is on it.
 
@@ -56,6 +56,8 @@ Every change has an **author**: `agent` (a model, or a program writing for one) 
 | group name | 16 characters; empty means the id; at most 8 groups |
 | card title | 40 characters |
 | `by` of a card | 24 characters |
+| `fixed` of a card | 16 characters |
+| `watch` of a card | 200 characters |
 | field value | the limit of that field (section 6) |
 | item cell | 60 characters |
 | cells per item | 1 to 6 |
@@ -114,7 +116,7 @@ Details that are easy to miss:
 
 ## 6. Card types
 
-16 core types, and extension kinds (below). Every card also has `title` (40) and `by` (24, below). "Default" is columns x rows. "Checked" is what a renderer MUST reject with `bad-value`; anything else is only clipped.
+16 core types, and extension kinds (below). Every card also has `title` (40), `by` (24), `fixed` (16) and `watch` (200), all below. "Default" is columns x rows. "Checked" is what a renderer MUST reject with `bad-value`; anything else is only clipped.
 
 | Type | Default | Fields (limit) | Item cells | Checked |
 |---|---|---|---|---|
@@ -132,7 +134,7 @@ Details that are easy to miss:
 | `timeline` | 3x3 | none | `when \| text \| done\|run\|todo` (cell 3 optional) | |
 | `note` | 3x2 | `text` (240) | none | |
 | `web` | 6x5 | `url` (600) | none | |
-| `record` | 3x3 | `text` (240), `cols` (200), and any other field name that is a valid id (80 each); at most 12 fields besides `title` and `by` | up to 6 cells | |
+| `record` | 3x3 | `text` (240), `cols` (200), and any other field name that is a valid id (80 each); at most 12 fields besides `title`, `by`, `fixed` and `watch` | up to 6 cells | |
 | `doc` | 3x2 | `src` (600), `text` (240) | none | |
 
 A **number**, where one is checked, is written `[+-]? ( digits [ "." [digits] ] | "." digits ) [ ("e" | "E") [+-]? digits ]` in ASCII digits, and its value must be finite as an IEEE 754 double. So `12`, `12.`, `.5`, `-0.5e-3` and `1E+3` are numbers; `1e400` (too large), `0x10`, `inf`, `nan` and `١٢` are not. A chart drops every comma of the cell before the check (`1,250.5`). A route cuts the cell at its first comma, trims white space around the two parts and checks each.
@@ -164,6 +166,20 @@ Meaning per type:
 - A renderer SHOULD show `by` when the cards of a board name more than one writer. It MUST NOT show it as one of a record's own fields.
 - A renderer that knows which writer a line came from (one of several sessions or MCP clients) MAY set `by` itself when that writer creates a card without one.
 
+**A card that stays on the screen.** `fixed` keeps a card in front of the user whatever they are looking at: another topic, one card picked out, the board moved or zoomed. It is for the few things the user wants in sight all the time (today's schedule, a job that is running, a state being watched), not for the answer to one question. Its value is where the card sits, `x,y`: the card's top left corner as a whole-number percentage (0 to 100) of the width and the height of the area the board is shown in. It is checked: anything else is `bad-value`. Without a value the card is an ordinary card again.
+
+- A fixed card is not held in a place of its own on the screen. It floats over the board at its `x,y`; with no fixed card nothing of the screen is taken.
+- A renderer that shows fixed cards MUST keep them on the screen through every change of view, SHOULD draw them small, and MUST NOT also draw them in their topic. It keeps a card inside the screen when `x,y` would put part of it outside.
+- Either author may set `fixed`. When the user moves a fixed card, the renderer writes the new place as the user's own `set <id> fixed x,y` and reports it as an event.
+- A renderer that does not show fixed cards draws the card in its topic like any other: a writer loses nothing but the placement.
+- A writer SHOULD keep fixed cards few, and unfix or delete one when it is no longer worth the place.
+
+**How a card is kept fresh.** `watch` says what makes a card's content change when nobody is talking: `when a job starts or ends`, `on gpu, every 10 min: df -h / | tail -1`. It is written for the host (the program that runs the agent and owns the board), in words the host and its agent have agreed on; this document does not define them. The intent is that a card changes when something happened, not on a clock: a host that has to look (a command, a page) looks cheaply and brings the agent in only when what it saw has changed.
+
+- A renderer MUST NOT show `watch` as content of the card, nor as one of a record's own fields. It MAY show when the card last changed.
+- A host MUST NOT act on a `watch` written by a writer it would not let run commands (an outside agent on a shared board, a document being replayed): to those writers it is text only.
+- `fixed` and `watch` do not need each other: an ordinary card can be watched, and a fixed card can stand still.
+
 ### Extension kinds
 
 A kind named `x-` followed by an id (`x-kanban`) is an extension kind, whose meaning is agreed between a writer and a renderer outside this document. The whole name, `x-` included, is at most 24 characters.
@@ -177,7 +193,7 @@ A kind named `x-` followed by an id (`x-kanban`) is an extension kind, whose mea
 A renderer need not support every core type (a phone may have no `web`), and may forbid some to writers outside its own process (section 11). It says what a writer may use in a **description**, a few lines of the form `<key> <values>`:
 
 ```
-patet 0.5
+patet 0.6
 renderer APERIT 0.4.0
 kinds status metric chart route draw image table progress checklist decision input timeline note record doc
 features tell
@@ -320,7 +336,7 @@ The instructions for the model are [GUIDE.md](GUIDE.md); its section "How a turn
 A board saved as a file is its accepted ops, in order. The first line is the header `# patet <major>.<minor>` (a comment, so a reader that predates it skips it). Each other line is a letter, a tab and a payload:
 
 ```
-# patet 0.5
+# patet 0.6
 T	2026-11-18
 A	topic ws Team Workshop
 A	card k2 decision ws 3x3 Which venue?
@@ -386,7 +402,7 @@ A renderer is an [AG-UI](https://docs.ag-ui.com) client and the agent is an AG-U
 For each run the renderer POSTs a `RunAgentInput`:
 
 - `messages` ends with a user message whose text is the turn in the layout of section 10.1, without `<earlier>`: the earlier messages of the conversation are in `messages` themselves.
-- `state.patet` is the same as data: `{ "version": "0.5", "board": "<ops>", "events": ["user set k2 chosen o2", ...], "renderer": ["kinds status metric ...", "features tell"] }`. `renderer` is the description of section 6, one line per entry.
+- `state.patet` is the same as data: `{ "version": "0.6", "board": "<ops>", "events": ["user set k2 chosen o2", ...], "renderer": ["kinds status metric ...", "features tell"] }`. `renderer` is the description of section 6, one line per entry.
 - `context` has one entry whose `value` is the text of GUIDE.md.
 - `tools` has one frontend tool, `screen`, with the input of section 10.4.
 

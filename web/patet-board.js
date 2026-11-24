@@ -353,7 +353,7 @@ export class PatetBoard extends HTMLElement {
         break;
       case "record": {
         para(text(), "dim");
-        const kv = [...c.fields.entries()].filter(([k]) => k !== "text" && k !== "cols" && k !== "by").sort((x, y) => (x[0] < y[0] ? -1 : 1));
+        const kv = [...c.fields.entries()].filter(([k]) => k !== "text" && k !== "cols" && k !== "by" && k !== "fixed" && k !== "watch").sort((x, y) => (x[0] < y[0] ? -1 : 1));
         if (kv.length) body.push(h("div", { class: "kv" }, kv.flatMap(([k, v]) => [h("span", { text: k.replace(/[-_]/g, " ") }), h("span", { text: b.show(v) })])));
         rows();
         break;

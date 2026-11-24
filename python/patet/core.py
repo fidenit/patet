@@ -14,7 +14,7 @@ _ID = "(1 to 24 letters, digits, _ or -)"
 _ID_ASCII = frozenset("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-")
 
 LIMITS: Dict[str, int] = {
-    "id": 24, "title": 40, "by": 24, "topic": 24, "group": 16, "cell": 60, "cells": 6, "items": 24, "draw_items": 80,
+    "id": 24, "title": 40, "by": 24, "fixed": 16, "watch": 200, "topic": 24, "group": 16, "cell": 60, "cells": 6, "items": 24, "draw_items": 80,
     "groups": 8, "vars": 64, "say": 80, "size": 8, "record_field": 80, "record_fields": 12,
 }
 
@@ -62,7 +62,7 @@ def kind_names() -> List[str]:
 MEDIA_KINDS = ("web", "image", "doc")
 
 
-def describe(renderer: str = "patet-python 0.5", media: bool = False, extra_kinds: Iterable[str] = (), features: Iterable[str] = ()) -> List[str]:
+def describe(renderer: str = "patet-python 0.6", media: bool = False, extra_kinds: Iterable[str] = (), features: Iterable[str] = ()) -> List[str]:
     """What a renderer supports, one line per entry (SPEC.md section 6): give it to the model after GUIDE.md.
 
     `extra_kinds` are the extension kinds (`x-...`) you draw yourself; `features` is `tell` when you can read aloud.
@@ -115,11 +115,23 @@ def asks(kind: str) -> bool:
     return kind in ("decision", "input")
 
 
+#: The fields every card has besides ``title``: they do not count toward a record's fields.
+COMMON_FIELDS = ("by", "fixed", "watch")
+_FIXED_RE = re.compile(r"[0-9]{1,3},[0-9]{1,3}")
+
+
+def valid_fixed(value: str) -> bool:
+    """Is this a place on the screen as ``fixed`` writes it: ``x,y``, two whole numbers from 0 to 100 in ASCII digits."""
+    return bool(_FIXED_RE.fullmatch(value)) and all(int(n) <= 100 for n in value.split(","))
+
+
 def _field_limit(kind: str, name: str) -> Optional[int]:
     if name == "title":
         return LIMITS["title"]
     if name == "by":  # every card says who wrote it (SPEC.md section 6)
         return LIMITS["by"]
+    if name in ("fixed", "watch"):  # every card can be fixed on the screen and say how it is kept fresh (section 6)
+        return LIMITS[name]
     for f in _PART[kind].fields:
         if f[0] == name:
             return f[1]
@@ -385,13 +397,16 @@ class Board:
         limit = _field_limit(c.kind, name)
         if limit is None:
             raise Reject("unknown-field", f"{c.kind_name} has no field '{name}'")
-        if c.kind == "record" and name not in ("title", "by") and name not in c.fields and len([k for k in c.fields if k != "by"]) >= LIMITS["record_fields"]:
+        # `title`, `by`, `fixed` and `watch` belong to every card and do not count toward a record's fields.
+        if c.kind == "record" and name != "title" and name not in COMMON_FIELDS and name not in c.fields and len([k for k in c.fields if k not in COMMON_FIELDS]) >= LIMITS["record_fields"]:
             raise Reject("limit", f"card '{id}' already has {LIMITS['record_fields']} fields")
         # The user's answers are the user's: an agent does not write them.
         if agent and ((c.kind == "decision" and name == "chosen") or (c.kind == "input" and name == "sent")):
             raise Reject("user-only", f"'{name}' is the user's answer; it is set when the user picks or sends, never by an agent")
         if c.kind == "input" and name == "sent" and value != "yes":
             raise Reject("bad-value", f"input.sent is yes (got '{value}')")
+        if name == "fixed" and value != "" and not valid_fixed(value):
+            raise Reject("bad-value", f"fixed is x,y, two whole numbers from 0 to 100 (got '{value}')")
         where = (c.kind, name)
         what = None
         if where == ("status", "state") and value not in ("ok", "run", "wait", "fail", "idle"):

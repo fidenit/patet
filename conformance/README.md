@@ -63,6 +63,7 @@ The numbers are the case files (`03` is `03-rejections.txt`).
 | 35-white-space | the White_Space characters, and two that are not |
 | 36-name-order | code point order of names and fields |
 | 37-by | `by`, who wrote a card: every kind, clipping, emptying, not one of a record's 12 fields |
+| 38-fixed | `fixed`, a place on the screen (`x,y`, checked), and `watch`: every kind, either author, emptying, clipping, not one of a record's 12 fields |
 
 ### Verbs
 

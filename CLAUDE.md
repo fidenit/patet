@@ -8,7 +8,7 @@ PATET is a specification first: a line language an AI writes to build and edit a
 |---|---|
 | `SPEC.md` | The rules. Normative |
 | `GUIDE.md` | What a model is given as its system prompt. Its card table must equal every implementation's `parts_table()` |
-| `conformance/` | 37 cases. A behaviour not in a case is not promised |
+| `conformance/` | 38 cases. A behaviour not in a case is not promised |
 | `rust/`, `js/`, `python/`, `kotlin/` | The board, the parser, the serializer. No dependencies in any of them |
 | `web/` | `<patet-board>`, the renderer for the web; `web/index.html` is the demo served at https://fidenit.github.io/patet/web/ |
 | `examples/assistant/` | A whole assistant in two files |
@@ -36,7 +36,7 @@ The web element has a self-test: serve the repository (`python -m http.server 80
 
 ## Where things stand (2026-11-19)
 
-- Version 0.5: one addition to 0.4, the field `by` (who wrote a card, case 37). The online demo is on.
+- Version 0.6: two fields of every card added to 0.5, `fixed` (a card that stays on the screen) and `watch` (how it is kept fresh), case 38. 0.5 added `by` (case 37). The online demo is on; `<patet-board>` does not show fixed cards yet (it draws them in their topic).
 - **Packages are not published yet.** `npm publish` (from the repository root) needs the owner's passkey in a real terminal. `cargo publish` (in `rust/`) passed its dry run and waits for the owner's word. PyPI: no account or token yet; until then `pip install "git+https://github.com/fidenit/patet#subdirectory=python"` works and is documented. Once npm is published, replace "There is no npm package yet" in `web/README.md` with `npm install patet` (`import "patet/board"`).
 - The fuller list of what is next, for both repositories, is at the top of `docs/NEXT.md` in the APERIT repository (Korean).
 - Not checked anywhere: the GBNF on a real llama.cpp; Python 3.9 (only 3.13 was run); the example against a model that is not Claude; trademarks in KIPRIS (USPTO has PATET only in class 35, retail).

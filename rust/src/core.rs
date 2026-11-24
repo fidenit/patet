@@ -203,6 +203,13 @@ impl Kind {
         if field == "by" {
             return Some(BY_LIMIT);
         }
+        // Every card can be fixed on the screen and say how it is kept fresh (SPEC.md section 6).
+        if field == "fixed" {
+            return Some(FIXED_LIMIT);
+        }
+        if field == "watch" {
+            return Some(WATCH_LIMIT);
+        }
         if let Some(f) = self.part().fields.iter().find(|f| f.0 == field) {
             return Some(f.1);
         }
@@ -222,6 +229,18 @@ pub const ID_LIMIT: usize = 24;
 pub const TITLE_LIMIT: usize = 40;
 /// `by`, the writer of a card: a field of every kind.
 pub const BY_LIMIT: usize = 24;
+/// `fixed`, where a card stays on the screen (`x,y`, each a whole number from 0 to 100): a field of every kind.
+pub const FIXED_LIMIT: usize = 16;
+/// `watch`, how a card is kept fresh, in the host's own words: a field of every kind.
+pub const WATCH_LIMIT: usize = 200;
+/// The fields every card has besides `title`: they do not count toward a record's fields.
+pub const COMMON_FIELDS: [&str; 3] = ["by", "fixed", "watch"];
+
+/// Is this a place on the screen as `fixed` writes it: `x,y`, two whole numbers from 0 to 100 in ASCII digits.
+pub fn valid_fixed(value: &str) -> bool {
+    let part = |s: &str| !s.is_empty() && s.len() <= 3 && s.bytes().all(|b| b.is_ascii_digit()) && s.parse::<u16>().map(|v| v <= 100).unwrap_or(false);
+    matches!(value.split_once(','), Some((x, y)) if part(x) && part(y))
+}
 pub const TOPIC_NAME_LIMIT: usize = 24;
 pub const GROUP_NAME_LIMIT: usize = 16;
 pub const MAX_GROUPS: usize = 8;
@@ -511,9 +530,9 @@ impl Board {
                 let mut note = None;
                 let c = self.card_mut(&id)?;
                 let limit = c.kind.field_limit(&field).ok_or_else(|| no("unknown-field", format!("{} has no field '{field}'", c.kind_name())))?;
-                // `title` and `by` belong to every card and do not count toward a record's fields.
-                let own = c.fields.keys().filter(|k| *k != "by").count();
-                if c.kind == Kind::Record && field != "title" && field != "by" && !c.fields.contains_key(&field) && own >= MAX_RECORD_FIELDS {
+                // `title`, `by`, `fixed` and `watch` belong to every card and do not count toward a record's fields.
+                let own = c.fields.keys().filter(|k| !COMMON_FIELDS.contains(&k.as_str())).count();
+                if c.kind == Kind::Record && field != "title" && !COMMON_FIELDS.contains(&field.as_str()) && !c.fields.contains_key(&field) && own >= MAX_RECORD_FIELDS {
                     return Err(no("limit", format!("card '{id}' already has {MAX_RECORD_FIELDS} fields")));
                 }
                 // The user's answers are the user's: an agent does not write them.
@@ -524,6 +543,9 @@ impl Board {
                     return Err(no("bad-value", format!("input.sent is yes (got '{value}')")));
                 }
                 match (c.kind, field.as_str()) {
+                    (_, "fixed") if !value.is_empty() && !valid_fixed(&value) => {
+                        return Err(no("bad-value", format!("fixed is x,y, two whole numbers from 0 to 100 (got '{value}')")));
+                    }
                     (Kind::Status, "state") if !["ok", "run", "wait", "fail", "idle"].contains(&value.as_str()) => {
                         return Err(no("bad-value", format!("status.state is one of ok|run|wait|fail|idle (got '{value}')")));
                     }

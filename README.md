@@ -20,7 +20,7 @@ Each line is one op, applied the moment it ends. The result is a board of cards,
 user set k2 chosen o2
 ```
 
-Version **0.5**. Apache-2.0. The protocol is separate from any app: [APERIT](https://github.com/fidenit/aperit) (until now called KITE) is the first product built on it.
+Version **0.6**. Apache-2.0. The protocol is separate from any app: [APERIT](https://github.com/fidenit/aperit) (until now called KITE) is the first product built on it.
 
 ## Start here
 
@@ -49,7 +49,7 @@ It sits beside AG-UI, A2UI and MCP rather than against them: an agent can reach 
 | [schema/](schema) | The ops as JSON Schema, for tools that validate or generate them |
 | [examples/](examples) | Boards you can load |
 | [QUICKSTART.md](QUICKSTART.md) | Ten minutes: make your own model answer with a board |
-| [conformance/](conformance) | 37 cases a renderer runs to check itself, with a table of what each covers |
+| [conformance/](conformance) | 38 cases a renderer runs to check itself, with a table of what each covers |
 | [grammar/](grammar) | The line syntax as EBNF, and as GBNF for constrained decoding with local models |
 | [rust/](rust) | Reference implementation: board, parser, serializer. No dependencies |
 | [js/](js) | The same in JavaScript, one file, no dependencies. Runs in a browser, in Node, in a worker |
@@ -106,4 +106,4 @@ Then run the [conformance cases](conformance).
 
 ## Status
 
-0.x: the language may still change between minor versions where the spec says so (section 12). Four implementations pass the 37 conformance cases: Rust (used by APERIT for Windows and macOS), Kotlin (the APERIT Android app), JavaScript (`<patet-board>`) and Python. Feedback, renderers and bindings for other transports are welcome.
+0.x: the language may still change between minor versions where the spec says so (section 12). Four implementations pass the 38 conformance cases: Rust (used by APERIT for Windows and macOS), Kotlin (the APERIT Android app), JavaScript (`<patet-board>`) and Python. Feedback, renderers and bindings for other transports are welcome.
