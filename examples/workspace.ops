@@ -1,4 +1,4 @@
-# patet 0.4
+# patet 0.8
 T	2026-11-16
 A	say Set up two areas, three topics and a shelved one.
 A	let team 12 people
@@ -10,6 +10,7 @@ A	topic budget Budget
 A	put budget work
 A	topic garden Garden
 A	put garden home
+A	link launch budget the launch date sets when the ad spend starts
 A	card m1 metric launch 2x2 Team size
 A	set m1 value {team}
 A	card k1 checklist launch 3x3 Launch tasks

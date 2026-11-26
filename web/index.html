@@ -181,6 +181,13 @@ if (q.has("selftest")) {
   out.push("whole-board:" + topics());
   board.apply("focus b"); await wait(50);
   out.push("focus-topic:" + (root.querySelector("section.focus h2")?.firstChild?.textContent ?? "none"));
+  board.clear();
+  board.write("topic a Trip\ntopic b Leave days\ntopic c Garden\ncard t1 note a Plan\nlink a b the trip takes three days off");
+  await wait(50);
+  out.push("map-lines:" + root.querySelectorAll("svg.map line").length + " nodes:" + root.querySelectorAll("svg.map g.node").length);
+  out.push("link-pills:" + [...root.querySelectorAll("section h2 .link")].map((x) => x.textContent + "|" + x.title).join(","));
+  board.apply("unlink b a"); await wait(50);
+  out.push("after-unlink:" + root.querySelectorAll("svg.map").length);
   document.body.append(Object.assign(document.createElement("pre"), { id: "selftest", textContent: out.join("\n") }));
 }
 </script>

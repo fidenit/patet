@@ -104,7 +104,9 @@ patet-board {
 
 The light and dark sets change the greys only (`--bg` to `--faint`, `--on`, `--on-text`). What you set yourself wins over both.
 
-For what a variable cannot say, three parts are exposed: `patet-board::part(card)` (each card, also `::part(decision)`, `::part(table)` and so on by kind), `::part(topic)` (the frame around a topic's cards) and `::part(turn)` (the "my turn" panel).
+For what a variable cannot say, five parts are exposed: `patet-board::part(card)` (each card, also `::part(decision)`, `::part(table)` and so on by kind), `::part(topic)` (the frame around a topic's cards), `::part(turn)` (the "my turn" panel), `::part(map)` and `::part(link)`.
+
+**Links (0.8).** When topics are linked, a small map sits above the board: the topics around an oval, a line for each link (its reason is the tooltip), and a topic's dot brings that topic into view. Each topic's heading carries a pill per link (`↔ other topic`, the reason as its tooltip) that does the same.
 
 Layout is not yours to set from outside, by design: the writer gives a size in grid cells and the element places the cards. Give the element the width you want it to have.
 

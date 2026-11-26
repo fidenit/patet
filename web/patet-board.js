@@ -41,6 +41,13 @@ function h(tag, props = {}, ...kids) {
   return e;
 }
 
+/** A tooltip inside an SVG drawing (an SVG <title>, which an HTML <title> is not). */
+function svgTitle(text) {
+  const t = document.createElementNS(SVG, "title");
+  t.textContent = text;
+  return t;
+}
+
 const STYLE = `
 :host { --bg:#0f1012; --panel:#16171a; --card:#1c1d21; --raised:#25262b; --line:#2e3036; --edge:#4a4d55; --text:#ececee; --soft:#c9cacf; --dim:#8f9198; --faint:#63656c;
   --accent:#f0932b; --green:#4cc38a; --red:#e5605a; --amber:#e0a93b; --on:#ececee; --on-text:#16171a;
@@ -62,6 +69,14 @@ aside { background:var(--panel); border:1px solid var(--line); border-radius:cal
 section { border:1px solid var(--line); border-radius:calc(var(--radius) * 1.2); padding:12px; margin-bottom:16px; }
 section > h2 { font-size:14px; margin:4px 8px 10px; color:var(--soft); }
 section > h2 small { color:var(--faint); font-weight:400; margin-left:6px; }
+section > h2 .link { font-size:11px; font-weight:400; color:var(--accent); background:none; border:1px solid var(--line); border-radius:999px; padding:1px 8px; margin-left:8px; cursor:pointer; }
+section > h2 .link:hover { border-color:var(--accent); }
+section.flash { animation:flash 1.2s ease-out; }
+@keyframes flash { from { border-color:var(--accent); box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 30%,transparent); } to { border-color:var(--line); box-shadow:none; } }
+.map { display:block; width:100%; height:auto; margin:0 0 14px; border:1px solid var(--line); border-radius:calc(var(--radius) * 1.2); background:var(--panel); }
+.map line { stroke:var(--accent); stroke-width:2; opacity:.85; } .map line:hover { stroke-width:4; opacity:1; }
+.map g.node { cursor:pointer; } .map g.node circle { fill:var(--card); stroke:var(--edge); stroke-width:1.5; } .map g.node:hover circle { stroke:var(--text); }
+.map g.node text { fill:var(--soft); font-size:12px; text-anchor:middle; } .map g.node.ask circle { stroke:var(--accent); }
 .grid { display:grid; grid-template-columns:repeat(var(--cols,12),minmax(0,1fr)); grid-auto-rows:minmax(72px,auto); gap:12px; }
 .card { background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:16px; min-width:0; overflow:hidden; grid-column:span var(--w); grid-row:span var(--h); }
 .card.focus, section.focus { border-color:var(--edge); }
@@ -296,9 +311,18 @@ export class PatetBoard extends HTMLElement {
         main.append(h("div", { class: "group", text: b.groups.find((g) => g.id === t.group)?.name ?? "Other" }));
       }
       const on = kind === "topic" && t.id === b.focus;
-      main.append(h("section", { part: "topic", class: on ? "focus" : null, "data-topic": t.id }, h("h2", { text: t.name }, h("small", { text: String(cards.length) })), h("div", { class: "grid" }, cards.map((c) => this.#card(c)))));
+      // Links (0.8): the topics this one bears on, each a pill that brings that topic into view; the reason is its tooltip.
+      const links = b.links.filter((l) => l.a === t.id || l.b === t.id).map((l) => {
+        const other = l.a === t.id ? l.b : l.a;
+        const name = b.topics.find((x) => x.id === other)?.name ?? other;
+        return h("button", { class: "link", part: "link", title: l.reason || null, text: `↔ ${name}`, onclick: () => this.#goTo(other) });
+      });
+      main.append(h("section", { part: "topic", class: on ? "focus" : null, "data-topic": t.id }, h("h2", { text: t.name }, h("small", { text: String(cards.length) }), links), h("div", { class: "grid" }, cards.map((c) => this.#card(c)))));
     }
     if (b.topics.length === 0 && b.shelf.length === 0) main.append(h("div", { class: "empty", text: "Nothing on the board yet." }));
+    // A small map over the board when topics are linked: the topics around an oval, a line for each link.
+    const mapLinks = b.links.filter((l) => shown.some((t) => t.id === l.a) && shown.some((t) => t.id === l.b));
+    if (mapLinks.length) main.prepend(this.#map(shown, mapLinks, asking));
     if (b.shelf.length) {
       main.append(h("div", { class: "shelf" }, h("span", { text: "On the shelf:" }),
         b.shelf.map((s) => h("button", { class: "pill", title: "Bring it back", text: `${s.topic.name} (${s.cards.length})`, onclick: () => this.#user(`restore ${s.topic.id}`) }))));
@@ -314,6 +338,52 @@ export class PatetBoard extends HTMLElement {
     }
     this.#fit();
     if (focused) this.shadowRoot.querySelector(`[data-key="${CSS.escape(focused)}"]`)?.focus();
+  }
+
+  /** Bring a topic into view and make it blink once (from a link). A topic out of view under a focused group brings the whole board back. */
+  #goTo(id) {
+    const wrap = this.shadowRoot.querySelector(".wrap");
+    const find = () => wrap.querySelector(`section[data-topic="${CSS.escape(id)}"]`);
+    const show = (s) => {
+      s.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      s.classList.remove("flash");
+      void s.offsetWidth; // restart the animation
+      s.classList.add("flash");
+    };
+    const s = find();
+    if (s) return show(s);
+    this.#awayAt = this.#focusTurn;
+    this.#render();
+    const again = find();
+    if (again) show(again);
+  }
+
+  /** The topics around an oval, in board order, with a line for each link (its reason is the tooltip). */
+  #map(topics, links, asking) {
+    const W = 640, H = Math.max(150, Math.min(260, 70 + topics.length * 14));
+    const cx = W / 2, cy = H / 2, rx = W / 2 - 70, ry = H / 2 - 30;
+    const at = new Map(topics.map((t, i) => {
+      const a = -Math.PI / 2 + (2 * Math.PI * i) / topics.length;
+      return [t.id, [cx + rx * Math.cos(a), cy + ry * Math.sin(a)]];
+    }));
+    const waits = new Set(asking.map((c) => c.topic));
+    const short = (s) => (s.length > 14 ? s.slice(0, 13) + "…" : s);
+    return h("svg", { class: "map", part: "map", viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Topics and how they bear on each other" },
+      links.map((l) => {
+        const [x1, y1] = at.get(l.a);
+        const [x2, y2] = at.get(l.b);
+        const line = h("line", { x1, y1, x2, y2 });
+        if (l.reason) line.append(svgTitle(l.reason));
+        return line;
+      }),
+      topics.map((t) => {
+        const [x, y] = at.get(t.id);
+        const g = h("g", { class: waits.has(t.id) ? "node ask" : "node", "data-topic": t.id, onclick: () => this.#goTo(t.id) },
+          h("circle", { cx: x, cy: y, r: 7 }),
+          h("text", { x, y: y + 22, text: short(t.name) }));
+        g.append(svgTitle(t.name));
+        return g;
+      }));
   }
 
   #card(c, topicName = null) {

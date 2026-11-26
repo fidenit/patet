@@ -13,7 +13,7 @@ Found with APERIT: on a phone the board is explored as a mind map (groups, then 
 
 - Section 12 counted a new verb as a major change, while its own note on major 0 already let an older reader skip what it rejects. A new verb before 1.0 is now said to be a minor change, as new card types were (0.3); from 1.0 on it is major. When to call it 1.0 stays the owner's decision.
 
-SPEC sections 2, 4, 5, 8 and 9; GUIDE one block and the verb list; case 40. Rust, JavaScript, Python, Kotlin (checked in APERIT's unit tests). Grammars and schema. `<patet-board>` does not draw links yet.
+SPEC sections 2, 4, 5, 8 and 9; GUIDE one block and the verb list; case 40. Rust, JavaScript, Python, Kotlin (checked in APERIT's unit tests). Grammars and schema. `<patet-board>` draws links: a small map of the topics above the board, and a pill per link in each topic's heading; the demo's "Groups" example has one.
 
 ## 0.7
 
