@@ -1,4 +1,4 @@
-# PATET 0.6
+# PATET 0.7
 
 A line language an AI writes to build and edit a screen, and reads back to see what is on it.
 
@@ -30,7 +30,7 @@ group  ->  topic  ->  card  ->  item
 - A **group** is a broad area that holds topics. Groups are optional.
 - A **card** has a type, a title, fields (name and value) and, for list-like types, items.
 - An **item** has an id and 1 to 6 cells.
-- A board also holds **named values**, a **shelf** of archived topics, one **caption** (`say`) and at most one **focused** card.
+- A board also holds **named values**, a **shelf** of archived topics, one **caption** (`say`) and at most one **focused** card, topic or group.
 
 Every change has an **author**: `agent` (a model, or a program writing for one) or `user` (a gesture on the renderer). A few ops depend on the author (section 5). A third author, `restore`, is never on the wire: a renderer uses it only to load a serialized board (section 8).
 
@@ -91,7 +91,7 @@ Ids of topics, groups and cards SHOULD be unique across all three kinds. A rende
 | `move` | `move <id> <col> <row>` | Place a card at a grid cell | `no-such-card`; pinned and author is agent (`pinned`); the column or the row is absent or malformed (`bad-syntax`) |
 | `pin` | `pin <id>` | Lock position and size | author is agent (`user-only`); `no-such-card` |
 | `unpin` | `unpin <id>` | Unlock; clears the position | author is agent (`user-only`); `no-such-card` |
-| `focus` | `focus <id>` | Mark the card to look at | `no-such-card` |
+| `focus` | `focus <id>` | Mark what the user should look at: a card, a topic or a group | no card, topic or group has that id (`no-such-card`) |
 | `let` | `let <name> <value>` | Set a named value; an empty value removes it | `bad-id`; 65th name (`limit`) |
 | `archive` | `archive <topic>` | Shelve the topic with its cards | `no-such-topic` |
 | `restore` | `restore <topic>` | Bring a shelved topic back | not on the shelf (`not-shelved`) |
@@ -108,6 +108,7 @@ Details that are easy to miss:
 - The column and the row of `move` are whole numbers from 0 to 9999, written in ASCII digits without a sign (leading zeros are allowed). Anything else is `bad-syntax`.
 - `set` with no value is not a missing argument: the field is set to the empty text. A checked field (section 6) still has to hold one of its values, so there it is `bad-value`.
 - `del <id>` looks the id up as a card first, then a topic, then a group. Deleting a group leaves its topics without a group.
+- `focus <id>` looks the id up in the same order. It replaces what was focused before; deleting or shelving what is focused leaves nothing focused. An id that is none of the three is `no-such-card`, the code `focus` had when it took cards only.
 - **The user's answers are the user's.** `chosen` of a decision, `sent` of an input card, and the third cell of an input box hold what the user answered. An agent's op that writes one of them is rejected with `user-only`. An agent asks; it does not answer for the user.
 - **Pinning.** When the user moves or resizes a card it becomes pinned. An agent's `move` and `size` on a pinned card are rejected; its content ops still apply. Only the user pins and unpins. (The `restore` author of section 8 has the user's rights, but its `move` and `size` do not pin.)
 - `focus` and `say` are not part of the serialized board (section 8).
@@ -193,7 +194,7 @@ A kind named `x-` followed by an id (`x-kanban`) is an extension kind, whose mea
 A renderer need not support every core type (a phone may have no `web`), and may forbid some to writers outside its own process (section 11). It says what a writer may use in a **description**, a few lines of the form `<key> <values>`:
 
 ```
-patet 0.6
+patet 0.7
 renderer APERIT 0.4.0
 kinds status metric chart route draw image table progress checklist decision input timeline note record doc
 features tell
@@ -210,7 +211,7 @@ A reader ignores keys it does not know. A writer SHOULD create only the kinds li
 
 ## 7. Layout
 
-Placement is the renderer's. `size` and `move` are hints, and the user's gestures win (section 5, pinning). When a topic has more cards than fit at a readable size, a renderer SHOULD keep the focused card, asking cards and pinned cards in view and fold the rest away rather than shrink text. A writer SHOULD normally send neither `move` nor `size` after creating a card, and SHOULD create the most important card of a topic first.
+Placement is the renderer's. `size` and `move` are hints, and the user's gestures win (section 5, pinning). When a topic has more cards than fit at a readable size, a renderer SHOULD keep the focused card, asking cards and pinned cards in view and fold the rest away rather than shrink text. A renderer SHOULD bring a focused topic into view. When a group is focused, it SHOULD show that group and MAY leave the rest of the board out of view until the user looks elsewhere; fixed cards stay (section 6). A writer SHOULD normally send neither `move` nor `size` after creating a card, and SHOULD create the most important card of a topic first.
 
 ## 8. Reading the board
 
@@ -255,7 +256,7 @@ Codes are stable; messages are for a model or a person to read and may change.
 | `exists` | a card with that id already exists |
 | `id-in-use` | the id belongs to something of another kind |
 | `shelved` | the id belongs to a topic or card on the shelf (`topic`, `card`, `group`) |
-| `no-such-topic`, `no-such-group`, `no-such-card`, `no-such-item` | what the op refers to is not there |
+| `no-such-topic`, `no-such-group`, `no-such-card`, `no-such-item` | what the op refers to is not there; for `focus`, no card, topic or group has the id |
 | `not-found` | `del` found nothing with that id |
 | `not-empty` | the topic still has cards |
 | `not-shelved` | the topic is not on the shelf |
@@ -336,7 +337,7 @@ The instructions for the model are [GUIDE.md](GUIDE.md); its section "How a turn
 A board saved as a file is its accepted ops, in order. The first line is the header `# patet <major>.<minor>` (a comment, so a reader that predates it skips it). Each other line is a letter, a tab and a payload:
 
 ```
-# patet 0.6
+# patet 0.7
 T	2026-11-18
 A	topic ws Team Workshop
 A	card k2 decision ws 3x3 Which venue?
@@ -402,7 +403,7 @@ A renderer is an [AG-UI](https://docs.ag-ui.com) client and the agent is an AG-U
 For each run the renderer POSTs a `RunAgentInput`:
 
 - `messages` ends with a user message whose text is the turn in the layout of section 10.1, without `<earlier>`: the earlier messages of the conversation are in `messages` themselves.
-- `state.patet` is the same as data: `{ "version": "0.6", "board": "<ops>", "events": ["user set k2 chosen o2", ...], "renderer": ["kinds status metric ...", "features tell"] }`. `renderer` is the description of section 6, one line per entry.
+- `state.patet` is the same as data: `{ "version": "0.7", "board": "<ops>", "events": ["user set k2 chosen o2", ...], "renderer": ["kinds status metric ...", "features tell"] }`. `renderer` is the description of section 6, one line per entry.
 - `context` has one entry whose `value` is the text of GUIDE.md.
 - `tools` has one frontend tool, `screen`, with the input of section 10.4.
 
@@ -430,9 +431,9 @@ An agent that knows nothing of PATET still works when its model follows the guid
 
 The version is `<major>.<minor>`.
 
-- The **minor** number grows with additions: a new session command, a new binding, a new error code, a new field, and, from 0.3 on, a new core card type. A writer learns which types a renderer has from its description (section 6), so a new type breaks nobody who reads it.
+- The **minor** number grows with additions: a new session command, a new binding, a new error code, a new field, something a verb takes that it rejected before (0.7: `focus` on a topic or a group), and, from 0.3 on, a new core card type. A writer learns which types a renderer has from its description (section 6), so a new type breaks nobody who reads it.
 - The **major** number grows with a breaking change: a new verb, a changed limit, a changed serialization order, a changed meaning. A reader MUST NOT read a stream that declares another major.
-- While the major number is 0, a file written by a newer minor may hold lines an older reader rejects (a card of a type it lacks). It skips them and reads the rest.
+- While the major number is 0, a file written by a newer minor may hold lines an older reader rejects (a card of a type it lacks, `focus` on a group). It skips them and reads the rest.
 
 A stream or file without a header is 0.1.
 

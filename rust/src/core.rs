@@ -289,6 +289,24 @@ pub enum Op {
     Restore { topic: String },
 }
 
+/// What `focus` marks: a card, a topic or a group (SPEC.md section 5).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum FocusKind {
+    Card,
+    Topic,
+    Group,
+}
+
+impl FocusKind {
+    pub fn name(self) -> &'static str {
+        match self {
+            FocusKind::Card => "card",
+            FocusKind::Topic => "topic",
+            FocusKind::Group => "group",
+        }
+    }
+}
+
 /// A group: one level above topics ("Work", "Home").
 #[derive(Clone, Debug)]
 pub struct Group {
@@ -358,7 +376,9 @@ pub struct Board {
     /// Named values. Several cards can show the same value; changing it here changes them all.
     pub vars: BTreeMap<String, String>,
     pub say: String,
+    /// The id of what the user should look at: a card, a topic or a group. `focus_kind` says which.
     pub focus: Option<String>,
+    pub focus_kind: Option<FocusKind>,
     /// Notes for the writer about ops that were applied with a change, such as clipped text.
     /// Each is `clipped <what> <limit>`. Whoever relays verdicts to the writer drains this.
     pub notes: Vec<String>,
@@ -431,6 +451,13 @@ impl Board {
     }
     fn card_mut(&mut self, id: &str) -> Result<&mut Card, Reject> {
         self.cards.iter_mut().find(|c| c.id == id).ok_or_else(|| no("no-such-card", format!("no card '{id}'")))
+    }
+    /// What was focused is gone. A focus without a kind (set by a host itself) is taken to be a card.
+    fn unfocus(&mut self, kind: FocusKind, id: &str) {
+        if self.focus.as_deref() == Some(id) && self.focus_kind.unwrap_or(FocusKind::Card) == kind {
+            self.focus = None;
+            self.focus_kind = None;
+        }
     }
 
     /// Check one op and apply it. A rejected op changes nothing.
@@ -587,26 +614,26 @@ impl Board {
             Op::Del { id, item: None } => {
                 let n = self.cards.len();
                 self.cards.retain(|c| c.id != id);
-                if self.cards.len() == n {
+                let kind = if self.cards.len() < n {
+                    FocusKind::Card
+                } else if self.topics.iter().any(|t| t.id == id) {
                     // Not a card: then a topic (only when empty), then a group.
-                    if self.topics.iter().any(|t| t.id == id) {
-                        if self.cards.iter().any(|c| c.topic == id) {
-                            return Err(no("not-empty", format!("topic '{id}' still has cards")));
-                        }
-                        self.topics.retain(|t| t.id != id);
-                    } else if self.groups.iter().any(|g| g.id == id) {
-                        // Topics of a deleted group go back to having no group.
-                        self.groups.retain(|g| g.id != id);
-                        for t in self.topics.iter_mut().filter(|t| t.group.as_deref() == Some(id.as_str())) {
-                            t.group = None;
-                        }
-                    } else {
-                        return Err(no("not-found", format!("nothing has the id '{id}'")));
+                    if self.cards.iter().any(|c| c.topic == id) {
+                        return Err(no("not-empty", format!("topic '{id}' still has cards")));
                     }
-                }
-                if self.focus.as_deref() == Some(id.as_str()) {
-                    self.focus = None;
-                }
+                    self.topics.retain(|t| t.id != id);
+                    FocusKind::Topic
+                } else if self.groups.iter().any(|g| g.id == id) {
+                    // Topics of a deleted group go back to having no group.
+                    self.groups.retain(|g| g.id != id);
+                    for t in self.topics.iter_mut().filter(|t| t.group.as_deref() == Some(id.as_str())) {
+                        t.group = None;
+                    }
+                    FocusKind::Group
+                } else {
+                    return Err(no("not-found", format!("nothing has the id '{id}'")));
+                };
+                self.unfocus(kind, &id);
             }
             Op::Size { id, w, h } => {
                 let c = self.card_mut(&id)?;
@@ -641,8 +668,18 @@ impl Board {
                 }
             }
             Op::Focus { id } => {
-                self.card_mut(&id)?;
+                // Looked up as `del` looks: a card, then a topic, then a group. The code is the one of 0.6.
+                let kind = if self.card(&id).is_some() {
+                    FocusKind::Card
+                } else if self.topics.iter().any(|t| t.id == id) {
+                    FocusKind::Topic
+                } else if self.groups.iter().any(|g| g.id == id) {
+                    FocusKind::Group
+                } else {
+                    return Err(no("no-such-card", format!("no card, topic or group '{id}'")));
+                };
                 self.focus = Some(id);
+                self.focus_kind = Some(kind);
             }
             Op::Let { name, value } => {
                 if !valid_id(&name) {
@@ -665,8 +702,9 @@ impl Board {
                 let t = self.topics.remove(at);
                 let (gone, kept): (Vec<Card>, Vec<Card>) = std::mem::take(&mut self.cards).into_iter().partition(|c| c.topic == topic);
                 self.cards = kept;
-                if self.focus.as_ref().map(|f| gone.iter().any(|c| &c.id == f)).unwrap_or(false) {
-                    self.focus = None;
+                self.unfocus(FocusKind::Topic, &topic);
+                for c in &gone {
+                    self.unfocus(FocusKind::Card, &c.id);
                 }
                 self.shelf.push(Shelved { topic: t, cards: gone });
             }
@@ -767,6 +805,56 @@ mod shelf_tests {
         run(&mut b, "restore trip").unwrap();
         assert_eq!(b.card("k1").unwrap().field("text"), "숙소는 애월");
         assert!(b.shelf.is_empty());
+    }
+}
+
+#[cfg(test)]
+mod focus_tests {
+    use super::*;
+
+    /// What is focused is not serialized, so the conformance cases see only the verdicts. This checks the rest.
+    #[test]
+    fn focus_marks_a_card_a_topic_or_a_group_until_it_goes() {
+        let mut b = Board::default();
+        let run = |b: &mut Board, line: &str| b.apply(crate::lang::parse(line).unwrap().unwrap(), Author::Ai).map_err(|e| e.code);
+        let seen = |b: &Board| b.focus.as_deref().zip(b.focus_kind).map(|(id, k)| format!("{} {id}", k.name()));
+        for l in ["topic t Work", "topic u Home", "group g Office", "put t g", "card k1 note t Plan"] {
+            run(&mut b, l).unwrap();
+        }
+        run(&mut b, "focus k1").unwrap();
+        assert_eq!(seen(&b).as_deref(), Some("card k1"));
+        run(&mut b, "focus u").unwrap();
+        assert_eq!(seen(&b).as_deref(), Some("topic u"));
+        run(&mut b, "focus g").unwrap();
+        assert_eq!(seen(&b).as_deref(), Some("group g"));
+        // A rejected focus changes nothing; deleting something else keeps the focus.
+        assert_eq!(run(&mut b, "focus nowhere"), Err("no-such-card"));
+        run(&mut b, "del k1").unwrap();
+        assert_eq!(seen(&b).as_deref(), Some("group g"));
+        // Deleting what is focused leaves nothing focused.
+        run(&mut b, "del g").unwrap();
+        assert_eq!(seen(&b), None);
+        run(&mut b, "focus t").unwrap();
+        run(&mut b, "del t").unwrap();
+        assert_eq!(seen(&b), None);
+        // Shelving a focused topic, or the topic of a focused card.
+        run(&mut b, "focus u").unwrap();
+        run(&mut b, "archive u").unwrap();
+        assert_eq!(seen(&b), None);
+        run(&mut b, "restore u").unwrap();
+        run(&mut b, "card k2 note u List").unwrap();
+        run(&mut b, "focus k2").unwrap();
+        run(&mut b, "archive u").unwrap();
+        assert_eq!(seen(&b), None);
+        // A card that shares the id of a topic is found first, as `del` finds it; deleting it unfocuses it only.
+        run(&mut b, "topic s Shared").unwrap();
+        run(&mut b, "card s note s Same id").unwrap();
+        run(&mut b, "focus s").unwrap();
+        assert_eq!(seen(&b).as_deref(), Some("card s"));
+        run(&mut b, "del s").unwrap();
+        assert_eq!(seen(&b), None);
+        run(&mut b, "focus s").unwrap();
+        assert_eq!(seen(&b).as_deref(), Some("topic s"));
     }
 }
 

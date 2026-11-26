@@ -69,6 +69,44 @@ const s = new LineStream();
 const got = [...s.feed("topic t A\nset k te"), ...s.feed("xt hi\nsay en"), ...s.feed("d")];
 check(JSON.stringify(got) === '["topic t A","set k text hi"]' && s.partial === "say end" && s.finish() === "say end", "LineStream");
 
+// What is focused is not serialized, so the conformance cases see only the verdicts. This checks the rest.
+{
+  const b = new Board();
+  const seen = () => (b.focus === null ? null : `${b.focusKind} ${b.focus}`);
+  const run = (l) => check(b.line(l) === "ok", `focus: ${l}`);
+  for (const l of ["topic t Work", "topic u Home", "group g Office", "put t g", "card k1 note t Plan"]) run(l);
+  run("focus k1");
+  check(seen() === "card k1", `focus on a card: ${seen()}`);
+  run("focus u");
+  check(seen() === "topic u", `focus on a topic: ${seen()}`);
+  run("focus g");
+  check(seen() === "group g", `focus on a group: ${seen()}`);
+  check(b.line("focus nowhere").startsWith("err no-such-card"), "focus on nothing");
+  run("del k1");
+  check(seen() === "group g", "deleting something else keeps the focus");
+  run("del g");
+  check(seen() === null, "deleting a focused group");
+  run("focus t");
+  run("del t");
+  check(seen() === null, "deleting a focused topic");
+  run("focus u");
+  run("archive u");
+  check(seen() === null, "shelving a focused topic");
+  run("restore u");
+  run("card k2 note u List");
+  run("focus k2");
+  run("archive u");
+  check(seen() === null, "shelving the topic of a focused card");
+  run("topic s Shared");
+  run("card s note s Same id");
+  run("focus s");
+  check(seen() === "card s", "a card is found before a topic of the same id");
+  run("del s");
+  check(seen() === null, "deleting the focused card");
+  run("focus s");
+  check(seen() === "topic s", "then the topic is found");
+}
+
 // Numbers, and the byte order mark of a file (dropped once, by whoever cuts the stream into lines).
 for (const n of ["0", "12", "12.", "12.5", ".5", "+7", "-.5e-3", "1e3", "1E+3"]) check(isNumber(n), `isNumber ${n}`);
 for (const n of ["", ".", "+", "e3", "1e", "1e+", "0x10", "inf", "nan", "Infinity", "1e400", "1 000", "1_000", "١٢", "12%", " 1"]) check(!isNumber(n), `not isNumber ${n}`);

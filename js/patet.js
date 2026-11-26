@@ -1,4 +1,4 @@
-// PATET 0.6 in JavaScript: the board, the parser and the serializer. No dependencies.
+// PATET 0.7 in JavaScript: the board, the parser and the serializer. No dependencies.
 // A port of the reference implementation (protocol/rust); it runs the same conformance cases (test.mjs).
 //
 //   import { Board, parse, serialize } from "./patet.js";
@@ -6,7 +6,7 @@
 //   const verdict = board.line("card k1 metric trip 2x2 Days left");   // "ok" | "ok clipped ..." | "err <code> <message>" | "skip"
 //   serialize(board);                                                  // the board as ops
 
-export const VERSION = "0.6";
+export const VERSION = "0.7";
 
 /** Why an op was not applied: a stable code for programs, an English message for whoever wrote the line. */
 export class Reject extends Error {
@@ -51,7 +51,7 @@ export const kindNames = () => PARTS.map((p) => p.name);
 export const MEDIA_KINDS = ["web", "image", "doc"];
 
 /** What a renderer supports, one line per entry (SPEC.md section 6): give it to the model after GUIDE.md. */
-export function describe({ renderer = "patet-js 0.6", media = false, extraKinds = [], features = [] } = {}) {
+export function describe({ renderer = "patet-js 0.7", media = false, extraKinds = [], features = [] } = {}) {
   const kinds = [...kindNames().filter((k) => media || !MEDIA_KINDS.includes(k)), ...extraKinds];
   const out = [`patet ${VERSION}`, `renderer ${renderer}`, `kinds ${kinds.join(" ")}`];
   if (features.length) out.push(`features ${features.join(" ")}`);
@@ -261,7 +261,9 @@ export class Board {
     this.shelf = []; // { topic, cards }
     this.vars = new Map();
     this.say = "";
+    /** The id of what the user should look at: a card, a topic or a group. `focusKind` says which. */
     this.focus = null;
+    this.focusKind = null; // "card" | "topic" | "group"
     /** Notes about ops applied with a change: `clipped <what> <limit>`. Whoever relays verdicts drains this. */
     this.notes = [];
   }
@@ -273,6 +275,13 @@ export class Board {
     const c = this.card(id);
     if (!c) throw no("no-such-card", `no card '${id}'`);
     return c;
+  }
+  // What was focused is gone. A focus without a kind (set by a host itself) is taken to be a card.
+  #unfocus(kind, id) {
+    if (this.focus === id && (this.focusKind ?? "card") === kind) {
+      this.focus = null;
+      this.focusKind = null;
+    }
   }
 
   /**
@@ -396,15 +405,20 @@ export class Board {
           return;
         }
         const at = this.cards.findIndex((c) => c.id === op.id);
-        if (at >= 0) this.cards.splice(at, 1);
-        else if (this.topics.some((t) => t.id === op.id)) {
+        let kind;
+        if (at >= 0) {
+          this.cards.splice(at, 1);
+          kind = "card";
+        } else if (this.topics.some((t) => t.id === op.id)) {
           if (this.cards.some((c) => c.topic === op.id)) throw no("not-empty", `topic '${op.id}' still has cards`);
           this.topics = this.topics.filter((t) => t.id !== op.id);
+          kind = "topic";
         } else if (this.groups.some((g) => g.id === op.id)) {
           this.groups = this.groups.filter((g) => g.id !== op.id);
           for (const t of this.topics) if (t.group === op.id) t.group = null;
+          kind = "group";
         } else throw no("not-found", `nothing has the id '${op.id}'`);
-        if (this.focus === op.id) this.focus = null;
+        this.#unfocus(kind, op.id);
         return;
       }
       case "size": {
@@ -430,10 +444,14 @@ export class Board {
         if (!op.on) c.grid = null;
         return;
       }
-      case "focus":
-        this.#card(op.id);
+      case "focus": {
+        // Looked up as `del` looks: a card, then a topic, then a group. The code is the one of 0.6.
+        const kind = this.card(op.id) ? "card" : this.topics.some((t) => t.id === op.id) ? "topic" : this.groups.some((g) => g.id === op.id) ? "group" : null;
+        if (!kind) throw no("no-such-card", `no card, topic or group '${op.id}'`);
         this.focus = op.id;
+        this.focusKind = kind;
         return;
+      }
       case "let": {
         if (!validId(op.name)) throw no("bad-id", `value name '${op.name}' is not valid ${ID}`);
         if (trim(op.value) === "") {
@@ -451,7 +469,8 @@ export class Board {
         this.topics = this.topics.filter((x) => x !== t);
         const gone = this.cards.filter((c) => c.topic === op.topic);
         this.cards = this.cards.filter((c) => c.topic !== op.topic);
-        if (gone.some((c) => c.id === this.focus)) this.focus = null;
+        this.#unfocus("topic", op.topic);
+        for (const c of gone) this.#unfocus("card", c.id);
         this.shelf.push({ topic: t, cards: gone });
         return;
       }

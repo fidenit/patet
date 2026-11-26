@@ -62,10 +62,10 @@ The demo page has examples, streams them as a model would, shows the verdicts th
 | `write(text, by = "agent")` | Apply several lines. Returns what was not simply applied: `[{ line, verdict }]`, an array that also carries the counts `applied`, `rejected`, `clipped`. Give the entries back to your model |
 | `feed(chunk)`, `end()` | A model's text as it streams: lines are applied as they end. Same return as `write` |
 | `read(topic?)` | The board as ops, all of it or one topic |
-| `load(ops, { say, focus })` | Replace the board with one written back as ops: what `read()` gave earlier, or the board your server keeps. Answers and pins come back as they were |
+| `load(ops, { say, focus })` | Replace the board with one written back as ops: what `read()` gave earlier, or the board your server keeps. Answers and pins come back as they were; `focus` is an id, looked up again as a card, a topic or a group |
 | `describe()` | What this renderer supports, to tell your agent ([SPEC.md, section 6](../SPEC.md#6-card-types)) |
 | `clear()` | Empty the board |
-| `board` | The `Board` itself: `board.cards`, `board.topics`, `board.say`, `board.focus` |
+| `board` | The `Board` itself: `board.cards`, `board.topics`, `board.say`, `board.focus` (an id) and `board.focusKind` (`card`, `topic` or `group`). A focused group is shown alone, with a button for the whole board; a focused topic is scrolled into view |
 | event `patet-event` | `detail.entry` is `user <op>`: a tick, a pick, a sent form. It bubbles and crosses the shadow boundary |
 
 | Attribute | |
@@ -93,7 +93,7 @@ patet-board {
 | `--card` | cards, and options not chosen |
 | `--raised` | input boxes, the track of a bar, a hovered option |
 | `--line` | borders of cards, topics and options |
-| `--edge` | the border of the focused card and of the card in "my turn" |
+| `--edge` | the border of the focused card or topic and of the card in "my turn" |
 | `--text`, `--soft`, `--dim`, `--faint` | text, from the strongest (titles, values) to the weakest (labels, hints) |
 | `--accent` | small marks: the dot and the count of "my turn", the topic label on a card, links, the colour named `accent` in a drawing |
 | `--primary`, `--primary-text` | the buttons that act: Send, Done, a chosen option, a chosen pill. They default to `--on` and `--on-text` |

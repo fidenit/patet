@@ -64,27 +64,28 @@ The numbers are the case files (`03` is `03-rejections.txt`).
 | 36-name-order | code point order of names and fields |
 | 37-by | `by`, who wrote a card: every kind, clipping, emptying, not one of a record's 12 fields |
 | 38-fixed | `fixed`, a place on the screen (`x,y`, checked), and `watch`: every kind, either author, emptying, clipping, not one of a record's 12 fields |
+| 39-focus | `focus` on a card, a topic and a group; ids it does not take (an item, a named value, a shelved topic, a deleted group) |
 
 ### Verbs
 
 | Verb | Applied in | Rejected in (code: files) |
 |---|---|---|
 | `topic` | every file | `bad-id`: 03 25 34; `shelved`: 06 10; `missing-argument`: 02 |
-| `group` | 04 06 10 11 13 14 16 25 29 34 | `bad-id`: 16 25; `id-in-use`: 03 11 16 29; `shelved`: 29; `limit`: 04 14; `missing-argument`: 16 |
-| `put` | 06 10 11 29 34 | `no-such-group`: 03 11 16; `no-such-topic`: 10 11 16; `missing-argument`: 16 |
+| `group` | 04 06 10 11 13 14 16 25 29 34 39 | `bad-id`: 16 25; `id-in-use`: 03 11 16 29; `shelved`: 29; `limit`: 04 14; `missing-argument`: 16 |
+| `put` | 06 10 11 29 34 39 | `no-such-group`: 03 11 16; `no-such-topic`: 10 11 16; `missing-argument`: 16 |
 | `card` | every file | `exists`: 03 16; `bad-id`: 16 25; `shelved`: 06 10; `unknown-kind`: 03 07 16 19 30 34; `no-such-topic`: 03 10 16; `missing-argument`: 02 16; `not-allowed`: none (below) |
 | `set` | 01 04 to 10, 12 to 14, 17 to 26, 28 31 34 35 36 37 | `no-such-card`: 03 10 16; `unknown-field`: 03 07 09 16 19 to 24, 28 34; `bad-value`: 03 07 08 09 21 to 24, 28; `user-only`: 08 09 28; `limit` (13th field of a record): 14 37; `missing-argument`: 02 16 28 |
-| `add` | 01 to 05, 07 to 10, 12 to 16, 18 to 22, 24 25 31 32 34 35 | `no-such-card`: 02 10 16 26; `no-items`: 03 07 20 23; `bad-id`: 03 16 25; `cell-count`: 03 14 19 20; `bad-value`: 03 16 24 32; `limit`: 14 15; `user-only`: 08 09; `missing-argument`: 02 16 |
+| `add` | 01 to 05, 07 to 10, 12 to 16, 18 to 22, 24 25 31 32 34 35 39 | `no-such-card`: 02 10 16 26; `no-items`: 03 07 20 23; `bad-id`: 03 16 25; `cell-count`: 03 14 19 20; `bad-value`: 03 16 24 32; `limit`: 14 15; `user-only`: 08 09; `missing-argument`: 02 16 |
 | `upd` | 01 05 08 09 13 14 18 to 21, 24 31 | `no-such-item`: 03 13 16 19 20 21; `no-such-card`: 16; `no-items`: 16 20 23; `cell-count`: 14 16; `bad-value`: 16 24; `user-only`: 08 09; `missing-argument`: 16; `bad-id`: none (below) |
-| `del` | 06 10 11 14 15 17 19 to 22, 24 | `no-such-item`: 03 16; `not-found`: 03 10 11 16; `not-empty`: 03 11 16; `missing-argument`: 02 |
+| `del` | 06 10 11 14 15 17 19 to 22, 24 39 | `no-such-item`: 03 16; `not-found`: 03 10 11 16; `not-empty`: 03 11 16; `missing-argument`: 02 |
 | `mv` | 06 11 17 19 | `no-such-topic`: 03 10 11 16; `no-such-card`: 03 10 11 16; `missing-argument`: 16 |
 | `size` | 05 17 19 27 31 33 | `no-such-card`: 16; `pinned`: 05 17; `bad-syntax`: 02 16 27 33 |
 | `move` | 05 10 17 19 27 31 33 | `no-such-card`: 16; `pinned`: 05 10 17 31; `bad-syntax`: 02 05 16 17 27 33 |
 | `pin` | 05 09 17 | `user-only`: 03 09; `no-such-card`: 09; `missing-argument`: 16 |
 | `unpin` | 05 09 17 | `user-only`: 03 09; `no-such-card`: 09; `missing-argument`: 16 |
-| `focus` | 01 19 | `no-such-card`: 03 10 16; `missing-argument`: 16 |
-| `let` | 04 06 12 15 18 25 34 35 36 | `bad-id`: 03 12 25; `limit`: 15; `missing-argument`: 12 16 |
-| `archive` | 06 10 29 | `no-such-topic`: 03 10 16; `missing-argument`: 16 |
+| `focus` | 01 19 39 | `no-such-card`: 03 10 16 39; `missing-argument`: 16 |
+| `let` | 04 06 12 15 18 25 34 35 36 39 | `bad-id`: 03 12 25; `limit`: 15; `missing-argument`: 12 16 |
+| `archive` | 06 10 29 39 | `no-such-topic`: 03 10 16; `missing-argument`: 16 |
 | `restore` | 06 10 29 | `not-shelved`: 03 10 16; `missing-argument`: 16 |
 | `say` | 01 04 13 18 26 | never rejected |
 | `tell` | 02 26 (skipped) | never rejected |
@@ -131,7 +132,7 @@ The user's gestures of SPEC.md section 9: ticking (05 08 13 24), deleting an ite
 | `shelved` | 06 10 29 |
 | `no-such-topic` | 03 10 11 16 |
 | `no-such-group` | 03 11 16 |
-| `no-such-card` | 02 03 09 10 11 16 26 |
+| `no-such-card` | 02 03 09 10 11 16 26 39 |
 | `no-such-item` | 03 13 16 19 20 21 |
 | `not-found` | 03 10 11 16 |
 | `not-empty` | 03 11 16 |
@@ -149,7 +150,7 @@ The user's gestures of SPEC.md section 9: ticking (05 08 13 24), deleting an ite
 - **The codes of a session** (`auth-required`, `line-too-long` and the others of SPEC.md 10.3) and everything else about bindings: these cases apply ops to a board, they do not open a connection.
 - **A trailing `\r`, a last line without `\n`, and the U+FEFF a file may start with** (SPEC.md sections 3 and 10.2). A case file is cut into lines before it is run, so none of them survives into an op. Both implementations test the U+FEFF rule on their line cutter.
 - **The `restore` author** (SPEC.md section 8) writes no line of a case. It is exercised by every case all the same: the runners read each board back with it, and 31 is the case that fails if they read it back as the user.
-- **`{name}` shown as a value, `\n` shown as a line break, `focus` and `say`.** They are drawing, or state that is not written back; the cases check that they are accepted and that the stored text is unchanged (12, 18).
+- **`{name}` shown as a value, `\n` shown as a line break, `focus` and `say`.** They are drawing, or state that is not written back; the cases check that they are accepted and that the stored text is unchanged (12, 18), and which ids `focus` takes (39). What is focused, and that deleting or shelving it unfocuses it, is tested by each implementation's own tests.
 - **What a renderer may shorten** for a model (SPEC.md section 8).
 
 ## Settled in 0.4

@@ -8,7 +8,7 @@ PATET is a specification first: a line language an AI writes to build and edit a
 |---|---|
 | `SPEC.md` | The rules. Normative |
 | `GUIDE.md` | What a model is given as its system prompt. Its card table must equal every implementation's `parts_table()` |
-| `conformance/` | 38 cases. A behaviour not in a case is not promised |
+| `conformance/` | 39 cases. A behaviour not in a case is not promised |
 | `rust/`, `js/`, `python/`, `kotlin/` | The board, the parser, the serializer. No dependencies in any of them |
 | `web/` | `<patet-board>`, the renderer for the web; `web/index.html` is the demo served at https://fidenit.github.io/patet/web/ |
 | `examples/assistant/` | A whole assistant in two files |
@@ -36,7 +36,8 @@ The web element has a self-test: serve the repository (`python -m http.server 80
 
 ## Where things stand (2026-11-19)
 
-- Version 0.6: two fields of every card added to 0.5, `fixed` (a card that stays on the screen) and `watch` (how it is kept fresh), case 38. 0.5 added `by` (case 37). The online demo is on; `<patet-board>` does not show fixed cards yet (it draws them in their topic).
+- Version 0.7: `focus` takes a topic or a group as well as a card (case 39); the board says which with `focus_kind` / `focusKind`. 0.6 added `fixed` (a card that stays on the screen) and `watch` (how it is kept fresh), case 38; 0.5 added `by` (case 37). The online demo is on; `<patet-board>` does not show fixed cards yet (it draws them in their topic).
+- The 0.7 change to `kotlin/Board.kt` was made here first, not in APERIT (it was checked with a stand-alone runner of the conformance cases on the cached Kotlin compiler). When APERIT takes 0.7, copy it to `android/app/src/main/java/com/fidenit/kite/core/` with that package line and run the app's unit tests.
 - **Packages are not published yet.** `npm publish` (from the repository root) needs the owner's passkey in a real terminal. `cargo publish` (in `rust/`) passed its dry run and waits for the owner's word. PyPI: no account or token yet; until then `pip install "git+https://github.com/fidenit/patet#subdirectory=python"` works and is documented. Once npm is published, replace "There is no npm package yet" in `web/README.md` with `npm install patet` (`import "patet/board"`).
 - The fuller list of what is next, for both repositories, is at the top of `docs/NEXT.md` in the APERIT repository (Korean).
 - **Next (set 2026-11-24): let others build their own screen with PATET.** Today only colours and fonts can be changed in `<patet-board>`. In order: (1) a way to register how a kind is drawn, extension kinds (`x-...`) and the 16 core types alike, with registered extension kinds listed by `describe()`; (2) publish to npm; (3) a board without drawing (state and user events only) so a host can lay cards out itself; (4) a thin React wrapper; (5) bring the element up to the spec (floating fixed cards, dragging and resizing, folding a crowded topic, a map under a route).

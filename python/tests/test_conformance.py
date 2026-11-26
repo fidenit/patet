@@ -120,6 +120,46 @@ class Conformance(unittest.TestCase):
         s = LineStream()
         self.assertEqual(s.feed("") + s.feed(bom) + s.feed("topic t T\n" + bom + "topic u U\n"), ["topic t T", bom + "topic u U"])
 
+    def test_focus_marks_a_card_a_topic_or_a_group_until_it_goes(self):
+        """What is focused is not serialized, so the conformance cases see only the verdicts. This checks the rest."""
+        b = Board()
+
+        def run(line):
+            self.assertEqual(b.line(line), "ok", line)
+
+        def seen():
+            return None if b.focus is None else f"{b.focus_kind} {b.focus}"
+
+        for line in ("topic t Work", "topic u Home", "group g Office", "put t g", "card k1 note t Plan"):
+            run(line)
+        run("focus k1")
+        self.assertEqual(seen(), "card k1")
+        run("focus u")
+        self.assertEqual(seen(), "topic u")
+        run("focus g")
+        self.assertEqual(seen(), "group g")
+        self.assertTrue(b.line("focus nowhere").startswith("err no-such-card"))
+        run("del k1")
+        self.assertEqual(seen(), "group g", "deleting something else keeps the focus")
+        run("del g")
+        self.assertIsNone(seen())
+        run("focus t")
+        run("del t")
+        self.assertIsNone(seen())
+        run("focus u")
+        run("archive u")
+        self.assertIsNone(seen(), "shelving a focused topic")
+        for line in ("restore u", "card k2 note u List", "focus k2", "archive u"):
+            run(line)
+        self.assertIsNone(seen(), "shelving the topic of a focused card")
+        for line in ("topic s Shared", "card s note s Same id", "focus s"):
+            run(line)
+        self.assertEqual(seen(), "card s", "a card is found before a topic of the same id")
+        run("del s")
+        self.assertIsNone(seen())
+        run("focus s")
+        self.assertEqual(seen(), "topic s")
+
     def test_limits_count_characters(self):
         b = Board()
         for l in ("topic t a", "card k note t x"):

@@ -18,7 +18,7 @@ upd <id> <item> <cell> | <cell> ...          replace an existing item
 del <id> [<item>]                            remove an item, a card, an empty topic or a group
 size <id> <w>x<h>                            resize a card (grid cells, 1 to 8 each)
 move <id> <col> <row>                        place a card (rarely needed: placement is automatic)
-focus <id>                                   mark the card the user should look at now
+focus <id>                                   mark what the user should look at now: a card, a topic or a group
 let <name> <value>                           a named value; write {name} in any card text to show it
 group <id> <name>                            create a group of topics, or rename it
 put <topic> <group>                          place a topic in a group
@@ -151,7 +151,7 @@ add k2 i3 todo | Book a table for {people}
 Renderers differ: a phone may have no web cards, another may add kinds. A renderer describes itself (the `hello` command of a line session, the end of this guide over MCP, `state.patet.renderer` over AG-UI) in lines like these:
 
 ```
-patet 0.6
+patet 0.7
 renderer APERIT 0.4.0
 kinds status metric chart route draw image table progress checklist decision input timeline note record doc
 features tell
@@ -222,6 +222,7 @@ set r1 people 4
 ## Growing boards
 
 - From about five topics on, group them: `group work Work`, then `put <topic> work`. Groups are broad areas of life or work, three to six of them (eight at most). Once a group exists, put every new topic in one.
+- When the user asks to see only one part of the board ("just my work"), put those topics in a group and `focus <group>`: the renderer shows that group and may hide the rest. Making the group is not enough. `focus <topic>` brings one topic into view.
 - Finished work is shelved, not deleted: `archive <topic>`. When the user mentions it again, `restore <topic>` and continue on its cards. Ids on the shelf stay reserved.
 - Keep the structure tidy without being asked: rename a topic that drifted, merge two that overlap (`mv` the cards, `del` the empty one), split a group that grew too large.
 

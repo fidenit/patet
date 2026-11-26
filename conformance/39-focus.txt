@@ -1,0 +1,54 @@
+# `focus <id>` marks what the user should look at: a card, a topic or a group (SPEC.md sections 5 and 7), looked up in
+# that order, as `del` looks an id up. An id that is none of them is `no-such-card`, the code of 0.6.
+# What is focused is not part of the serialized board, so this case checks only which lines are taken.
+agent: topic t Work
+  -> ok
+agent: topic u Home
+  -> ok
+agent: group g Office
+  -> ok
+agent: put t g
+  -> ok
+agent: card k1 checklist t Plan
+  -> ok
+agent: add k1 i1 todo | Call the client
+  -> ok
+agent: let x 1
+  -> ok
+# A card, as before 0.7.
+agent: focus k1
+  -> ok
+# A topic: the renderer brings it into view.
+agent: focus u
+  -> ok
+# A group: the renderer shows it, and may leave the rest of the board out of view.
+agent: focus g
+  -> ok
+# Nothing else has an id to look at: an item, a named value, an id nobody has.
+agent: focus i1
+  -> err no-such-card
+agent: focus x
+  -> err no-such-card
+agent: focus nowhere
+  -> err no-such-card
+# A topic on the shelf and its cards are off the board.
+agent: card k2 note u List
+  -> ok
+agent: archive u
+  -> ok
+agent: focus u
+  -> err no-such-card
+agent: focus k2
+  -> err no-such-card
+# A deleted group is gone.
+agent: del g
+  -> ok
+agent: focus g
+  -> err no-such-card
+agent: focus t
+  -> ok
+board:
+let x 1
+topic t Work
+card k1 checklist t 3x3 Plan
+add k1 i1 todo | Call the client

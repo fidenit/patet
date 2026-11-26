@@ -198,13 +198,24 @@ class Board {
     val shelf: MutableList<Shelved> = mutableListOf()
     val vars: TreeMap<String, String> = TreeMap(BY_CODE_POINT)
     var say: String = ""
+    /** The id of what the user should look at: a card, a topic or a group. [focusKind] says which. */
     var focus: String? = null
+    /** "card", "topic" or "group". */
+    var focusKind: String? = null
 
     /** 한도 초과로 잘린 것 등, 다음 턴에 모델에게 알려줄 내용. */
     val notes: MutableList<String> = mutableListOf()
 
     fun card(id: String): Card? = cards.firstOrNull { it.id == id }
     private fun cardMut(id: String): Card = card(id) ?: throw Rejected("no-such-card", "no card '$id'")
+
+    /** What was focused is gone. A focus without a kind (set by a host itself) is taken to be a card. */
+    private fun unfocus(kind: String, id: String) {
+        if (focus == id && (focusKind ?: "card") == kind) {
+            focus = null
+            focusKind = null
+        }
+    }
 
     /** 글 안의 {이름} 을 이름 붙은 값으로 바꿔 보여 준다. */
     fun show(s: String): String {
@@ -303,19 +314,21 @@ class Board {
                     if (!c.items.removeAll { it.id == op.item }) throw Rejected("no-such-item", "card '${op.id}' has no item '${op.item}'")
                     c.rev++
                 } else {
-                    if (!cards.removeAll { it.id == op.id }) {
-                        // 카드가 아니면 주제 삭제로 본다 (비어 있을 때만).
-                        if (topics.any { it.id == op.id }) {
-                            if (cards.any { it.topic == op.id }) throw Rejected("not-empty", "topic '${op.id}' still has cards")
-                            topics.removeAll { it.id == op.id }
-                        } else if (groups.any { it.id == op.id }) {
-                            groups.removeAll { it.id == op.id }
-                            topics.filter { it.group == op.id }.forEach { it.group = null }
-                        } else {
-                            throw Rejected("not-found", "nothing has the id '${op.id}'")
-                        }
+                    // 카드가 아니면 주제 삭제로 본다 (비어 있을 때만).
+                    val kind = if (cards.removeAll { it.id == op.id }) {
+                        "card"
+                    } else if (topics.any { it.id == op.id }) {
+                        if (cards.any { it.topic == op.id }) throw Rejected("not-empty", "topic '${op.id}' still has cards")
+                        topics.removeAll { it.id == op.id }
+                        "topic"
+                    } else if (groups.any { it.id == op.id }) {
+                        groups.removeAll { it.id == op.id }
+                        topics.filter { it.group == op.id }.forEach { it.group = null }
+                        "group"
+                    } else {
+                        throw Rejected("not-found", "nothing has the id '${op.id}'")
                     }
-                    if (focus == op.id) focus = null
+                    unfocus(kind, op.id)
                 }
             }
             is Op.Size -> {
@@ -339,8 +352,15 @@ class Board {
                 if (!op.on) c.grid = null
             }
             is Op.Focus -> {
-                cardMut(op.id)
+                // Looked up as `del` looks: a card, then a topic, then a group. The code is the one of 0.6.
+                val kind = when {
+                    card(op.id) != null -> "card"
+                    topics.any { it.id == op.id } -> "topic"
+                    groups.any { it.id == op.id } -> "group"
+                    else -> throw Rejected("no-such-card", "no card, topic or group '${op.id}'")
+                }
                 focus = op.id
+                focusKind = kind
             }
             is Op.Let -> {
                 if (!validId(op.name)) throw Rejected("bad-id", "value name '${op.name}' is not valid (1 to 24 letters, digits, _ or -)")
@@ -357,7 +377,8 @@ class Board {
                 topics.remove(t)
                 val gone = cards.filter { it.topic == op.topic }
                 cards.removeAll(gone)
-                if (gone.any { it.id == focus }) focus = null
+                unfocus("topic", op.topic)
+                gone.forEach { unfocus("card", it.id) }
                 shelf.add(Shelved(t, gone))
             }
             is Op.Restore -> {

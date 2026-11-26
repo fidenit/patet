@@ -172,6 +172,15 @@ if (q.has("selftest")) {
   out.push("events2:" + $("events").textContent.trim().split("\n").slice(-4).join(" / "));
   out.push("html-injected:" + (root.querySelector("b")?.textContent === "not an op" || root.innerHTML.includes("<b>not an op</b>")));
   out.push("note-lines:" + root.querySelector('article[data-id="n1"] p').textContent.split("\n").length);
+  board.clear();
+  board.write("group w Work\ngroup h Home\ntopic a Plans\nput a w\ntopic b Chores\nput b h\ncard p1 note a Plan\ncard p2 note b Chore\nfocus w");
+  await wait(50);
+  const topics = () => [...root.querySelectorAll("section h2")].map((x) => x.firstChild.textContent).join(",");
+  out.push("focus-group:" + topics());
+  btn("Show the whole board").click(); await wait(50);
+  out.push("whole-board:" + topics());
+  board.apply("focus b"); await wait(50);
+  out.push("focus-topic:" + (root.querySelector("section.focus h2")?.firstChild?.textContent ?? "none"));
   document.body.append(Object.assign(document.createElement("pre"), { id: "selftest", textContent: out.join("\n") }));
 }
 </script>

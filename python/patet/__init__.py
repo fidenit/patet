@@ -1,4 +1,4 @@
-"""PATET 0.6 in Python: the board, the parser and the serializer. No dependencies.
+"""PATET 0.7 in Python: the board, the parser and the serializer. No dependencies.
 
     from patet import Board, serialize
     board = Board()
@@ -38,7 +38,7 @@ from .lang import (
     strip_bom,
 )
 
-__version__ = "0.6.0"
+__version__ = "0.7.0"
 
 __all__ = [
     "VERSION", "LIMITS", "PARTS", "Part", "Board", "Card", "Group", "Item", "Topic", "Reject", "LineStream",

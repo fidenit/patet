@@ -106,8 +106,6 @@ agent: move k1 1,2 3
 agent: move k1 a1 b2
   -> err bad-syntax
 # focus, archive, restore
-agent: focus t
-  -> err no-such-card
 agent: focus nowhere
   -> err no-such-card
 agent: archive k1

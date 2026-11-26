@@ -16,6 +16,15 @@
 import { Board, LineStream, VERSION, asks, joinCells, kindNames, parse, serialize, splitCells } from "../js/patet.js";
 
 const MEDIA = ["web", "image", "doc"];
+
+/** Is this line a `focus` op? */
+function isFocus(line) {
+  try {
+    return parse(line)?.op === "focus";
+  } catch {
+    return false;
+  }
+}
 const SVG = "http://www.w3.org/2000/svg";
 
 /** Make an element: h("div", { class: "x", text: "hi", onclick }, child, ...). */
@@ -55,7 +64,7 @@ section > h2 { font-size:14px; margin:4px 8px 10px; color:var(--soft); }
 section > h2 small { color:var(--faint); font-weight:400; margin-left:6px; }
 .grid { display:grid; grid-template-columns:repeat(var(--cols,12),minmax(0,1fr)); grid-auto-rows:minmax(72px,auto); gap:12px; }
 .card { background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:16px; min-width:0; overflow:hidden; grid-column:span var(--w); grid-row:span var(--h); }
-.card.focus { border-color:var(--edge); }
+.card.focus, section.focus { border-color:var(--edge); }
 aside .card { border:1px solid var(--edge); }
 .card > h3 { font-size:16px; margin:0 0 10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .card > h3 small { float:right; color:var(--accent); font-size:11px; font-weight:400; margin-top:4px; }
@@ -91,7 +100,7 @@ svg { display:block; width:100%; } svg text { fill:var(--soft); font:10px var(--
 img { max-width:100%; border-radius:calc(var(--radius) * 0.5); display:block; } iframe { width:100%; height:320px; border:0; border-radius:calc(var(--radius) * 0.5); background:#fff; }
 a { color:var(--accent); }
 .empty { color:var(--faint); padding:40px; text-align:center; }
-.shelf { margin:4px 4px 0; color:var(--faint); font-size:12px; } .shelf button { margin-left:6px; }
+.shelf { margin:4px 4px 0; color:var(--faint); font-size:12px; } .shelf button { margin-left:6px; } .shelf.only { margin-bottom:10px; }
 `;
 
 const COLORS = { accent: "var(--accent)", orange: "var(--accent)", green: "var(--green)", red: "var(--red)", amber: "var(--amber)", yellow: "var(--amber)", dim: "var(--dim)", gray: "var(--dim)", faint: "var(--faint)", white: "var(--text)" };
@@ -139,7 +148,10 @@ export class PatetBoard extends HTMLElement {
       }
     }
     const verdict = this.board.line(line, by);
-    if (verdict.startsWith("ok")) this.#schedule();
+    if (verdict.startsWith("ok")) {
+      if (isFocus(line)) this.#focusTurn++;
+      this.#schedule();
+    }
     return verdict;
   }
 
@@ -233,6 +245,11 @@ export class PatetBoard extends HTMLElement {
     return Math.min(cols, Math.max(2, Math.ceil((w * cols) / (cols >= 10 ? 12 : 9))));
   }
 
+  /** Grows with every `focus` applied. What the user did about one focus (showing the whole board) lasts until the next. */
+  #focusTurn = 0;
+  #awayAt = -1;
+  #scrolledAt = -1;
+
   #pending = false;
   #schedule() {
     if (this.#pending) return;
@@ -249,7 +266,10 @@ export class PatetBoard extends HTMLElement {
     const focused = this.shadowRoot.activeElement?.dataset?.key;
     // The card that waits for the user comes to them: the focused one if it asks, else the oldest.
     const asking = b.cards.filter((c) => asks(c.kind) && !(c.fields.get("sent") || (c.kind === "decision" && c.fields.get("chosen"))));
-    const turn = asking.find((c) => c.id === b.focus) ?? asking[0] ?? null;
+    const kind = b.focus === null ? null : b.focusKind ?? "card";
+    const turn = asking.find((c) => kind === "card" && c.id === b.focus) ?? asking[0] ?? null;
+    // A focused group is shown alone until the user asks for the whole board (SPEC.md section 7).
+    const only = kind === "group" && this.#awayAt !== this.#focusTurn ? b.focus : null;
     const kids = [];
     if (turn || b.say) {
       kids.push(
@@ -262,13 +282,21 @@ export class PatetBoard extends HTMLElement {
     const main = h("main");
     let lastGroup;
     const order = [...b.topics].sort((x, y) => b.groups.findIndex((g) => g.id === x.group) - b.groups.findIndex((g) => g.id === y.group));
-    for (const t of b.groups.length ? order : b.topics) {
+    const shown = (b.groups.length ? order : b.topics).filter((t) => only === null || t.group === only);
+    const hidden = b.topics.length - shown.length;
+    if (hidden) {
+      main.append(h("div", { class: "shelf only" }, h("span", { text: `${hidden} other topic${hidden === 1 ? " is" : "s are"} out of view.` }),
+        h("button", { class: "pill", text: "Show the whole board", onclick: () => { this.#awayAt = this.#focusTurn; this.#schedule(); } })));
+      if (!shown.length) main.append(h("div", { class: "group", text: b.groups.find((g) => g.id === only)?.name ?? only }));
+    }
+    for (const t of shown) {
       const cards = b.cards.filter((c) => c.topic === t.id && c !== turn);
       if (b.groups.length && t.group !== lastGroup) {
         lastGroup = t.group;
         main.append(h("div", { class: "group", text: b.groups.find((g) => g.id === t.group)?.name ?? "Other" }));
       }
-      main.append(h("section", { part: "topic" }, h("h2", { text: t.name }, h("small", { text: String(cards.length) })), h("div", { class: "grid" }, cards.map((c) => this.#card(c)))));
+      const on = kind === "topic" && t.id === b.focus;
+      main.append(h("section", { part: "topic", class: on ? "focus" : null, "data-topic": t.id }, h("h2", { text: t.name }, h("small", { text: String(cards.length) })), h("div", { class: "grid" }, cards.map((c) => this.#card(c)))));
     }
     if (b.topics.length === 0 && b.shelf.length === 0) main.append(h("div", { class: "empty", text: "Nothing on the board yet." }));
     if (b.shelf.length) {
@@ -279,6 +307,11 @@ export class PatetBoard extends HTMLElement {
     wrap.className = turn || b.say ? "wrap" : "wrap solo";
     wrap.style.setProperty("--cols", this.cols);
     wrap.replaceChildren(...kids);
+    // A focused topic is brought into view once per `focus`, not on every redraw.
+    if (kind === "topic" && this.#scrolledAt !== this.#focusTurn) {
+      this.#scrolledAt = this.#focusTurn;
+      wrap.querySelector(`section[data-topic="${CSS.escape(b.focus)}"]`)?.scrollIntoView({ block: "nearest" });
+    }
     this.#fit();
     if (focused) this.shadowRoot.querySelector(`[data-key="${CSS.escape(focused)}"]`)?.focus();
   }
@@ -379,7 +412,8 @@ export class PatetBoard extends HTMLElement {
         break;
       }
     }
-    return h("article", { class: `card ${c.kind}${c.id === b.focus ? " focus" : ""}${c.fields.get("tone") === "danger" ? " danger" : ""}`, style: `--w:${this.#span(c.w)};--h:${this.cols <= 5 ? 1 : c.h}`, "data-id": c.id, part: `card ${c.kind}` },
+    const focused = c.id === b.focus && (b.focusKind ?? "card") === "card";
+    return h("article", { class: `card ${c.kind}${focused ? " focus" : ""}${c.fields.get("tone") === "danger" ? " danger" : ""}`, style: `--w:${this.#span(c.w)};--h:${this.cols <= 5 ? 1 : c.h}`, "data-id": c.id, part: `card ${c.kind}` },
       h("h3", { text: b.show(c.title) }, topicName && h("small", { text: topicName }), this.#byOf(c) && h("small", { class: "by", part: "by", text: this.#byOf(c) })), body);
   }
 

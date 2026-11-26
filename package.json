@@ -1,6 +1,6 @@
 {
   "name": "patet",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "PATET: the line language an AI writes to build and edit a screen. The board, the parser and the serializer, and <patet-board>, a renderer for the web. No dependencies.",
   "type": "module",
   "main": "./js/patet.js",

@@ -62,7 +62,7 @@ def kind_names() -> List[str]:
 MEDIA_KINDS = ("web", "image", "doc")
 
 
-def describe(renderer: str = "patet-python 0.6", media: bool = False, extra_kinds: Iterable[str] = (), features: Iterable[str] = ()) -> List[str]:
+def describe(renderer: str = "patet-python 0.7", media: bool = False, extra_kinds: Iterable[str] = (), features: Iterable[str] = ()) -> List[str]:
     """What a renderer supports, one line per entry (SPEC.md section 6): give it to the model after GUIDE.md.
 
     `extra_kinds` are the extension kinds (`x-...`) you draw yourself; `features` is `tell` when you can read aloud.
@@ -207,7 +207,9 @@ class Board:
         self.shelf: List[Shelved] = []
         self.vars: Dict[str, str] = {}
         self.say = ""
+        #: The id of what the user should look at: a card, a topic or a group. ``focus_kind`` says which.
         self.focus: Optional[str] = None
+        self.focus_kind: Optional[str] = None  # "card" | "topic" | "group"
         #: Notes about ops applied with a change: ``clipped <what> <limit>``. Whoever relays verdicts drains this.
         self.notes: List[str] = []
 
@@ -328,8 +330,12 @@ class Board:
             if not c.pinned:
                 c.grid = None
         elif verb == "focus":
-            self._card(op["id"])
-            self.focus = op["id"]
+            # Looked up as `del` looks: a card, then a topic, then a group. The code is the one of 0.6.
+            target = op["id"]
+            kind = "card" if self.card(target) else "topic" if self.topic(target) else "group" if self.group(target) else None
+            if kind is None:
+                raise Reject("no-such-card", f"no card, topic or group '{target}'")
+            self.focus, self.focus_kind = target, kind
         elif verb == "let":
             name, value = op["name"], op["value"]
             if not valid_id(name):
@@ -349,8 +355,9 @@ class Board:
             self.topics = [x for x in self.topics if x is not t]
             gone = [c for c in self.cards if c.topic == t.id]
             self.cards = [c for c in self.cards if c.topic != t.id]
-            if any(c.id == self.focus for c in gone):
-                self.focus = None
+            self._unfocus("topic", t.id)
+            for c in gone:
+                self._unfocus("card", c.id)
             self.shelf.append(Shelved(t, gone))
         elif verb == "restore":
             s = next((x for x in self.shelf if x.topic.id == op["topic"]), None)
@@ -439,19 +446,27 @@ class Board:
             return
         if self.card(id):
             self.cards = [c for c in self.cards if c.id != id]
+            kind = "card"
         elif self.topic(id):
             if any(c.topic == id for c in self.cards):
                 raise Reject("not-empty", f"topic '{id}' still has cards")
             self.topics = [t for t in self.topics if t.id != id]
+            kind = "topic"
         elif self.group(id):
             self.groups = [g for g in self.groups if g.id != id]
             for t in self.topics:
                 if t.group == id:
                     t.group = None
+            kind = "group"
         else:
             raise Reject("not-found", f"nothing has the id '{id}'")
-        if self.focus == id:
+        self._unfocus(kind, id)
+
+    def _unfocus(self, kind: str, id: str) -> None:
+        """What was focused is gone. A focus without a kind (set by a host itself) is taken to be a card."""
+        if self.focus == id and (self.focus_kind or "card") == kind:
             self.focus = None
+            self.focus_kind = None
 
     def _put_item(self, id: str, item: str, cells: List[str], update: bool, agent: bool) -> None:
         c = self._card(id)

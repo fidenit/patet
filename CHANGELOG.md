@@ -1,5 +1,18 @@
 # PATET changes
 
+## 0.7
+
+One addition: **`focus` takes a topic or a group**, not only a card. `focus <id>` looks the id up as `del` does: a card, then a topic, then a group. A renderer brings a focused topic into view, and shows a focused group, leaving the rest of the board out of view if it likes, until the user looks elsewhere. So "show me only my work" is one line. The board still holds one focused thing, and it is still not written back.
+
+Found with APERIT: asked to make a group for one company's work and show only that, a model made the group and had no way to say "look at this", so every other group stayed on the screen.
+
+- An id that is no card, topic or group is still rejected with `no-such-card`, not with `not-found` as `del` answers. Codes are stable within a major version, and with the old code every line of a 0.6 stream gets the verdict it got before, except `focus` on a topic or a group, which 0.6 rejected. The name of the code is now narrower than its meaning for this one verb; SPEC section 9 says so.
+- A 0.6 reader rejects `focus <topic>` and `focus <group>` with `no-such-card` and reads on: the view is lost, nothing on the board.
+- Deleting or shelving what is focused leaves nothing focused, as it did for cards.
+- The implementations say what is focused: `focus` is still the id, and `focus_kind` (Rust, Python) or `focusKind` (JavaScript, Kotlin) is `card`, `topic` or `group`.
+
+SPEC sections 2, 5, 7, 9 and 12; GUIDE two lines; case 39, and case 16 no longer expects `focus` on a topic to be rejected. Rust, JavaScript, Python, Kotlin. `<patet-board>` shows a focused group alone, with a button for the whole board, and scrolls a focused topic into view.
+
 ## 0.6
 
 Two additions, both fields of every card like `title` and `by`.
