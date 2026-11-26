@@ -287,7 +287,33 @@ pub enum Op {
     /// Shelve a topic with its cards / bring it back.
     Archive { topic: String },
     Restore { topic: String },
+    /// Relate two topics (no direction), with a short reason; written again, the reason changes (0.8).
+    Link { a: String, b: String, reason: String },
+    /// Take a relation away.
+    Unlink { a: String, b: String },
 }
+
+/// A relation between two topics (`link`). The pair has no order: `link a b` and `link b a` are the same link.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Link {
+    pub a: String,
+    pub b: String,
+    pub reason: String,
+}
+
+impl Link {
+    pub fn joins(&self, x: &str, y: &str) -> bool {
+        (self.a == x && self.b == y) || (self.a == y && self.b == x)
+    }
+    pub fn touches(&self, t: &str) -> bool {
+        self.a == t || self.b == t
+    }
+}
+
+/// At most this many links on a board.
+pub const LINK_LIMIT: usize = 64;
+/// The longest reason of a link (characters); a longer one is clipped.
+pub const REASON_LIMIT: usize = 60;
 
 /// What `focus` marks: a card, a topic or a group (SPEC.md section 5).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -371,6 +397,8 @@ pub struct Board {
     pub groups: Vec<Group>,
     pub topics: Vec<Topic>,
     pub cards: Vec<Card>,
+    /// Relations between topics, in the order they were made (`link`).
+    pub links: Vec<Link>,
     /// The shelf: finished or long-untouched topics.
     pub shelf: Vec<Shelved>,
     /// Named values. Several cards can show the same value; changing it here changes them all.
@@ -622,6 +650,7 @@ impl Board {
                         return Err(no("not-empty", format!("topic '{id}' still has cards")));
                     }
                     self.topics.retain(|t| t.id != id);
+                    self.links.retain(|l| !l.touches(&id));
                     FocusKind::Topic
                 } else if self.groups.iter().any(|g| g.id == id) {
                     // Topics of a deleted group go back to having no group.
@@ -707,6 +736,37 @@ impl Board {
                     self.unfocus(FocusKind::Card, &c.id);
                 }
                 self.shelf.push(Shelved { topic: t, cards: gone });
+                // A shelved topic takes its relations with it (they are not kept on the shelf).
+                self.links.retain(|l| !l.touches(&topic));
+            }
+            Op::Link { a, b, reason } => {
+                if a == b {
+                    return Err(no("bad-value", format!("a topic cannot link to itself ('{a}')")));
+                }
+                for t in [&a, &b] {
+                    if !self.topics.iter().any(|x| &x.id == t) {
+                        return Err(no("no-such-topic", format!("no topic '{t}'")));
+                    }
+                }
+                let reason = reason.trim().to_string();
+                let reason = if chars(&reason) > REASON_LIMIT {
+                    self.notes.push(format!("clipped link.{a}.{b} {REASON_LIMIT}"));
+                    clip(&reason, REASON_LIMIT)
+                } else {
+                    reason
+                };
+                if let Some(l) = self.links.iter_mut().find(|l| l.joins(&a, &b)) {
+                    l.reason = reason;
+                } else {
+                    if self.links.len() >= LINK_LIMIT {
+                        return Err(no("limit", format!("at most {LINK_LIMIT} links; unlink one that no longer matters")));
+                    }
+                    self.links.push(Link { a, b, reason });
+                }
+            }
+            Op::Unlink { a, b } => {
+                let at = self.links.iter().position(|l| l.joins(&a, &b)).ok_or_else(|| no("no-such-link", format!("no link between '{a}' and '{b}'")))?;
+                self.links.remove(at);
             }
             Op::Restore { topic } => {
                 let at = self.shelf.iter().position(|s| s.topic.id == topic).ok_or_else(|| no("not-shelved", format!("no topic '{topic}' on the shelf")))?;

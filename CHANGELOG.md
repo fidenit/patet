@@ -1,5 +1,20 @@
 # PATET changes
 
+## 0.8
+
+One addition: **`link`**, a relation between two topics. `link <a> <b> <reason>` says that two subjects bear on each other, with a short reason; `unlink <a> <b>` takes it away. A link has no direction: `link a b` and `link b a` are the same link, and writing it again changes only its reason (60 characters, clipped with a note). Both topics must be on the board and must differ; a board holds at most 64 links. Deleting or shelving a topic takes its links with it. A serialized board writes the links after the topics.
+
+Found with APERIT: on a phone the board is explored as a mind map (groups, then their topics, then their cards), and the lines between topics could only be guessed from shared words. Now the model says which topics bear on each other and why, and a renderer draws those as lines; guessed lines stay a renderer's own business.
+
+- A 0.7 reader rejects `link` and `unlink` with `unknown-verb` and reads on: the lines are lost, nothing else.
+- New code `no-such-link` for `unlink` of a pair that is not linked.
+
+### Settled in 0.8
+
+- Section 12 counted a new verb as a major change, while its own note on major 0 already let an older reader skip what it rejects. A new verb before 1.0 is now said to be a minor change, as new card types were (0.3); from 1.0 on it is major. When to call it 1.0 stays the owner's decision.
+
+SPEC sections 2, 4, 5, 8 and 9; GUIDE one block and the verb list; case 40. Rust, JavaScript, Python, Kotlin (checked in APERIT's unit tests). Grammars and schema. `<patet-board>` does not draw links yet.
+
 ## 0.7
 
 One addition: **`focus` takes a topic or a group**, not only a card. `focus <id>` looks the id up as `del` does: a card, then a topic, then a group. A renderer brings a focused topic into view, and shows a focused group, leaving the rest of the board out of view if it likes, until the user looks elsewhere. So "show me only my work" is one line. The board still holds one focused thing, and it is still not written back.

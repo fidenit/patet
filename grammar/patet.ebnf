@@ -1,4 +1,4 @@
-/* PATET 0.7: the line syntax of every op.
+/* PATET 0.8: the line syntax of every op.
 
    Notation: W3C EBNF, as in the XML specification (https://www.w3.org/TR/xml/#sec-notation).
    SPEC.md is the specification; this file restates its sections 3 and 5 in a form a tool can read.
@@ -49,7 +49,7 @@ Fence    ::= '```' Char*
 /* ---- Ops (SPEC.md section 5) ---- */
 
 Op       ::= Topic | Group | Put | Card | Set | Add | Upd | Del | Mv | Size | Move
-           | Pin | Unpin | Focus | Let | Archive | Restore | Say | Tell
+           | Pin | Unpin | Focus | Let | Archive | Restore | Link | Unlink | Say | Tell
 
 Topic    ::= 'topic' S Id ( S Text )?            /* without a name, the name is the id */
 Group    ::= 'group' S Id ( S Text )?
@@ -68,6 +68,8 @@ Focus    ::= 'focus' S Id                        /* a card, a topic or a group *
 Let      ::= 'let' S Id ( S Text )?              /* without a value, the name is removed */
 Archive  ::= 'archive' S Id
 Restore  ::= 'restore' S Id
+Link     ::= 'link' S Id S Id ( S Text )?        /* topic, topic, reason (0.8) */
+Unlink   ::= 'unlink' S Id S Id
 Say      ::= 'say' ( S Text )?
 Tell     ::= 'tell' ( S Text )?
 

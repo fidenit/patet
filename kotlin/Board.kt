@@ -113,7 +113,20 @@ sealed class Op {
     data class Let(val name: String, val value: String) : Op()
     data class Archive(val topic: String) : Op()
     data class Restore(val topic: String) : Op()
+    /** Relate two topics (no direction), with a short reason; written again, the reason changes (0.8). */
+    data class Link(val a: String, val b: String, val reason: String) : Op()
+    data class Unlink(val a: String, val b: String) : Op()
 }
+
+/** A relation between two topics (`link`): the pair has no order. */
+class Link(val a: String, val b: String, var reason: String) {
+    fun joins(x: String, y: String) = (a == x && b == y) || (a == y && b == x)
+    fun touches(t: String) = a == t || b == t
+}
+
+/** At most this many links on a board, and the longest reason (characters; a longer one is clipped). */
+const val LINK_LIMIT = 64
+const val REASON_LIMIT = 60
 
 class Group(val id: String, var name: String)
 class Topic(val id: String, var name: String, var group: String? = null)
@@ -196,6 +209,8 @@ class Board {
     val topics: MutableList<Topic> = mutableListOf()
     val cards: MutableList<Card> = mutableListOf()
     val shelf: MutableList<Shelved> = mutableListOf()
+    /** Relations between topics, in the order they were made (`link`, 0.8). */
+    val links: MutableList<Link> = mutableListOf()
     val vars: TreeMap<String, String> = TreeMap(BY_CODE_POINT)
     var say: String = ""
     /** The id of what the user should look at: a card, a topic or a group. [focusKind] says which. */
@@ -320,6 +335,7 @@ class Board {
                     } else if (topics.any { it.id == op.id }) {
                         if (cards.any { it.topic == op.id }) throw Rejected("not-empty", "topic '${op.id}' still has cards")
                         topics.removeAll { it.id == op.id }
+                        links.removeAll { it.touches(op.id) }
                         "topic"
                     } else if (groups.any { it.id == op.id }) {
                         groups.removeAll { it.id == op.id }
@@ -380,6 +396,27 @@ class Board {
                 unfocus("topic", op.topic)
                 gone.forEach { unfocus("card", it.id) }
                 shelf.add(Shelved(t, gone))
+                links.removeAll { it.touches(op.topic) } // a shelved topic takes its links with it
+            }
+            is Op.Link -> {
+                if (op.a == op.b) throw Rejected("bad-value", "a topic cannot link to itself ('${op.a}')")
+                for (t in listOf(op.a, op.b)) if (topics.none { it.id == t }) throw Rejected("no-such-topic", "no topic '$t'")
+                var reason = op.reason.trim()
+                if (chars(reason) > REASON_LIMIT) {
+                    notes.add("clipped link.${op.a}.${op.b} $REASON_LIMIT")
+                    reason = clip(reason, REASON_LIMIT)
+                }
+                val l = links.firstOrNull { it.joins(op.a, op.b) }
+                if (l != null) {
+                    l.reason = reason
+                } else {
+                    if (links.size >= LINK_LIMIT) throw Rejected("limit", "at most $LINK_LIMIT links; unlink one that no longer matters")
+                    links.add(Link(op.a, op.b, reason))
+                }
+            }
+            is Op.Unlink -> {
+                val l = links.firstOrNull { it.joins(op.a, op.b) } ?: throw Rejected("no-such-link", "no link between '${op.a}' and '${op.b}'")
+                links.remove(l)
             }
             is Op.Restore -> {
                 val s = shelf.firstOrNull { it.topic.id == op.topic } ?: throw Rejected("not-shelved", "no topic '${op.topic}' on the shelf")

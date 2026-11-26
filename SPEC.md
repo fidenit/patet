@@ -30,6 +30,7 @@ group  ->  topic  ->  card  ->  item
 - A **group** is a broad area that holds topics. Groups are optional.
 - A **card** has a type, a title, fields (name and value) and, for list-like types, items.
 - An **item** has an id and 1 to 6 cells.
+- A **link** relates two topics, with no direction and an optional short reason (0.8). A renderer may draw it between them; a model reads it as "these two subjects bear on each other".
 - A board also holds **named values**, a **shelf** of archived topics, one **caption** (`say`) and at most one **focused** card, topic or group.
 
 Every change has an **author**: `agent` (a model, or a program writing for one) or `user` (a gesture on the renderer). A few ops depend on the author (section 5). A third author, `restore`, is never on the wire: a renderer uses it only to load a serialized board (section 8).
@@ -65,8 +66,9 @@ Every change has an **author**: `agent` (a model, or a program writing for one) 
 | card size | 1 to 8 columns and rows; a value outside is clamped |
 | `say` | 80 characters |
 | named values | 64 names; a value is 60 characters |
+| links | 64; a reason is 60 characters |
 
-Text over a limit is **clipped**, not rejected: it is cut to the limit with `…` as its last character, the op is applied, and the writer is told (section 9) when it was a title, a field value, a cell, a named value or `say`. A topic or group name is clipped without a note. Lengths are counted in Unicode scalar values.
+Text over a limit is **clipped**, not rejected: it is cut to the limit with `…` as its last character, the op is applied, and the writer is told (section 9) when it was a title, a field value, a cell, a named value, the reason of a link (`clipped link.<a>.<b> 60`) or `say`. A topic or group name is clipped without a note. Lengths are counted in Unicode scalar values.
 
 The rule for ids needs no table of Unicode properties, so every implementation tests it alike. It admits the words of every script with their combining marks; it also admits symbols above U+007F, which a writer has no reason to use.
 
@@ -95,6 +97,8 @@ Ids of topics, groups and cards SHOULD be unique across all three kinds. A rende
 | `let` | `let <name> <value>` | Set a named value; an empty value removes it | `bad-id`; 65th name (`limit`) |
 | `archive` | `archive <topic>` | Shelve the topic with its cards | `no-such-topic` |
 | `restore` | `restore <topic>` | Bring a shelved topic back | not on the shelf (`not-shelved`) |
+| `link` | `link <topic> <topic> [<reason>]` | Relate two topics (no direction). Written again for the same pair, in either order, only the reason changes. Deleting or shelving a topic takes its links | the same topic twice (`bad-value`), `no-such-topic`, more than 64 (`limit`) |
+| `unlink` | `unlink <topic> <topic>` | Take a link away (either order) | `no-such-link` |
 | `say` | `say <text>` | The one-line caption | never |
 | `tell` | `tell <text>` | A sentence to read aloud; changes no board | never |
 
@@ -220,7 +224,8 @@ A board is written back in the same language, in this order:
 1. `let <name> <value>` for each named value, by name in code point order.
 2. `group <id> <name>` for each group, in creation order.
 3. For each topic in creation order: `topic <id> <name>`, then `put <topic> <group>` if it is in one.
-4. For each card in creation order: `card <id> <kind> <topic> <w>x<h> <title>`, then its `set` lines by field name in code point order, then its `add` lines in item order, then `move <id> <col> <row>` if placed, then `pin <id>` if pinned.
+4. `link <a> <b> <reason>` for each link in creation order (without a reason when it has none).
+5. For each card in creation order: `card <id> <kind> <topic> <w>x<h> <title>`, then its `set` lines by field name in code point order, then its `add` lines in item order, then `move <id> <col> <row>` if placed, then `pin <id>` if pinned.
 
 Applying these lines in order to an empty board with author `restore` MUST give the same board. `restore` is the author a renderer uses to load a serialized board, and for nothing else; it never appears in a stream, a log or an event. It has the user's rights, so the `pin` lines and the user's answers apply, but its `move` and `size` do not pin. (With author `user` a card an agent had placed would come back pinned; with author `agent` the `pin` lines and the answers would be rejected.)
 
@@ -260,6 +265,7 @@ Codes are stable; messages are for a model or a person to read and may change.
 | `not-found` | `del` found nothing with that id |
 | `not-empty` | the topic still has cards |
 | `not-shelved` | the topic is not on the shelf |
+| `no-such-link` | `unlink` found no link between the two topics |
 | `limit` | a count limit was reached |
 | `pinned` | the user pinned the card |
 | `user-only` | only the user may do this: pin and unpin, and write the user's own answers |
@@ -433,7 +439,7 @@ The version is `<major>.<minor>`.
 
 - The **minor** number grows with additions: a new session command, a new binding, a new error code, a new field, something a verb takes that it rejected before (0.7: `focus` on a topic or a group), and, from 0.3 on, a new core card type. A writer learns which types a renderer has from its description (section 6), so a new type breaks nobody who reads it.
 - The **major** number grows with a breaking change: a new verb, a changed limit, a changed serialization order, a changed meaning. A reader MUST NOT read a stream that declares another major.
-- While the major number is 0, a file written by a newer minor may hold lines an older reader rejects (a card of a type it lacks, `focus` on a group). It skips them and reads the rest.
+- While the major number is 0, a file written by a newer minor may hold lines an older reader rejects (a card of a type it lacks, `focus` on a group, a verb it does not know such as 0.8's `link`). It skips them and reads the rest. So while the major number is 0, a new verb is a minor change; from 1.0 on it is a major one.
 
 A stream or file without a header is 0.1.
 

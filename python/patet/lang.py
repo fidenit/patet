@@ -6,7 +6,7 @@ import re
 from typing import Any, Dict, List, Optional, Tuple
 
 #: The protocol version this implementation writes and reads (SPEC.md, Versioning).
-VERSION = "0.7"
+VERSION = "0.8"
 
 # What counts as white space: the Unicode White_Space property, as in the reference implementation.
 # (str.strip() and \s in Python also take U+001C..U+001F, which the protocol does not.)
@@ -199,6 +199,13 @@ def parse(raw: str) -> Optional[Op]:
         return {"op": "pin", "id": _need(rest, "pin <id>"), "on": cmd == "pin"}
     if cmd == "focus":
         return {"op": "focus", "id": _need(rest, "focus <id>")}
+    if cmd == "link":
+        a, r1 = split1(rest)
+        b, reason = split1(r1)
+        return {"op": "link", "a": _need(a, "link <topic> <topic> [<reason>]"), "b": _need(b, "link <topic> <topic> [<reason>]"), "reason": reason}
+    if cmd == "unlink":
+        a, b = split1(rest)
+        return {"op": "unlink", "a": _need(a, "unlink <topic> <topic>"), "b": _need(b, "unlink <topic> <topic>")}
     if cmd == "say":
         return {"op": "say", "text": rest}
     if cmd == "tell":

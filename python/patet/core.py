@@ -15,7 +15,7 @@ _ID_ASCII = frozenset("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234
 
 LIMITS: Dict[str, int] = {
     "id": 24, "title": 40, "by": 24, "fixed": 16, "watch": 200, "topic": 24, "group": 16, "cell": 60, "cells": 6, "items": 24, "draw_items": 80,
-    "groups": 8, "vars": 64, "say": 80, "size": 8, "record_field": 80, "record_fields": 12,
+    "groups": 8, "vars": 64, "say": 80, "size": 8, "record_field": 80, "record_fields": 12, "links": 64, "reason": 60,
 }
 
 
@@ -205,6 +205,8 @@ class Board:
         self.topics: List[Topic] = []
         self.cards: List[Card] = []
         self.shelf: List[Shelved] = []
+        #: Relations between topics, no direction (0.8): ``(a, b, reason)`` in the order they were made.
+        self.links: List[List[str]] = []
         self.vars: Dict[str, str] = {}
         self.say = ""
         #: The id of what the user should look at: a card, a topic or a group. ``focus_kind`` says which.
@@ -359,6 +361,30 @@ class Board:
             for c in gone:
                 self._unfocus("card", c.id)
             self.shelf.append(Shelved(t, gone))
+            self.links = [l for l in self.links if t.id not in (l[0], l[1])]  # a shelved topic takes its links
+        elif verb == "link":
+            a, b = op["a"], op["b"]
+            if a == b:
+                raise Reject("bad-value", f"a topic cannot link to itself ('{a}')")
+            for x in (a, b):
+                if not self.topic(x):
+                    raise Reject("no-such-topic", f"no topic '{x}'")
+            reason = op["reason"].strip(WS)
+            if len(reason) > LIMITS["reason"]:
+                self.notes.append(f"clipped link.{a}.{b} {LIMITS['reason']}")
+                reason = _clip(reason, LIMITS["reason"])
+            found = next((l for l in self.links if {l[0], l[1]} == {a, b}), None)
+            if found:
+                found[2] = reason
+            else:
+                if len(self.links) >= LIMITS["links"]:
+                    raise Reject("limit", f"at most {LIMITS['links']} links; unlink one that no longer matters")
+                self.links.append([a, b, reason])
+        elif verb == "unlink":
+            found = next((l for l in self.links if {l[0], l[1]} == {op["a"], op["b"]}), None)
+            if not found:
+                raise Reject("no-such-link", f"no link between '{op['a']}' and '{op['b']}'")
+            self.links.remove(found)
         elif verb == "restore":
             s = next((x for x in self.shelf if x.topic.id == op["topic"]), None)
             if not s:
@@ -451,6 +477,7 @@ class Board:
             if any(c.topic == id for c in self.cards):
                 raise Reject("not-empty", f"topic '{id}' still has cards")
             self.topics = [t for t in self.topics if t.id != id]
+            self.links = [l for l in self.links if id not in (l[0], l[1])]
             kind = "topic"
         elif self.group(id):
             self.groups = [g for g in self.groups if g.id != id]
@@ -522,6 +549,10 @@ def serialize(b: Board, topic: Optional[str] = None) -> str:
         out.append(f"topic {t.id} {t.name}")
         if topic is None and t.group is not None:
             out.append(f"put {t.id} {t.group}")
+    for x, y, reason in b.links:
+        if topic is not None and topic not in (x, y):
+            continue
+        out.append(f"link {x} {y} {reason}" if reason else f"link {x} {y}")
     for c in b.cards:
         if topic is not None and c.topic != topic:
             continue

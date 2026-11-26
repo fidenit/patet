@@ -4,7 +4,7 @@
 use crate::core::{Board, Op, Reject};
 
 /// The protocol version this implementation writes and reads (SPEC.md, Versioning).
-pub const VERSION: &str = "0.7";
+pub const VERSION: &str = "0.8";
 
 /// First line of a saved log or a stream. It starts with `#`, so a parser that predates it reads a comment.
 pub fn header() -> String {
@@ -176,6 +176,15 @@ pub fn parse(line: &str) -> Result<Option<Op>, Reject> {
         "restore" => Op::Restore { topic: need(rest, "restore <topic>")?.into() },
         "pin" | "unpin" => Op::Pin { id: need(rest, "pin <id>")?.into(), on: cmd == "pin" },
         "focus" => Op::Focus { id: need(rest, "focus <id>")?.into() },
+        "link" => {
+            let (a, rest) = split1(rest);
+            let (b, reason) = split1(rest);
+            Op::Link { a: need(a, "link <topic> <topic> [<reason>]")?.into(), b: need(b, "link <topic> <topic> [<reason>]")?.into(), reason: reason.into() }
+        }
+        "unlink" => {
+            let (a, b) = split1(rest);
+            Op::Unlink { a: need(a, "unlink <topic> <topic>")?.into(), b: need(b, "unlink <topic> <topic>")?.into() }
+        }
         "say" => Op::Say { text: rest.into() },
         // A sentence to read aloud. It changes no board, so it is not an op (a renderer with a voice handles it).
         "tell" => return Ok(None),
@@ -213,6 +222,9 @@ pub fn serialize_with(b: &Board, level: &dyn Fn(&str) -> u8) -> String {
             _ => {}
         }
     }
+    for l in &b.links {
+        s += &format!("link {} {} {}\n", l.a, l.b, l.reason).replace(" \n", "\n");
+    }
     for c in &b.cards {
         let lv = level(&c.topic);
         if lv == 0 {
@@ -246,7 +258,7 @@ pub fn serialize_topic(b: &Board, topic: &str) -> Option<String> {
     }
     let text = serialize_with(b, &|t| if t == topic { 2 } else { 0 });
     let keep = |l: &&str| {
-        !l.starts_with("group ") && !l.starts_with("put ") && !l.starts_with("let ") && !l.starts_with('#') && (!l.starts_with("topic ") || l.split_whitespace().nth(1) == Some(topic))
+        !l.starts_with("group ") && !l.starts_with("put ") && !l.starts_with("let ") && !l.starts_with('#') && (!l.starts_with("topic ") || l.split_whitespace().nth(1) == Some(topic)) && (!l.starts_with("link ") || l.split_whitespace().skip(1).take(2).any(|t| t == topic))
     };
     Some(text.lines().filter(keep).map(|l| format!("{l}\n")).collect())
 }

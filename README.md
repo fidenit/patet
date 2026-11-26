@@ -20,7 +20,7 @@ Each line is one op, applied the moment it ends. The result is a board of cards,
 user set k2 chosen o2
 ```
 
-Version **0.7**. Apache-2.0. The protocol is separate from any app: [APERIT](https://github.com/fidenit/aperit) (until now called KITE) is the first product built on it.
+Version **0.8**. Apache-2.0. The protocol is separate from any app: [APERIT](https://github.com/fidenit/aperit) (until now called KITE) is the first product built on it.
 
 ## Start here
 

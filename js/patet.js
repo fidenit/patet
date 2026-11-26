@@ -1,4 +1,4 @@
-// PATET 0.7 in JavaScript: the board, the parser and the serializer. No dependencies.
+// PATET 0.8 in JavaScript: the board, the parser and the serializer. No dependencies.
 // A port of the reference implementation (protocol/rust); it runs the same conformance cases (test.mjs).
 //
 //   import { Board, parse, serialize } from "./patet.js";
@@ -6,7 +6,7 @@
 //   const verdict = board.line("card k1 metric trip 2x2 Days left");   // "ok" | "ok clipped ..." | "err <code> <message>" | "skip"
 //   serialize(board);                                                  // the board as ops
 
-export const VERSION = "0.7";
+export const VERSION = "0.8";
 
 /** Why an op was not applied: a stable code for programs, an English message for whoever wrote the line. */
 export class Reject extends Error {
@@ -22,7 +22,7 @@ export class Reject extends Error {
 const no = (code, message) => new Reject(code, message);
 
 const ID = "(1 to 24 letters, digits, _ or -)";
-export const LIMITS = { id: 24, title: 40, by: 24, fixed: 16, watch: 200, topic: 24, group: 16, cell: 60, cells: 6, items: 24, drawItems: 80, groups: 8, vars: 64, say: 80, size: 8, recordField: 80, recordFields: 12, gridCell: 9999 };
+export const LIMITS = { id: 24, title: 40, by: 24, fixed: 16, watch: 200, topic: 24, group: 16, cell: 60, cells: 6, items: 24, drawItems: 80, groups: 8, vars: 64, say: 80, size: 8, recordField: 80, recordFields: 12, gridCell: 9999, links: 64, reason: 60 };
 
 /** The card types: name, default size, fields with limits (an empty description marks a field the renderer sets), item shape. */
 export const PARTS = [
@@ -242,6 +242,15 @@ export function parse(raw) {
       return { op: "pin", id: need(rest, "pin <id>"), on: cmd === "pin" };
     case "focus":
       return { op: "focus", id: need(rest, "focus <id>") };
+    case "link": {
+      const [a, r1] = split1(rest);
+      const [b, reason] = split1(r1);
+      return { op: "link", a: need(a, "link <topic> <topic> [<reason>]"), b: need(b, "link <topic> <topic> [<reason>]"), reason };
+    }
+    case "unlink": {
+      const [a, b] = split1(rest);
+      return { op: "unlink", a: need(a, "unlink <topic> <topic>"), b: need(b, "unlink <topic> <topic>") };
+    }
     case "say":
       return { op: "say", text: rest };
     case "tell":
@@ -259,6 +268,7 @@ export class Board {
     this.topics = []; // { id, name, group }
     this.cards = []; // { id, kind, ext, topic, title, fields: Map, items: [{ id, cells }], w, h, grid, pinned, rev }
     this.shelf = []; // { topic, cards }
+    this.links = []; // { a, b, reason }: relations between topics, no direction (0.8)
     this.vars = new Map();
     this.say = "";
     /** The id of what the user should look at: a card, a topic or a group. `focusKind` says which. */
@@ -412,6 +422,7 @@ export class Board {
         } else if (this.topics.some((t) => t.id === op.id)) {
           if (this.cards.some((c) => c.topic === op.id)) throw no("not-empty", `topic '${op.id}' still has cards`);
           this.topics = this.topics.filter((t) => t.id !== op.id);
+          this.links = this.links.filter((l) => l.a !== op.id && l.b !== op.id);
           kind = "topic";
         } else if (this.groups.some((g) => g.id === op.id)) {
           this.groups = this.groups.filter((g) => g.id !== op.id);
@@ -472,6 +483,29 @@ export class Board {
         this.#unfocus("topic", op.topic);
         for (const c of gone) this.#unfocus("card", c.id);
         this.shelf.push({ topic: t, cards: gone });
+        this.links = this.links.filter((l) => l.a !== op.topic && l.b !== op.topic); // a shelved topic takes its links
+        return;
+      }
+      case "link": {
+        if (op.a === op.b) throw no("bad-value", `a topic cannot link to itself ('${op.a}')`);
+        for (const t of [op.a, op.b]) if (!this.topics.some((x) => x.id === t)) throw no("no-such-topic", `no topic '${t}'`);
+        let reason = trim(op.reason);
+        if (chars(reason) > LIMITS.reason) {
+          this.notes.push(`clipped link.${op.a}.${op.b} ${LIMITS.reason}`);
+          reason = clip(reason, LIMITS.reason);
+        }
+        const l = this.links.find((x) => (x.a === op.a && x.b === op.b) || (x.a === op.b && x.b === op.a));
+        if (l) l.reason = reason;
+        else {
+          if (this.links.length >= LIMITS.links) throw no("limit", `at most ${LIMITS.links} links; unlink one that no longer matters`);
+          this.links.push({ a: op.a, b: op.b, reason });
+        }
+        return;
+      }
+      case "unlink": {
+        const at = this.links.findIndex((x) => (x.a === op.a && x.b === op.b) || (x.a === op.b && x.b === op.a));
+        if (at < 0) throw no("no-such-link", `no link between '${op.a}' and '${op.b}'`);
+        this.links.splice(at, 1);
         return;
       }
       case "restore": {
@@ -540,6 +574,10 @@ export function serialize(b, topic = null) {
     if (topic !== null && t.id !== topic) continue;
     s += `topic ${t.id} ${t.name}\n`;
     if (topic === null && t.group !== null) s += `put ${t.id} ${t.group}\n`;
+  }
+  for (const l of b.links) {
+    if (topic !== null && l.a !== topic && l.b !== topic) continue;
+    s += (l.reason ? `link ${l.a} ${l.b} ${l.reason}` : `link ${l.a} ${l.b}`) + "\n";
   }
   for (const c of b.cards) {
     if (topic !== null && c.topic !== topic) continue;

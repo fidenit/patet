@@ -65,6 +65,7 @@ The numbers are the case files (`03` is `03-rejections.txt`).
 | 37-by | `by`, who wrote a card: every kind, clipping, emptying, not one of a record's 12 fields |
 | 38-fixed | `fixed`, a place on the screen (`x,y`, checked), and `watch`: every kind, either author, emptying, clipping, not one of a record's 12 fields |
 | 39-focus | `focus` on a card, a topic and a group; ids it does not take (an item, a named value, a shelved topic, a deleted group) |
+| 40-links | `link` and `unlink`: either order is the same link, a second `link` changes the reason, clipping, a topic linked to itself, a topic not on the board, shelving takes the links |
 
 ### Verbs
 

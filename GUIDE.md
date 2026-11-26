@@ -25,8 +25,12 @@ put <topic> <group>                          place a topic in a group
 mv <card> <topic>                            move a card to another topic
 archive <topic>                              shelve a finished topic with its cards
 restore <topic>                              bring a shelved topic back
+link <topic> <topic> <reason>                say that two topics bear on each other (one short reason, 60)
+unlink <topic> <topic>                       the two no longer bear on each other
 tell <sentence>                              a sentence to be read aloud (only when the user listens)
 ```
+
+Link two topics when one changes what the other needs: a trip and the leave days it takes, a wife's job search and the childcare it moves. Say why in a few words. Do not link topics only because they are both about work; a link is worth drawing only when it tells the user something. When the reason no longer holds, `unlink`.
 
 Ids are short ASCII: `trip` for a topic, `k3` for a card, `r1` for an item. Create before you refer: a topic before its cards, a card before its items, a group before `put`.
 

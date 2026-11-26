@@ -1,0 +1,39 @@
+# `link` relates two topics, `unlink` takes the relation away (SPEC.md section 5, 0.8). A link has no direction:
+# `link a b` and `link b a` are the same link, and writing it again changes only its reason (60, clipped). A topic cannot
+# link to itself; both topics must be on the board. Deleting or shelving a topic takes its links with it.
+agent: topic a Wife's career
+  -> ok
+agent: topic b Friday childcare
+  -> ok
+agent: topic c Weather
+  -> ok
+agent: link a b both depend on her schedule
+  -> ok
+agent: link b a she is away on Friday
+  -> ok
+agent: link a a self
+  -> err bad-value
+agent: link a z
+  -> err no-such-topic
+agent: link b c
+  -> ok
+user: link a c rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
+  -> ok clipped link.a.c 60
+agent: unlink c b
+  -> ok
+agent: unlink c b
+  -> err no-such-link
+agent: topic d Old
+  -> ok
+agent: link d a
+  -> ok
+agent: archive d
+  -> ok
+agent: link
+  -> err missing-argument
+board:
+topic a Wife's career
+topic b Friday childcare
+topic c Weather
+link a b she is away on Friday
+link a c rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr…

@@ -111,6 +111,12 @@ object Lang {
             "restore" -> Op.Restore(need(rest, "restore <topic>"))
             "pin", "unpin" -> Op.Pin(need(rest, "pin <id>"), cmd == "pin")
             "focus" -> Op.Focus(need(rest, "focus <id>"))
+            "link" -> {
+                val (a, r1) = split1(rest)
+                val (b, reason) = split1(r1)
+                Op.Link(need(a, "link <topic> <topic> [<reason>]"), need(b, "link <topic> <topic> [<reason>]"), reason)
+            }
+            "unlink" -> split1(rest).let { (a, b) -> Op.Unlink(need(a, "unlink <topic> <topic>"), need(b, "unlink <topic> <topic>")) }
             "say" -> Op.Say(rest)
             // 소리 내어 읽는 문장. 보드를 바꾸지 않으므로 조작이 아니다 (음성 재생 쪽에서 따로 처리한다).
             "tell" -> null
@@ -127,6 +133,7 @@ object Lang {
             s.append("topic ${t.id} ${t.name}\n")
             t.group?.let { s.append("put ${t.id} $it\n") }
         }
+        for (l in b.links) s.append(if (l.reason.isEmpty()) "link ${l.a} ${l.b}\n" else "link ${l.a} ${l.b} ${l.reason}\n")
         for (c in b.cards) {
             s.append("card ${c.id} ${c.kindName} ${c.topic} ${c.w}x${c.h} ${c.title}\n")
             for ((f, v) in c.fields) s.append("set ${c.id} $f $v\n")

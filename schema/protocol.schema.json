@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "PATET 0.7: a batch of board ops",
+  "title": "PATET 0.8: a batch of board ops",
   "description": "JSON form of the ops of PATET (SPEC.md). The wire format is plain text lines; this schema describes the same ops as JSON objects so tools can validate and generate them. Convert each op to its line with the 'x-line' template. Text over a limit is clipped by a renderer rather than rejected, so 'maxLength' is what a writer should stay within. Lengths ('maxLength') count Unicode characters, as JSON Schema defines them.",
   "type": "object",
   "required": [
@@ -17,7 +17,8 @@
         "0.4",
         "0.5",
         "0.6",
-        "0.7"
+        "0.7",
+        "0.8"
       ],
       "description": "Protocol version of this document."
     },
@@ -508,6 +509,35 @@
             "by": {
               "const": "user"
             }
+          }
+        },
+        {
+          "title": "link",
+          "x-line": "link <topic> <topic> [<reason>]",
+          "description": "Relate two topics, with no direction; written again for the same pair, only the reason changes (60, clipped). Both topics must exist and differ; at most 64 links. Deleting or shelving a topic takes its links. From 0.8 on.",
+          "type": "object",
+          "required": ["op", "a", "b"],
+          "additionalProperties": false,
+          "properties": {
+            "op": { "const": "link" },
+            "a": { "$ref": "#/$defs/id" },
+            "b": { "$ref": "#/$defs/id" },
+            "reason": { "type": "string", "maxLength": 60 },
+            "by": { "$ref": "#/$defs/by" }
+          }
+        },
+        {
+          "title": "unlink",
+          "x-line": "unlink <topic> <topic>",
+          "description": "Take a relation between two topics away (either order). From 0.8 on.",
+          "type": "object",
+          "required": ["op", "a", "b"],
+          "additionalProperties": false,
+          "properties": {
+            "op": { "const": "unlink" },
+            "a": { "$ref": "#/$defs/id" },
+            "b": { "$ref": "#/$defs/id" },
+            "by": { "$ref": "#/$defs/by" }
           }
         },
         {
